@@ -1,0 +1,15 @@
+{
+  "name": "use-agently",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "use-agently": "./src/cli.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
