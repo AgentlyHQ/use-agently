@@ -1,10 +1,13 @@
-# Default ignored files
 /shelf/
 /workspace.xml
-# Ignored default folder with query files
 /queries/
-# Datasource local storage ignored files
+/codeStyles/
 /dataSources/
 /dataSources.local.xml
-# Editor-based HTTP Client requests
 /httpRequests/
+/dictionaries/
+/misc.xml
+copilot*
+
+/git_toolbox_prj.xml
+/material_theme_project_new.xml
