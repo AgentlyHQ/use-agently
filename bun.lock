@@ -17,11 +17,12 @@
     "packages/use-agently": {
       "name": "use-agently",
       "version": "0.0.0",
-      "bin": {
-        "use-agently": "./src/cli.ts",
+      "bin": "build/use-agently",
+      "dependencies": {
+        "commander": "^14.0.3",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.3.9",
       },
     },
   },

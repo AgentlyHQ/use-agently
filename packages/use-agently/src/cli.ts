@@ -1,3 +1,5 @@
-#!/usr/bin/env bun
+import { Command } from "commander";
 
-console.log("use-agently");
+export const cli = new Command();
+
+cli.name("use-agently").description("use-agently CLI").version("0.0.0");
