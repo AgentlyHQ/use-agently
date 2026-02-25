@@ -55,7 +55,7 @@ The wallet system is designed for extensibility. `Wallet` interface requires `ty
 
 - **Runtime/Package Manager**: Bun (>= 1.3.0)
 - **Build**: Turborepo orchestrates tasks; Bun compiler creates standalone executables
-- **Type checking**: `tsc --project tsconfig.json` (no emit, strict mode, NodeNext module resolution)
+- **Linting**: ESLint with typescript-eslint (type-checked recommended rules), flat config at root
 - **Formatting**: Prettier (printWidth: 120), enforced via pre-commit hook (husky + lint-staged)
 - **CI**: GitHub Actions runs build, test, and format check on PRs
 

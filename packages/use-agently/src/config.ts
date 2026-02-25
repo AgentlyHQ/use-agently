@@ -19,7 +19,7 @@ export async function loadConfig(): Promise<Config | undefined> {
   if (!(await file.exists())) {
     return undefined;
   }
-  return file.json();
+  return (await file.json()) as Promise<Config>;
 }
 
 export async function saveConfig(config: Config): Promise<void> {

@@ -9,20 +9,20 @@ export const agentsCommand = new Command("agents").description("List available a
     throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
   }
 
-  const agents = await response.json();
+  const agents: unknown = await response.json();
 
   if (!Array.isArray(agents) || agents.length === 0) {
     console.log("No agents available.");
     return;
   }
 
-  for (const agent of agents) {
-    console.log(`${agent.name ?? agent.id ?? "unknown"}`);
+  for (const agent of agents as Array<Record<string, unknown>>) {
+    console.log(`${(agent.name as string) ?? (agent.id as string) ?? "unknown"}`);
     if (agent.description) {
-      console.log(`  ${agent.description}`);
+      console.log(`  ${agent.description as string}`);
     }
     if (agent.url) {
-      console.log(`  ${agent.url}`);
+      console.log(`  ${agent.url as string}`);
     }
     console.log();
   }
