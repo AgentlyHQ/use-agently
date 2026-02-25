@@ -1,14 +1,19 @@
 import { Command } from "commander";
-import { loadConfig, saveConfig } from "../config.js";
+import { loadConfig, saveConfig, backupConfig } from "../config.js";
 import { generateEvmPrivateKeyConfig } from "../wallets/evm-private-key.js";
 
 export const initCommand = new Command("init")
   .description("Generate a new local wallet and save it to config")
-  .action(async () => {
+  .option("--regenerate", "Backup existing config and generate a new wallet")
+  .action(async (options: { regenerate?: boolean }) => {
     const existing = await loadConfig();
     if (existing?.wallet) {
-      console.error("Wallet already configured. To reinitialize, run `use-agently reset` first.");
-      process.exit(1);
+      if (!options.regenerate) {
+        console.error("Wallet already configured. Use --regenerate to create a new wallet.");
+        process.exit(1);
+      }
+      const backupPath = await backupConfig();
+      console.log(`Existing config backed up to ${backupPath}`);
     }
 
     const walletConfig = generateEvmPrivateKeyConfig();

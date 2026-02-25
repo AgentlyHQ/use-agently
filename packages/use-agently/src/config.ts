@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { mkdir } from "node:fs/promises";
+import { mkdir, rename } from "node:fs/promises";
 
 const CONFIG_DIR = join(homedir(), ".use-agently");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -27,11 +27,12 @@ export async function saveConfig(config: Config): Promise<void> {
   await Bun.write(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
 }
 
-export async function clearConfig(): Promise<void> {
-  const file = Bun.file(CONFIG_PATH);
-  if (await file.exists()) {
-    await Bun.write(CONFIG_PATH, "{}\n");
-  }
+export async function backupConfig(): Promise<string> {
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/T/, "_").replace(/:/g, "").replace(/\..+/, "").slice(0, 17);
+  const backupPath = join(CONFIG_DIR, `config-${timestamp}.json`);
+  await rename(CONFIG_PATH, backupPath);
+  return backupPath;
 }
 
 export async function getConfigOrThrow(): Promise<Config> {

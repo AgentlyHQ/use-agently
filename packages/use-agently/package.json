@@ -18,8 +18,7 @@
   "scripts": {
     "build": "bun build src/bin.ts --compile --outfile build/use-agently",
     "clean": "rm -rf build",
-    "dev": "bun run src/bin.ts",
-    "lint": "tsc --project tsconfig.json"
+    "dev": "bun run src/bin.ts"
   },
   "dependencies": {
     "@a2a-js/sdk": "^0.3.10",
