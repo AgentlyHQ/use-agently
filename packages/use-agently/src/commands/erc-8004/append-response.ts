@@ -12,7 +12,7 @@ import {
   getExplorerUrl,
   CHAINS,
 } from "../../erc-8004/chain.js";
-import { parseAgentId, parseFeedbackIndex, parseClientAddress, parseBytes32Hash } from "../../erc-8004/validate.js";
+import { parseAgentId, parseFeedbackIndex, parseAddress, parseBytes32Hash } from "../../erc-8004/validate.js";
 import {
   promptAgentId,
   promptFeedbackIndex,
@@ -40,7 +40,7 @@ export async function appendResponse(options: AppendResponseOptions): Promise<vo
   const chainName = Object.entries(CHAINS).find(([, c]) => c.chainId === chainId)?.[0] ?? `chain-${chainId}`;
 
   const agentIdParsed = parseAgentId(options.agentId ?? (await promptAgentId()));
-  const clientAddressParsed = parseClientAddress(options.clientAddress ?? (await promptClientAddress()));
+  const clientAddressParsed = parseAddress(options.clientAddress ?? (await promptClientAddress()), "client address");
   const feedbackIndexParsed = parseFeedbackIndex(options.feedbackIndex ?? (await promptFeedbackIndex()));
 
   const responseUri = options.responseUri ?? (await promptResponseUri());

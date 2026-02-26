@@ -4,7 +4,7 @@ import {
   validateFeedbackValue,
   validateValueDecimals,
   validateFeedbackIndex,
-  validateClientAddress,
+  validateAddress,
 } from "./validate.js";
 
 /** Wraps a throwing validate function into inquirer's `true | string` format. */
@@ -51,7 +51,7 @@ export async function promptFeedbackIndex(): Promise<string> {
 export async function promptClientAddress(): Promise<string> {
   return input({
     message: "Client address (Ethereum address):",
-    validate: inquirerValidate(validateClientAddress),
+    validate: inquirerValidate((v) => validateAddress(v, "client address")),
   });
 }
 
@@ -68,7 +68,7 @@ export async function promptResponseUri(): Promise<string> {
 export async function promptRegistryAddress(): Promise<`0x${string}`> {
   const address = await input({
     message: "Registry contract address:",
-    validate: inquirerValidate(validateClientAddress),
+    validate: inquirerValidate((v) => validateAddress(v, "registry address")),
   });
   return address as `0x${string}`;
 }

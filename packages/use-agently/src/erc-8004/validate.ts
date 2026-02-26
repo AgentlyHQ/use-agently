@@ -44,9 +44,9 @@ export function parseFeedbackIndex(feedbackIndex: string): bigint {
   return parsed;
 }
 
-export function parseClientAddress(address: string): `0x${string}` {
+export function parseAddress(address: string, fieldName = "address"): `0x${string}` {
   if (!isAddress(address)) {
-    throw new Error(`Invalid client address: ${address}. Must be a valid Ethereum address.`);
+    throw new Error(`Invalid ${fieldName}: ${address}. Must be a valid Ethereum address.`);
   }
   return address;
 }
@@ -63,5 +63,5 @@ export const validateAgentId = (v: string) => void parseAgentId(v);
 export const validateFeedbackValue = (v: string) => void parseFeedbackValue(v);
 export const validateValueDecimals = (v: string) => void parseValueDecimals(v);
 export const validateFeedbackIndex = (v: string) => void parseFeedbackIndex(v);
-export const validateClientAddress = (v: string) => void parseClientAddress(v);
+export const validateAddress = (v: string, fieldName?: string) => void parseAddress(v, fieldName);
 export const validateBytes32Hash = (v: string, fieldName: string) => void parseBytes32Hash(v, fieldName);

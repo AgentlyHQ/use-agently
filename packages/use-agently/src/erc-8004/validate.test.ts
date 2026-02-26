@@ -5,7 +5,7 @@ import {
   validateValueDecimals,
   validateBytes32Hash,
   validateFeedbackIndex,
-  validateClientAddress,
+  validateAddress,
   validateAgentId,
 } from "./validate";
 
@@ -165,25 +165,29 @@ describe("validateFeedbackIndex", () => {
   });
 });
 
-describe("validateClientAddress", () => {
+describe("validateAddress", () => {
   test("accepts valid address", () => {
-    expect(() => validateClientAddress("0x0000000000000000000000000000000000000001")).not.toThrow();
+    expect(() => validateAddress("0x0000000000000000000000000000000000000001")).not.toThrow();
   });
 
   test("accepts checksummed address", () => {
-    expect(() => validateClientAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")).not.toThrow();
+    expect(() => validateAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")).not.toThrow();
   });
 
   test("rejects invalid address", () => {
-    expect(() => validateClientAddress("not-an-address")).toThrow("Invalid client address");
+    expect(() => validateAddress("not-an-address")).toThrow("Invalid address");
   });
 
   test("rejects empty string", () => {
-    expect(() => validateClientAddress("")).toThrow("Invalid client address");
+    expect(() => validateAddress("")).toThrow("Invalid address");
   });
 
   test("rejects short hex", () => {
-    expect(() => validateClientAddress("0x1234")).toThrow("Invalid client address");
+    expect(() => validateAddress("0x1234")).toThrow("Invalid address");
+  });
+
+  test("uses custom field name in error message", () => {
+    expect(() => validateAddress("bad", "registry address")).toThrow("Invalid registry address");
   });
 });
 
