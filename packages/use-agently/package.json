@@ -12,13 +12,15 @@
   "author": "AgentlyHQ",
   "type": "module",
   "bin": {
-    "use-agently": "build/use-agently"
+    "use-agently": "build/bin.js"
   },
   "files": [
     "build"
   ],
   "scripts": {
-    "build": "bun build src/bin.ts --compile --outfile build/use-agently",
+    "build": "bun build src/bin.ts --compile --outfile build/use-agently && bun build src/bin.ts --target node --outfile build/bin.js",
+    "build:bun": "bun build src/bin.ts --compile --outfile build/use-agently",
+    "build:node": "bun build src/bin.ts --target node --outfile build/bin.js",
     "clean": "rm -rf build",
     "dev": "bun run src/bin.ts",
     "lint": "eslint"
