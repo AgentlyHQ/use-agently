@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { mkdir, rename } from "node:fs/promises";
+import { mkdir, rename, readFile, writeFile } from "node:fs/promises";
 
 const CONFIG_DIR = join(homedir(), ".use-agently");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -15,16 +15,24 @@ export interface Config {
 }
 
 export async function loadConfig(): Promise<Config | undefined> {
-  const file = Bun.file(CONFIG_PATH);
-  if (!(await file.exists())) {
+  let contents: string;
+  try {
+    contents = await readFile(CONFIG_PATH, "utf8");
+  } catch {
     return undefined;
   }
-  return (await file.json()) as Promise<Config>;
+  try {
+    return JSON.parse(contents) as Config;
+  } catch {
+    throw new Error(
+      `Config file at ${CONFIG_PATH} contains invalid JSON. Please fix or delete it and run \`use-agently init\`.`,
+    );
+  }
 }
 
 export async function saveConfig(config: Config): Promise<void> {
   await mkdir(CONFIG_DIR, { recursive: true });
-  await Bun.write(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n", "utf8");
 }
 
 export async function backupConfig(): Promise<string> {
