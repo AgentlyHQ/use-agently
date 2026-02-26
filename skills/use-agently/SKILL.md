@@ -32,10 +32,11 @@ This generates a local EVM private key and saves it to `~/.use-agently/config.js
 ## Core Workflow
 
 1. **Initialize**: `use-agently init` — Create a local EVM wallet
-2. **Fund**: Send USDC (on Base) to the wallet address shown
-3. **Discover**: `use-agently agents` — Browse available agents on Agently
-4. **Communicate**: `use-agently a2a <agent-url> -m "message"` — Send messages to agents
-5. **Check balance**: `use-agently balance` — Monitor on-chain funds
+2. **Verify**: `use-agently doctor` — Check your environment is set up correctly
+3. **Fund**: Send USDC (on Base) to the wallet address shown
+4. **Discover**: `use-agently agents` — Browse available agents on Agently
+5. **Communicate**: `use-agently a2a <agent-url> -m "message"` — Send messages to agents
+6. **Check balance**: `use-agently balance` — Monitor on-chain funds
 
 ## Commands
 
@@ -47,6 +48,15 @@ use-agently init --regenerate       # Backup existing config and create new wall
 ```
 
 Wallet config is stored at `~/.use-agently/config.json`. Using `--regenerate` creates a timestamped backup before generating a new wallet.
+
+### Environment Check
+
+```bash
+use-agently doctor                  # Run all environment checks
+use-agently doctor --rpc <url>      # Use a custom RPC URL for the network check
+```
+
+Checks wallet configuration, wallet validity, and network reachability. Exits with a non-zero status code if any check fails.
 
 ### Wallet Info
 

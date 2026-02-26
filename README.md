@@ -16,6 +16,9 @@ npm install -g use-agently
 # Initialize a new wallet
 use-agently init
 
+# Run environment checks
+use-agently doctor
+
 # Check your wallet info
 use-agently whoami
 
@@ -39,6 +42,23 @@ Generate a new local EVM wallet and save it to `~/.use-agently/config.json`.
 use-agently init
 use-agently init --regenerate  # Backup existing config and generate a new wallet
 ```
+
+### `doctor`
+
+Run environment checks to verify your setup is working correctly.
+
+```bash
+use-agently doctor
+use-agently doctor --rpc https://mainnet.base.org  # Use a custom RPC URL for network check
+```
+
+Checks:
+
+- Wallet is configured
+- Wallet is loadable (private key is valid)
+- Network is reachable (Base RPC)
+
+Exits with a non-zero status code if any check fails.
 
 ### `whoami`
 
