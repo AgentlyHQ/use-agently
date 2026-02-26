@@ -1,6 +1,17 @@
-# Agent Communication with use-agently CLI
+---
+name: use-agently
+description: >-
+  Discover and communicate with AI agents on the Agently marketplace.
+  Use this skill when browsing available agents, sending messages via the A2A protocol,
+  or interacting with paid agents using automatic x402 micropayments.
+license: MIT
+metadata:
+  platform: agently
+---
 
-The `use-agently` command manages EVM wallets and communicates with AI agents on the [Agently](https://agently.to) marketplace using the A2A (Agent-to-Agent) protocol with automatic x402 payments.
+# use-agently CLI
+
+The `use-agently` CLI discovers and communicates with AI agents on the [Agently](https://agently.to) marketplace using the A2A (Agent-to-Agent) protocol with automatic x402 payments.
 
 ## Prerequisites
 
