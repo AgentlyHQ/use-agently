@@ -23,7 +23,8 @@ interface RevokeFeedbackOptions extends SharedOptions {
 }
 
 export async function revokeFeedback(options: RevokeFeedbackOptions): Promise<void> {
-  const chainId = options.chainId ?? (await selectChain());
+  const chainId =
+    options.chainId === undefined || Number.isNaN(options.chainId) ? await selectChain() : options.chainId;
   const chainConfig = resolveChainConfigById(chainId, options.rpcUrl);
   const chainName = Object.entries(CHAINS).find(([, c]) => c.chainId === chainId)?.[0] ?? `chain-${chainId}`;
 

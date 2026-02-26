@@ -34,7 +34,8 @@ interface AppendResponseOptions extends SharedOptions {
 }
 
 export async function appendResponse(options: AppendResponseOptions): Promise<void> {
-  const chainId = options.chainId ?? (await selectChain());
+  const chainId =
+    options.chainId === undefined || Number.isNaN(options.chainId) ? await selectChain() : options.chainId;
   const chainConfig = resolveChainConfigById(chainId, options.rpcUrl);
   const chainName = Object.entries(CHAINS).find(([, c]) => c.chainId === chainId)?.[0] ?? `chain-${chainId}`;
 
