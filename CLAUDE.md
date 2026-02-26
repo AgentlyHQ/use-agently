@@ -62,3 +62,10 @@ The wallet system is designed for extensibility. `Wallet` interface requires `ty
 ## Publishing
 
 npm publishing is triggered by GitHub releases. Version is extracted from git tags (`v1.0.0` format). Tags containing `.beta` or similar publish with `next` dist-tag.
+
+## Documentation
+
+When CLI commands, features, or behavior change, always update these files to keep them in sync:
+
+- `README.md` — Project README (install, quick start, command reference, how it works)
+- `skills/use-agently/SKILL.md` — Claude Code skill reference (prerequisites, commands, workflows, tips)
