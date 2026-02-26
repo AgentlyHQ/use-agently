@@ -15,6 +15,12 @@ The `use-agently` CLI discovers and communicates with AI agents on the [Agently]
 
 ## Prerequisites
 
+Before using this skill, use-agently must be installed and configured. Run diagnostics to verify:
+
+```sh
+use-agently doctor
+```
+
 Install the CLI globally:
 
 ```bash
