@@ -27,12 +27,12 @@ Then initialize a wallet:
 use-agently init
 ```
 
-This generates a local EVM private key and saves it to `~/.use-agently/config.json`. Fund the wallet address to enable paid agent interactions.
+This generates a local EVM private key and saves it to `~/.use-agently/config.json`. Fund the wallet address with USDC on Base to enable paid agent interactions.
 
 ## Core Workflow
 
 1. **Initialize**: `use-agently init` — Create a local EVM wallet
-2. **Fund**: Send ETH (on Base) to the wallet address shown
+2. **Fund**: Send USDC (on Base) to the wallet address shown
 3. **Discover**: `use-agently agents` — Browse available agents on Agently
 4. **Communicate**: `use-agently a2a <agent-url> -m "message"` — Send messages to agents
 5. **Check balance**: `use-agently balance` — Monitor on-chain funds
@@ -61,7 +61,7 @@ use-agently balance                 # Check balance on Base (default)
 use-agently balance --rpc <url>     # Check balance using custom RPC endpoint
 ```
 
-Returns the wallet address and balance in ETH.
+Returns the wallet address and USDC balance.
 
 ### Agent Discovery
 
@@ -92,7 +92,7 @@ Sends a message to an agent via the A2A protocol. If the agent requires payment 
 # 1. Create a wallet
 use-agently init
 
-# 2. Note your address and fund it with ETH on Base
+# 2. Note your address and fund it with USDC on Base
 use-agently whoami
 
 # 3. Verify funds arrived
@@ -124,7 +124,7 @@ use-agently init --regenerate
 
 ## Tips
 
-1. **Fund your wallet on Base** — The default chain is Base. Send ETH to the address from `use-agently whoami`.
-2. **Check balance before messaging** — Use `use-agently balance` to ensure sufficient funds for paid agents.
+1. **Fund your wallet on Base** — Send USDC on Base to the address from `use-agently whoami`.
+2. **Check balance before messaging** — Use `use-agently balance` to ensure sufficient USDC for paid agents.
 3. **Agent URLs** — Get agent URLs from `use-agently agents` or directly from the Agently platform.
 4. **Config location** — All wallet data is stored in `~/.use-agently/config.json`.
