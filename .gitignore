@@ -37,6 +37,7 @@ dist
 
 # agently
 .agently
+.use-agently
 
 # aixyz
 .aixyz
