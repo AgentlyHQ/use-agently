@@ -1,3 +1,4 @@
+import type { Account } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { ExactEvmScheme } from "@x402/evm";
 import { toClientEvmSigner } from "@x402/evm";
@@ -29,6 +30,10 @@ export class EvmPrivateKeyWallet implements Wallet {
   constructor(privateKey: `0x${string}`) {
     this.privateKey = privateKey;
     this.address = privateKeyToAccount(privateKey).address;
+  }
+
+  getAccount(): Account {
+    return privateKeyToAccount(this.privateKey);
   }
 
   getX402Schemes(): SchemeRegistration[] {
