@@ -63,7 +63,6 @@ jobs:
           VERSION="${{ steps.info.outputs.version }}"
           sed -i 's/"version": "0.0.0"/"version": "'"$VERSION"'"/g' packages/*/package.json
           sed -i 's/"workspace:\*"/"'"$VERSION"'"/g' packages/*/package.json
-          sed -i 's/"workspace:\*"/"'"$VERSION"'"/g' packages/create-aixyz-app/templates/*/package.json
 
       - name: Publish all packages
         run: |
