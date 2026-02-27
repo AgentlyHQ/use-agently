@@ -13,7 +13,7 @@ export const balanceCommand = new Command("balance")
   .action(async (options: { rpcUrl?: string }, command: Command) => {
     const config = await getConfigOrThrow();
     const rpcUrl = options.rpcUrl ?? config.rpcUrl;
-    const wallet = loadWallet(config.wallet);
+    const wallet = loadWallet(config.wallet, rpcUrl);
     const address = wallet.address as `0x${string}`;
 
     const client = createPublicClient({
