@@ -1,4 +1,3 @@
-import type { Account } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
@@ -32,10 +31,6 @@ export class EvmPrivateKeyWallet implements Wallet {
   constructor(privateKey: `0x${string}`) {
     this.privateKey = privateKey;
     this.address = privateKeyToAccount(privateKey).address;
-  }
-
-  getAccount(): Account {
-    return privateKeyToAccount(this.privateKey);
   }
 
   getX402Schemes(): SchemeRegistration[] {
