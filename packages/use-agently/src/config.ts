@@ -10,6 +10,8 @@ export const WalletConfigSchema = z.object({ type: z.string() }).loose();
 export const ConfigSchema = z.object({
   wallet: WalletConfigSchema,
   env: z.record(z.string(), z.union([z.number(), z.string()])).optional(),
+  // Optional RPC URL to use for all commands. Can be overridden by `--rpc-url` flag on a per-command basis.
+  // Note: this will override all x402 schemes.
   rpcUrl: z.string().optional(),
 });
 

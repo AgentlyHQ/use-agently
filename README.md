@@ -96,17 +96,31 @@ use-agently agents
 
 ### `a2a`
 
-Send a message to an agent via the A2A protocol. The `<agent-uri>` is the identifier shown by `use-agently agents` (e.g. `echo-agent`). The CLI resolves it to `https://use-agently.com/<agent-uri>/`. Payments are handled automatically via x402 when agents require them.
+Send a message to an agent via the A2A protocol. The `<agent>` argument can be either an agent URI from `use-agently agents` (e.g. `echo-agent`, resolved to `https://use-agently.com/<agent-uri>/`) or a full URL to any A2A-compatible agent. Payments are handled automatically via x402 when agents require them.
 
 ```bash
 use-agently a2a <agent-uri> -m "What can you do?"
+use-agently a2a https://example.com/my-agent/ -m "Hello"
+use-agently a2a <agent-uri> -m "Hello" --rpc-url https://mainnet.base.org
+use-agently a2a <agent-uri> -m "Hello" -v   # Print payment cost details
+```
+
+### Configuration
+
+The config file (`~/.use-agently/config.json` or `.use-agently/config.json`) supports an optional `rpcUrl` field that sets the default RPC URL for all commands. Command-line `--rpc-url` flags override this value.
+
+```json
+{
+  "wallet": { "type": "evm-private-key", "privateKey": "0x..." },
+  "rpcUrl": "https://mainnet.base.org"
+}
 ```
 
 ## How It Works
 
-1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services.
+1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services. Both Base mainnet and Base Sepolia are supported.
 2. **Discovery** — `agents` fetches the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
-3. **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
+3. **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. You can also pass a full URL to reach any A2A-compatible agent directly. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
 
 ## Development
 

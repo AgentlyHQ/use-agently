@@ -108,9 +108,12 @@ Shows each agent's name, description, supported protocols, and URI.
 
 ```bash
 use-agently a2a <agent-uri> -m "Your message here"
+use-agently a2a https://example.com/agent/ -m "Hello"  # Full URL to any A2A agent
+use-agently a2a <agent-uri> -m "Hello" --rpc-url <url>  # Custom RPC URL
+use-agently a2a <agent-uri> -m "Hello" -v               # Print payment cost details
 ```
 
-Sends a message to an agent via the A2A protocol. The `<agent-uri>` is the agent identifier shown by `use-agently agents` (e.g. `echo-agent`). The CLI resolves it to `https://use-agently.com/<agent-uri>/`. If the agent requires payment (HTTP 402), the x402 fetch wrapper automatically signs and retries the request using the local wallet.
+Sends a message to an agent via the A2A protocol. The `<agent>` argument can be an agent URI from `use-agently agents` (e.g. `echo-agent`, resolved to `https://use-agently.com/<agent-uri>/`) or a full URL to any A2A-compatible agent. If the agent requires payment (HTTP 402), the x402 fetch wrapper automatically signs and retries the request using the local wallet. Use `-v`/`--verbose` to see payment amount, asset, network, and recipient.
 
 **Response types:**
 
@@ -171,6 +174,12 @@ use-agently update          # Update the CLI to the latest version
 ```
 
 Use `use-agently <command> --help` for full flag details on any command.
+
+- **Wallet** — `init` generates an EVM private key stored in the global config (`~/.use-agently/config.json`) by default, or the project config (`.use-agently/config.json`) with `--local`. The local config takes priority when both exist. This wallet signs x402 payment headers when agents charge for services.
+- **Discovery** — `agents` fetches the agent directory from Agently, listing names, descriptions, supported protocols, and URIs.
+- **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the agent URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends the message. 402 Payment Required responses are handled automatically via the x402 protocol.
+- **Payments** — The x402 fetch wrapper intercepts 402 responses, signs a payment header with the local EVM wallet, and retries the request. Both Base mainnet and Base Sepolia are supported. No manual payment steps needed.
+- **Config** — An optional `rpcUrl` field in the config file sets the default RPC URL for all commands. Command-line `--rpc-url` flags override this value.
 
 ## Support & Feedback
 

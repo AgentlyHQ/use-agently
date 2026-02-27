@@ -14,14 +14,14 @@ export type PaymentInfo = {
   resource: { url: string; description: string };
 };
 
-export type createPaymentFetchOptions = {
+export type CreatePaymentFetchOptions = {
   onPayment?: (info: PaymentInfo) => void;
   paymentRequirementsSelector?: SelectPaymentRequirements;
 };
 
 export function createPaymentFetch(
   wallet: Wallet,
-  { onPayment, paymentRequirementsSelector }: createPaymentFetchOptions = {},
+  { onPayment, paymentRequirementsSelector }: CreatePaymentFetchOptions = {},
 ) {
   const client = x402Client.fromConfig({
     schemes: wallet.getX402Schemes(),

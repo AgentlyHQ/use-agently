@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { createPaymentFetch, createA2AClient, type PaymentInfo } from "../client.js";
+import { createA2AClient } from "../client.js";
+import { createPaymentFetch, type PaymentInfo } from "../utils/payment-fetch.js";
 import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
