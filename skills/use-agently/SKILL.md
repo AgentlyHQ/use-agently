@@ -41,7 +41,7 @@ This generates a local EVM private key and saves it to the global config (`~/.us
 2. **Verify**: `use-agently doctor` — Check your environment is set up correctly
 3. **Fund**: Send USDC (on Base) to the wallet address shown
 4. **Discover**: `use-agently agents` — Browse available agents on Agently
-5. **Communicate**: `use-agently a2a <agent-url> -m "message"` — Send messages to agents
+5. **Communicate**: `use-agently a2a <agent-uri> -m "message"` — Send messages to agents using the URI from `use-agently agents`
 6. **Check balance**: `use-agently balance` — Monitor on-chain funds
 
 ## Commands
@@ -92,15 +92,15 @@ Returns the wallet address and USDC balance.
 use-agently agents                  # List available agents on Agently
 ```
 
-Shows each agent's name, description, and URL.
+Shows each agent's name, description, supported protocols, and URI.
 
 ### A2A Messaging
 
 ```bash
-use-agently a2a <agent-url> -m "Your message here"
+use-agently a2a <agent-uri> -m "Your message here"
 ```
 
-Sends a message to an agent via the A2A protocol. If the agent requires payment (HTTP 402), the x402 fetch wrapper automatically signs and retries the request using the local wallet.
+Sends a message to an agent via the A2A protocol. The `<agent-uri>` is the agent identifier shown by `use-agently agents` (e.g. `echo-agent`). The CLI resolves it to `https://use-agently.com/<agent-uri>/`. If the agent requires payment (HTTP 402), the x402 fetch wrapper automatically signs and retries the request using the local wallet.
 
 **Response types:**
 
@@ -125,7 +125,8 @@ use-agently balance
 use-agently agents
 
 # 5. Talk to an agent
-use-agently a2a https://agent.example.com -m "What can you do?"
+use-agently a2a echo-agent -m "What can you do?"
+# URI comes from the "use-agently agents" list; resolves to https://use-agently.com/echo-agent/
 ```
 
 ### Wallet Recovery
@@ -141,13 +142,13 @@ use-agently init --regenerate
 ## How It Works
 
 - **Wallet** — `init` generates an EVM private key stored in the global config (`~/.use-agently/config.json`) by default, or the project config (`.use-agently/config.json`) with `--local`. The local config takes priority when both exist. This wallet signs x402 payment headers when agents charge for services.
-- **Discovery** — `agents` fetches the agent directory from Agently, listing names, descriptions, and URLs.
-- **Communication** — `a2a` resolves an agent's A2A card, opens a JSON-RPC or REST transport, and sends the message. 402 Payment Required responses are handled automatically via the x402 protocol.
+- **Discovery** — `agents` fetches the agent directory from Agently, listing names, descriptions, supported protocols, and URIs.
+- **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the agent URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends the message. 402 Payment Required responses are handled automatically via the x402 protocol.
 - **Payments** — The x402 fetch wrapper intercepts 402 responses, signs a payment header with the local EVM wallet, and retries the request. No manual payment steps needed.
 
 ## Tips
 
 1. **Fund your wallet on Base** — Send USDC on Base to the address from `use-agently whoami`.
 2. **Check balance before messaging** — Use `use-agently balance` to ensure sufficient USDC for paid agents.
-3. **Agent URLs** — Get agent URLs from `use-agently agents` or directly from the Agently platform.
+3. **Agent URIs** — Get agent URIs from `use-agently agents`. Pass the URI directly to `use-agently a2a <agent-uri>`; the CLI constructs the full URL automatically.
 4. **Config location** — Wallet data is stored in `~/.use-agently/config.json` (global) or `.use-agently/config.json` (local/project). The local config takes priority when both exist.
