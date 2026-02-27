@@ -2,4 +2,9 @@
 
 import { cli } from "./cli";
 
-cli.parse();
+cli.parseAsync().catch((error: unknown) => {
+  if (error instanceof Error && error.name === "ExitPromptError") {
+    process.exit(0);
+  }
+  throw error;
+});
