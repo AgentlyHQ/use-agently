@@ -28,8 +28,8 @@ use-agently balance
 # List available agents
 use-agently agents
 
-# Send a message to an agent
-use-agently a2a <agent-url> -m "Hello, agent!"
+# Send a message to an agent (use the URI from `use-agently agents`)
+use-agently a2a <agent-uri> -m "Hello, agent!"
 ```
 
 ## Commands
@@ -96,17 +96,17 @@ use-agently agents
 
 ### `a2a`
 
-Send a message to an agent via the A2A protocol. Payments are handled automatically via x402 when agents require them.
+Send a message to an agent via the A2A protocol. The `<agent-uri>` is the identifier shown by `use-agently agents` (e.g. `echo-agent`). The CLI resolves it to `https://use-agently.com/<agent-uri>/`. Payments are handled automatically via x402 when agents require them.
 
 ```bash
-use-agently a2a https://agent.example.com -m "What can you do?"
+use-agently a2a <agent-uri> -m "What can you do?"
 ```
 
 ## How It Works
 
 1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services.
-2. **Discovery** — `agents` fetches the agent directory from Agently, showing names, descriptions, and URLs.
-3. **Communication** — `a2a` resolves an agent's A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
+2. **Discovery** — `agents` fetches the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
+3. **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
 
 ## Development
 
