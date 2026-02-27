@@ -24,7 +24,7 @@ use-agently doctor
 Install the CLI globally:
 
 ```bash
-npm install -g use-agently
+npm install -g use-agently@latest
 ```
 
 Then initialize a wallet:
