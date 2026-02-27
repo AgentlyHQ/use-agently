@@ -14,34 +14,35 @@ function extractTextFromParts(parts: any[]): string {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractAgentText(result: any): string {
-  if (!result) {
-    return "The agent processed your request but returned no response.";
+function extractTextFromStreamEvent(event: any): string {
+  if (!event) return "";
+
+  // Direct message event
+  if (event.kind === "message" && event.parts) {
+    return extractTextFromParts(event.parts);
   }
 
-  // Direct message response
-  if (result.kind === "message" && result.parts) {
-    return extractTextFromParts(result.parts);
+  // Artifact update event
+  if (event.kind === "artifact-update" && event.artifact?.parts) {
+    return extractTextFromParts(event.artifact.parts);
   }
 
-  // Task-based response — agent messages
-  const messages = result.kind === "task" ? result.messages : result.task?.messages || result.messages;
-  if (messages) {
-    const text = messages
-      .filter((m: { role: string }) => m.role === "agent")
-      .flatMap((m: { parts: unknown[] }) => extractTextFromParts(m.parts))
-      .join("\n");
-    if (text) return text;
+  // Task event — agent messages
+  if (event.kind === "task") {
+    if (event.messages) {
+      const text = event.messages
+        .filter((m: { role: string }) => m.role === "agent")
+        .flatMap((m: { parts: unknown[] }) => extractTextFromParts(m.parts))
+        .join("\n");
+      if (text) return text;
+    }
+    if (event.artifacts?.length > 0) {
+      const text = event.artifacts.flatMap((a: { parts: unknown[] }) => extractTextFromParts(a.parts)).join("\n");
+      if (text) return text;
+    }
   }
 
-  // Task artifacts response
-  const artifacts = result.artifacts || result.task?.artifacts;
-  if (artifacts && artifacts.length > 0) {
-    const text = artifacts.flatMap((a: { parts: unknown[] }) => extractTextFromParts(a.parts)).join("\n");
-    if (text) return text;
-  }
-
-  return result.text || "The agent processed your request but returned no text response.";
+  return event.text || "";
 }
 
 export const a2aCommand = new Command("a2a")
@@ -55,7 +56,7 @@ export const a2aCommand = new Command("a2a")
     const agentUrl = `https://use-agently.com/${agentUri}/`;
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
 
-    const result = await client.sendMessage({
+    const stream = client.sendMessageStream({
       message: {
         kind: "message",
         messageId: randomUUID(),
@@ -64,5 +65,17 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    console.log(extractAgentText(result));
+    let hasOutput = false;
+    for await (const event of stream) {
+      const text = extractTextFromStreamEvent(event);
+      if (text) {
+        process.stdout.write(text);
+        hasOutput = true;
+      }
+    }
+    if (hasOutput) {
+      process.stdout.write("\n");
+    } else {
+      console.log("The agent processed your request but returned no response.");
+    }
   });
