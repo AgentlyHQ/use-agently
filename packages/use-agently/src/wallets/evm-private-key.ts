@@ -1,4 +1,6 @@
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { createPublicClient, http } from "viem";
+import { base } from "viem/chains";
 import { ExactEvmScheme } from "@x402/evm";
 import { toClientEvmSigner } from "@x402/evm";
 import type { SchemeRegistration } from "@x402/fetch";
@@ -33,7 +35,8 @@ export class EvmPrivateKeyWallet implements Wallet {
 
   getX402Schemes(): SchemeRegistration[] {
     const account = privateKeyToAccount(this.privateKey);
-    const signer = toClientEvmSigner(account);
+    const publicClient = createPublicClient({ chain: base, transport: http() });
+    const signer = toClientEvmSigner(account, publicClient);
     return [
       {
         network: "eip155:*" as const,

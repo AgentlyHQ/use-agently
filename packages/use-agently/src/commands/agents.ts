@@ -1,7 +1,17 @@
 import { Command } from "commander";
 
-const STATIC_SESSION = "MHgzODNmYWYxOThjOTI0NjUwZWRiODQzYTRiYWU3NDJhOGZlZDU4YzBkMzE5YTg3YjE1MTA2NzI5OTE4MDI5MjBk";
-const AGENTS_URL = `https://agently.to/sessions/${STATIC_SESSION}/agents`;
+const AGENTS_URL = `https://use-agently.com/marketplace.json`;
+
+interface AgentEntry {
+  uri: string;
+  name: string | null;
+  description: string | null;
+  protocols: string[];
+}
+
+interface AgentsResponse {
+  agents: AgentEntry[];
+}
 
 export const agentsCommand = new Command("agents").description("List available agents on Agently").action(async () => {
   const response = await fetch(AGENTS_URL);
@@ -9,21 +19,22 @@ export const agentsCommand = new Command("agents").description("List available a
     throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
   }
 
-  const agents: unknown = await response.json();
+  const data: any = await response.json();
 
-  if (!Array.isArray(agents) || agents.length === 0) {
+  if (!data.agents || data.agents.length === 0) {
     console.log("No agents available.");
     return;
   }
 
-  for (const agent of agents as Array<Record<string, unknown>>) {
-    console.log(`${(agent.name as string) ?? (agent.id as string) ?? "unknown"}`);
+  for (const agent of data.agents) {
+    console.log(`${agent.name ?? agent.uri}`);
     if (agent.description) {
-      console.log(`  ${agent.description as string}`);
+      console.log(`  ${agent.description}`);
     }
-    if (agent.url) {
-      console.log(`  ${agent.url as string}`);
+    if (agent.protocols.length > 0) {
+      console.log(`  Protocols: ${agent.protocols.join(", ")}`);
     }
+    console.log(`  ${agent.uri}`);
     console.log();
   }
 });
