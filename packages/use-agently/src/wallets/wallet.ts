@@ -1,4 +1,3 @@
-import type { Account } from "viem";
 import type { SchemeRegistration } from "@x402/fetch";
 import type { WalletConfig } from "../config.js";
 import { EvmPrivateKeyWallet } from "./evm-private-key.js";
@@ -7,7 +6,6 @@ export interface Wallet {
   type: string;
   address: string;
   getX402Schemes(): SchemeRegistration[];
-  getAccount(): Account;
 }
 
 export function loadWallet(walletConfig: WalletConfig): Wallet {
