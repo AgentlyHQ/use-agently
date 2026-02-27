@@ -33,7 +33,7 @@ Then initialize a wallet:
 use-agently init
 ```
 
-This generates a local EVM private key and saves it to `~/.use-agently/config.json`. Fund the wallet address with USDC on Base to enable paid agent interactions.
+This generates a local EVM private key and saves it to the global config (`~/.use-agently/config.json`) by default. Use `--local` to save to a project-specific config (`.use-agently/config.json` in the current directory). Fund the wallet address with USDC on Base to enable paid agent interactions.
 
 ## Core Workflow
 
@@ -49,11 +49,18 @@ This generates a local EVM private key and saves it to `~/.use-agently/config.js
 ### Wallet Initialization
 
 ```bash
-use-agently init                    # Generate new EVM wallet
+use-agently init                    # Generate new EVM wallet (global scope)
+use-agently init --local            # Generate new EVM wallet (project scope)
 use-agently init --regenerate       # Backup existing config and create new wallet
+use-agently init --local --regenerate
 ```
 
-Wallet config is stored at `~/.use-agently/config.json`. Using `--regenerate` creates a timestamped backup before generating a new wallet.
+Config is stored in one of two locations depending on scope:
+
+- **Global** (default): `~/.use-agently/config.json` — shared across all projects
+- **Local** (`--local`): `.use-agently/config.json` in the current directory — project-specific
+
+When loading config, the local (project) config takes priority over the global config. Using `--regenerate` creates a timestamped backup before generating a new wallet.
 
 ### Environment Check
 
@@ -133,7 +140,7 @@ use-agently init --regenerate
 
 ## How It Works
 
-- **Wallet** — `init` generates an EVM private key stored locally at `~/.use-agently/config.json`. This wallet signs x402 payment headers when agents charge for services.
+- **Wallet** — `init` generates an EVM private key stored in the global config (`~/.use-agently/config.json`) by default, or the project config (`.use-agently/config.json`) with `--local`. The local config takes priority when both exist. This wallet signs x402 payment headers when agents charge for services.
 - **Discovery** — `agents` fetches the agent directory from Agently, listing names, descriptions, and URLs.
 - **Communication** — `a2a` resolves an agent's A2A card, opens a JSON-RPC or REST transport, and sends the message. 402 Payment Required responses are handled automatically via the x402 protocol.
 - **Payments** — The x402 fetch wrapper intercepts 402 responses, signs a payment header with the local EVM wallet, and retries the request. No manual payment steps needed.
@@ -143,4 +150,4 @@ use-agently init --regenerate
 1. **Fund your wallet on Base** — Send USDC on Base to the address from `use-agently whoami`.
 2. **Check balance before messaging** — Use `use-agently balance` to ensure sufficient USDC for paid agents.
 3. **Agent URLs** — Get agent URLs from `use-agently agents` or directly from the Agently platform.
-4. **Config location** — All wallet data is stored in `~/.use-agently/config.json`.
+4. **Config location** — Wallet data is stored in `~/.use-agently/config.json` (global) or `.use-agently/config.json` (local/project). The local config takes priority when both exist.

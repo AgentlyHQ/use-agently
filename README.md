@@ -36,12 +36,21 @@ use-agently a2a <agent-url> -m "Hello, agent!"
 
 ### `init`
 
-Generate a new local EVM wallet and save it to `~/.use-agently/config.json`.
+Generate a new local EVM wallet and save it to config.
 
 ```bash
-use-agently init
-use-agently init --regenerate  # Backup existing config and generate a new wallet
+use-agently init                    # Save to global config (~/.use-agently/config.json)
+use-agently init --local            # Save to project config (.use-agently/config.json)
+use-agently init --regenerate       # Backup existing config and generate a new wallet
+use-agently init --local --regenerate
 ```
+
+Config is stored in one of two locations depending on the scope:
+
+- **Global** (default): `~/.use-agently/config.json` — shared across all projects
+- **Local** (`--local`): `.use-agently/config.json` in the current directory — project-specific
+
+When loading config, the local (project) config takes priority over the global config.
 
 ### `doctor`
 
