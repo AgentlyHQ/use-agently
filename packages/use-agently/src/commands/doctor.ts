@@ -13,8 +13,8 @@ interface Check {
 
 export const doctorCommand = new Command("doctor")
   .description("Run environment checks and report any issues")
-  .option("--rpc <url>", "Custom RPC URL to use for network check")
-  .action(async (options: { rpc?: string }, command: Command) => {
+  .option("--rpc-url <url>", "Custom RPC URL to use for network check")
+  .action(async (options: { rpcUrl?: string }, command: Command) => {
     const checks: Check[] = [];
 
     // Check 1: config file exists and has a wallet
@@ -45,7 +45,8 @@ export const doctorCommand = new Command("doctor")
     let networkOk = false;
     let networkMessage: string | undefined;
     try {
-      const client = createPublicClient({ chain: base, transport: http(options.rpc) });
+      const rpcUrl = options.rpcUrl ?? config?.rpcUrl;
+      const client = createPublicClient({ chain: base, transport: http(rpcUrl) });
       await client.getChainId();
       networkOk = true;
     } catch (err) {

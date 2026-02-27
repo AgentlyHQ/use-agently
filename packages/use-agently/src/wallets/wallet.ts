@@ -8,10 +8,10 @@ export interface Wallet {
   getX402Schemes(): SchemeRegistration[];
 }
 
-export function loadWallet(walletConfig: WalletConfig): Wallet {
+export function loadWallet(walletConfig: WalletConfig, rpcUrl?: string): Wallet {
   switch (walletConfig.type) {
     case "evm-private-key":
-      return new EvmPrivateKeyWallet(walletConfig.privateKey as `0x${string}`);
+      return new EvmPrivateKeyWallet(walletConfig.privateKey as `0x${string}`, rpcUrl);
     default:
       throw new Error(`Unknown wallet type: ${walletConfig.type}`);
   }

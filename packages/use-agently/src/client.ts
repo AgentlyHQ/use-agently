@@ -1,16 +1,14 @@
-import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
-import type { Wallet } from "./wallets/wallet.js";
 
-export function createPaymentFetch(wallet: Wallet) {
-  return wrapFetchWithPaymentFromConfig(fetch, {
-    schemes: wallet.getX402Schemes(),
-  });
-}
+export { createPaymentFetch, type PaymentInfo, type createPaymentFetchOptions } from "./utils/payment-fetch.js";
 
-export async function createA2AClient(agentUrl: string, fetchImpl: typeof fetch) {
+export async function createA2AClient(
+  agentUrl: string,
+  fetchImpl: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
+) {
+  const f = fetchImpl as typeof fetch;
   const factory = new ClientFactory({
-    transports: [new JsonRpcTransportFactory({ fetchImpl }), new RestTransportFactory({ fetchImpl })],
+    transports: [new JsonRpcTransportFactory({ fetchImpl: f }), new RestTransportFactory({ fetchImpl: f })],
   });
   return factory.createFromUrl(agentUrl);
 }

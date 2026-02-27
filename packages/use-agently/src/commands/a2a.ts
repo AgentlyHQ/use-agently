@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { createPaymentFetch, createA2AClient } from "../client.js";
+import { createPaymentFetch, createA2AClient, type PaymentInfo } from "../client.js";
 import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
@@ -62,12 +62,21 @@ export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
   .requiredOption("-m, --message <text>", "Message to send")
-  .action(async (agentUri: string, options: { message: string }) => {
+  .option("--rpc-url <url>", "Custom RPC URL")
+  .option("-v, --verbose", "Print payment cost details")
+  .action(async (agentUri: string, options: { message: string; rpcUrl?: string; verbose?: boolean }) => {
     const config = await getConfigOrThrow();
-    const wallet = loadWallet(config.wallet);
-    const paymentFetch = createPaymentFetch(wallet);
+    const rpcUrl = options.rpcUrl ?? config.rpcUrl;
+    const wallet = loadWallet(config.wallet, rpcUrl);
     const agentUrl = resolveAgentUrl(agentUri);
-    const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
+
+    let paymentInfo: PaymentInfo | undefined;
+    const paymentFetch = createPaymentFetch(wallet, {
+      onPayment: (info) => {
+        paymentInfo = info;
+      },
+    });
+    const client = await createA2AClient(agentUrl, paymentFetch);
 
     const stream = client.sendMessageStream({
       message: {
@@ -87,6 +96,12 @@ export const a2aCommand = new Command("a2a")
         process.stdout.write(chunk);
         wroteText = true;
       }
+    }
+
+    if (options.verbose && paymentInfo) {
+      console.log(
+        `\nPayment: ${paymentInfo.amount} ${paymentInfo.asset} on ${paymentInfo.network} to ${paymentInfo.payTo}`,
+      );
     }
 
     if (wroteText) {

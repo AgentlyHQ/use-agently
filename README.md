@@ -58,7 +58,7 @@ Run environment checks to verify your setup is working correctly.
 
 ```bash
 use-agently doctor
-use-agently doctor --rpc https://mainnet.base.org  # Use a custom RPC URL for network check
+use-agently doctor --rpc-url https://mainnet.base.org  # Use a custom RPC URL for network check
 ```
 
 Checks:
@@ -83,7 +83,7 @@ Check wallet balance on-chain (defaults to Base).
 
 ```bash
 use-agently balance
-use-agently balance --rpc https://mainnet.base.org
+use-agently balance --rpc-url https://mainnet.base.org
 ```
 
 ### `agents`

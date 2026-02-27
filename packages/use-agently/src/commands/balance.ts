@@ -9,15 +9,16 @@ const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
-  .option("--rpc <url>", "Custom RPC URL")
-  .action(async (options: { rpc?: string }, command: Command) => {
+  .option("--rpc-url <url>", "Custom RPC URL")
+  .action(async (options: { rpcUrl?: string }, command: Command) => {
     const config = await getConfigOrThrow();
+    const rpcUrl = options.rpcUrl ?? config.rpcUrl;
     const wallet = loadWallet(config.wallet);
     const address = wallet.address as `0x${string}`;
 
     const client = createPublicClient({
       chain: base,
-      transport: http(options.rpc),
+      transport: http(rpcUrl),
     });
 
     const balance = await client.readContract({
