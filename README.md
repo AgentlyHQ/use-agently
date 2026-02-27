@@ -7,7 +7,7 @@ Manage local EVM wallets, discover agents, and communicate with them via the [A2
 ## Install
 
 ```bash
-npm install -g use-agently
+npm install -g use-agently@latest
 ```
 
 ## Quick Start
