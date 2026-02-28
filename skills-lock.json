@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "aixyz": {
+      "source": "agentlyhq/aixyz",
+      "sourceType": "github",
+      "computedHash": "9a9d7d19698780447f249eacd6b5994cb8ef4b906bd5f94c3182494181744b37"
+    }
+  }
+}
