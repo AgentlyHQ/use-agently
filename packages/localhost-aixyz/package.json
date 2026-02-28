@@ -5,13 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "aixyz build",
-    "clean": "rm -rf .vercel/output",
     "dev": "aixyz dev",
     "test": "bun test"
   },
   "dependencies": {
-    "ai": "^6.0.0",
-    "aixyz": "^0.12.0",
-    "zod": "^4.0.0"
+    "ai": "^6",
+    "aixyz": "^0",
+    "zod": "^4"
   }
 }
