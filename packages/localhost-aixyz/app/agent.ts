@@ -1,7 +1,7 @@
 import { stepCountIs, ToolLoopAgent } from "ai";
 import type { Accepts } from "aixyz/accepts";
 
-const echoModel = {
+export const echoModel = {
   specificationVersion: "v3" as const,
   provider: "echo",
   modelId: "echo",

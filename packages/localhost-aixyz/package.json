@@ -6,7 +6,8 @@
   "scripts": {
     "build": "aixyz build",
     "clean": "rm -rf .vercel/output",
-    "dev": "aixyz dev"
+    "dev": "aixyz dev",
+    "test": "bun test"
   },
   "dependencies": {
     "ai": "^6.0.0",
