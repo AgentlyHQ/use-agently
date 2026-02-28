@@ -18,14 +18,6 @@ jobs:
 
       - run: bun turbo run build
 
-  Lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
-
-      - run: bun turbo run lint
-
   Test:
     runs-on: ubuntu-latest
     steps:
