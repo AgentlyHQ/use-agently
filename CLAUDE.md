@@ -27,9 +27,29 @@ bun run test
 
 All top-level commands use Turborepo (`turbo`) to orchestrate across packages.
 
+## Local Dev Test Loop
+
+`packages/localhost-aixyz` is the local testing infrastructure for the CLI. It is a private aixyz agent that serves a free A2A endpoint at `http://localhost:3000` so you can test `use-agently a2a` without hitting production agents or spending real funds.
+
+```bash
+# Terminal 1 — start the local agent (requires OPENAI_API_KEY in packages/localhost-aixyz/.env.local)
+bun run --filter localhost-aixyz dev
+
+# Terminal 2 — send a message via the CLI
+use-agently a2a http://localhost:3000 -m "Hello!"
+```
+
+The agent exposes a free endpoint (`accepts: { scheme: "free" }`), so no wallet balance is needed. Set `OPENAI_API_KEY` in `packages/localhost-aixyz/.env.local` before starting the dev server.
+
+Always use this agent when developing or testing changes to `use-agently` to maintain conformity and ensure every change is exercised end-to-end.
+
 ## Architecture
 
 - **Monorepo**: Bun workspaces with `packages/*` layout, Turborepo for task orchestration
+- **`packages/localhost-aixyz`**: Local development agent (private, not published)
+  - `aixyz.config.ts` — Agent metadata and skills
+  - `app/agent.ts` — Free A2A endpoint (`accepts: { scheme: "free" }`) with echo tool
+  - `app/tools/echo.ts` — Simple echo tool for testing
 - **`packages/use-agently`**: The CLI package
   - `src/bin.ts` — Executable entry point (`#!/usr/bin/env bun`)
   - `src/cli.ts` — Commander.js program setup, registers all commands

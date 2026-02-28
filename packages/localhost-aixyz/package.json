@@ -1,0 +1,17 @@
+{
+  "name": "localhost-aixyz",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "aixyz build",
+    "clean": "rm -rf .vercel/output",
+    "dev": "aixyz dev"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^1.3.22",
+    "ai": "^6.0.0",
+    "aixyz": "^0.12.0",
+    "zod": "^4.0.0"
+  }
+}
