@@ -52,7 +52,8 @@ export const a2aCommand = new Command("a2a")
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const paymentFetch = createPaymentFetch(wallet);
-    const agentUrl = `https://use-agently.com/${agentUri}/`;
+    const baseUrl = config.baseUrl ?? "https://use-agently.com";
+    const agentUrl = `${baseUrl}/${agentUri}/`;
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
 
     const result = await client.sendMessage({

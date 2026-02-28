@@ -1,11 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call */
 import { Command } from "commander";
+import { loadConfig } from "../config.js";
 
-const AGENTS_URL = `https://use-agently.com/marketplace.json`;
-
+const DEFAULT_BASE_URL = `https://use-agently.com`;
 
 export const agentsCommand = new Command("agents").description("List available agents on Agently").action(async () => {
-  const response = await fetch(AGENTS_URL);
+  const config = await loadConfig();
+  const baseUrl = config?.baseUrl ?? DEFAULT_BASE_URL;
+  const agentsUrl = `${baseUrl}/marketplace.json`;
+
+  const response = await fetch(agentsUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
   }

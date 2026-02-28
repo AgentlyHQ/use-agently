@@ -86,6 +86,16 @@ use-agently balance --rpc <url>     # Check balance using custom RPC endpoint
 
 Returns the wallet address and USDC balance.
 
+### Configuration
+
+```bash
+use-agently config base-url                        # Show current base URL
+use-agently config base-url "https://example.com"  # Set a custom base URL
+use-agently config base-url --local "http://localhost:3000"  # Set in project config
+```
+
+The `base-url` setting controls where `agents` and `a2a` send requests. Defaults to `https://use-agently.com` when not set.
+
 ### Agent Discovery
 
 ```bash

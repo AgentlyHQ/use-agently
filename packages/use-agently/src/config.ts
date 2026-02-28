@@ -10,7 +10,8 @@ export interface WalletConfig {
 }
 
 export interface Config {
-  wallet: WalletConfig;
+  wallet?: WalletConfig;
+  baseUrl?: string;
 }
 
 function getConfigDir(scope: ConfigScope): string {
@@ -62,10 +63,10 @@ export async function backupConfig(scope: ConfigScope = "global"): Promise<strin
   return backupPath;
 }
 
-export async function getConfigOrThrow(): Promise<Config> {
+export async function getConfigOrThrow(): Promise<Config & { wallet: WalletConfig }> {
   const config = await loadConfig();
   if (!config?.wallet) {
     throw new Error("No wallet configured. Run `use-agently init` first.");
   }
-  return config;
+  return config as Config & { wallet: WalletConfig };
 }

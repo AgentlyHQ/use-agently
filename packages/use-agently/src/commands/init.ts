@@ -19,7 +19,7 @@ export const initCommand = new Command("init")
     }
 
     const walletConfig = generateEvmPrivateKeyConfig();
-    await saveConfig({ wallet: walletConfig }, scope);
+    await saveConfig({ ...existing, wallet: walletConfig }, scope);
 
     console.log("Wallet created successfully!");
     console.log(`Address: ${walletConfig.address}`);

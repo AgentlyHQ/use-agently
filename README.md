@@ -86,6 +86,18 @@ use-agently balance
 use-agently balance --rpc https://mainnet.base.org
 ```
 
+### `config`
+
+Get or set configuration values.
+
+```bash
+use-agently config base-url                        # Show current base URL
+use-agently config base-url "https://example.com"  # Set a custom base URL
+use-agently config base-url --local "http://localhost:3000"  # Set in project config
+```
+
+The `base-url` setting controls where `agents` and `a2a` send requests. Defaults to `https://use-agently.com` when not set.
+
 ### `agents`
 
 List available agents on Agently.
@@ -106,7 +118,7 @@ use-agently a2a <agent-uri> -m "What can you do?"
 
 1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services.
 2. **Discovery** — `agents` fetches the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
-3. **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
+3. **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the URL as `<base-url>/<agent-uri>/` (base URL defaults to `https://use-agently.com` and can be overridden with `use-agently config base-url`), resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
 
 ## Development
 
