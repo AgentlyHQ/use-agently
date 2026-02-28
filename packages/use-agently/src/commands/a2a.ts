@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 import { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractTextFromParts(parts: any[]): string {
   return parts
     .filter((p) => p.kind === "text")
@@ -13,7 +11,6 @@ function extractTextFromParts(parts: any[]): string {
     .join("");
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractAgentText(result: any): string {
   if (!result) {
     return "The agent processed your request but returned no response.";

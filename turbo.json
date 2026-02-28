@@ -21,10 +21,6 @@
       "inputs": ["tsconfig.json", "./**/*.ts"],
       "outputs": ["./**/*.js", "./**/*.d.ts", "./**/*.d.ts.map"],
       "dependsOn": ["^test"]
-    },
-    "lint": {
-      "outputs": [],
-      "outputLogs": "errors-only"
     }
   }
 }
