@@ -55,8 +55,8 @@ jobs:
       - name: Build all packages
         run: bun run build
 
-#      - name: Lint all packages
-#        run: bun run lint
+      #      - name: Lint all packages
+      #        run: bun run lint
 
       - name: Set version and resolve workspace dependencies
         run: |

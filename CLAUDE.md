@@ -39,6 +39,10 @@ All top-level commands use Turborepo (`turbo`) to orchestrate across packages.
   - `src/wallets/evm-private-key.ts` — EVM private key wallet implementation (viem + @x402/evm)
   - `src/commands/` — One file per CLI command (init, whoami, balance, agents, a2a)
   - Build output: `build/use-agently` (standalone binary via `bun build --compile`)
+- **`packages/localhost-aixyz`**: Local dev test server (private, not published)
+  - Bootstrapped with `create-aixyz-app` — serves a fully functional A2A + x402 agent locally
+  - Used as the conformity test target: route CLI commands to it via `--base-url`
+  - Run with `bun run --filter localhost-aixyz dev` (starts on `http://localhost:3000` by default)
 
 ### Wallet Abstraction
 
@@ -50,6 +54,7 @@ The wallet system is designed for extensibility. `Wallet` interface requires `ty
 - **viem** — EVM wallet generation, account management, on-chain reads
 - **@x402/fetch** + **@x402/evm** — Wraps fetch to auto-handle 402 Payment Required via x402 protocol
 - **@a2a-js/sdk** — A2A protocol client (agent card resolution, JSON-RPC/REST transport)
+- **aixyz** — SDK powering `packages/localhost-aixyz` local dev server
 
 ## Tooling
 
@@ -69,3 +74,33 @@ When CLI commands, features, or behavior change, always update these files to ke
 
 - `README.md` — Project README (install, quick start, command reference, how it works)
 - `skills/use-agently/SKILL.md` — Claude Code skill reference (prerequisites, commands, workflows, tips)
+- `AGENTS.md` — Agent guidance file (mirrors this file)
+
+## Testing Infrastructure
+
+The `packages/localhost-aixyz` package is a local [aixyz](https://aixyz.sh) agent server bootstrapped with `create-aixyz-app`. It provides a real A2A + x402 conformant endpoint you can always run locally to verify CLI behaviour without hitting production.
+
+### Dev test loop
+
+1. Start the local agent server:
+
+   ```bash
+   cd packages/localhost-aixyz
+   cp .env.example .env.local   # add your OPENAI_API_KEY
+   bun install
+   bun run dev                  # starts on http://localhost:3000
+   ```
+
+2. Point the CLI at the local server using `--base-url`:
+
+   ```bash
+   # List agents served by the local server
+   bun run --filter use-agently dev agents --base-url http://localhost:3000
+
+   # Send a message to the local agent
+   bun run --filter use-agently dev a2a localhost-aixyz --base-url http://localhost:3000 -m "Convert 100 meters to feet"
+   ```
+
+3. Verify the output matches expectations, then repeat.
+
+This loop guarantees that every CLI change is validated against a real, locally-running A2A server before being committed.
