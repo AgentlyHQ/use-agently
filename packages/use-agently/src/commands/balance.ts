@@ -3,7 +3,7 @@ import { createPublicClient, erc20Abi, formatUnits, http } from "viem";
 import { base } from "viem/chains";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { resolveOutputFormat, outputResult } from "../output.js";
+import { emit } from "../output.js";
 
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
@@ -11,11 +11,10 @@ export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
   .option("--rpc <url>", "Custom RPC URL")
   .option("--output <format>", "Output format (json, text)")
-  .action(async (options: { rpc?: string; output?: string }) => {
+  .action(async (options: { rpc?: string }) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const address = wallet.address as `0x${string}`;
-    const format = resolveOutputFormat(options.output, config.output);
 
     const client = createPublicClient({
       chain: base,
@@ -31,8 +30,12 @@ export const balanceCommand = new Command("balance")
 
     const data = { address: wallet.address, balance: formatUnits(balance, 6), token: "USDC", chain: "Base" };
 
-    outputResult(data, format, (d) => {
-      console.log(`Address: ${d.address}`);
-      console.log(`Balance: ${d.balance} USDC (Base)`);
-    });
+    emit(
+      data,
+      (d) => {
+        console.log(`Address: ${d.address}`);
+        console.log(`Balance: ${d.balance} USDC (Base)`);
+      },
+      config.output,
+    );
   });

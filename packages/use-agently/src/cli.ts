@@ -5,10 +5,15 @@ import { balanceCommand } from "./commands/balance.js";
 import { agentsCommand } from "./commands/agents.js";
 import { a2aCommand } from "./commands/a2a.js";
 import { doctorCommand } from "./commands/doctor.js";
+import { flush } from "./output.js";
 
 export const cli = new Command();
 
 cli.name("use-agently").description("use-agently CLI").version("0.0.0");
+
+cli.hook("postAction", (_thisCommand, actionCommand) => {
+  flush(actionCommand.opts().output as string | undefined);
+});
 
 cli.addCommand(initCommand);
 cli.addCommand(whoamiCommand);

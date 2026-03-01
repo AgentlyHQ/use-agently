@@ -1,19 +1,36 @@
 export type OutputFormat = "json" | "text";
 
-export function resolveOutputFormat(optionValue: string | undefined, configValue: string | undefined): OutputFormat {
-  const value = optionValue ?? configValue;
+type PendingResult = {
+  data: unknown;
+  print: () => void;
+  configOutput: string | undefined;
+  exitCode: number;
+};
+
+let pending: PendingResult | null = null;
+
+export function resolveOutputFormat(cliFlag: string | undefined, configValue: string | undefined): OutputFormat {
+  const value = cliFlag ?? configValue;
   if (value === "json" || value === "text") return value;
   return "text";
 }
 
-export function printJson(data: unknown): void {
-  console.log(JSON.stringify(data, null, 2));
+export function emit<T>(data: T, textPrint: (data: T) => void, configOutput?: string, exitCode = 0): void {
+  if (pending !== null) {
+    throw new Error("emit() called twice before flush()");
+  }
+  pending = { data, print: () => textPrint(data), configOutput, exitCode };
 }
 
-export function outputResult<T>(data: T, format: OutputFormat, textFormatter: (data: T) => void): void {
+export function flush(cliFlag: string | undefined): void {
+  if (!pending) return;
+  const format = resolveOutputFormat(cliFlag, pending.configOutput);
   if (format === "json") {
-    printJson(data);
+    console.log(JSON.stringify(pending.data, null, 2));
   } else {
-    textFormatter(data);
+    pending.print();
   }
+  const code = pending.exitCode;
+  pending = null;
+  if (code !== 0) process.exit(code);
 }

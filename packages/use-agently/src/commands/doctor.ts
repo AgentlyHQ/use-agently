@@ -3,7 +3,7 @@ import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { loadConfig } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { resolveOutputFormat, outputResult } from "../output.js";
+import { emit } from "../output.js";
 
 const PASS = "✓";
 const FAIL = "✗";
@@ -18,12 +18,11 @@ export const doctorCommand = new Command("doctor")
   .description("Run environment checks and report any issues")
   .option("--rpc <url>", "Custom RPC URL to use for network check")
   .option("--output <format>", "Output format (json, text)")
-  .action(async (options: { rpc?: string; output?: string }) => {
+  .action(async (options: { rpc?: string }) => {
     const checks: Check[] = [];
 
     // Check 1: config file exists and has a wallet
     const config = await loadConfig();
-    const format = resolveOutputFormat(options.output, config?.output);
     const hasWallet = !!config?.wallet;
     checks.push({
       name: "Wallet configured",
@@ -60,14 +59,15 @@ export const doctorCommand = new Command("doctor")
 
     const data = { checks, allOk: checks.every((c) => c.ok) };
 
-    outputResult(data, format, (d) => {
-      for (const check of d.checks) {
-        const icon = check.ok ? PASS : FAIL;
-        console.log(`${icon} ${check.name}${check.message ? `: ${check.message}` : ""}`);
-      }
-    });
-
-    if (!data.allOk) {
-      process.exit(1);
-    }
+    emit(
+      data,
+      (d) => {
+        for (const check of d.checks) {
+          const icon = check.ok ? PASS : FAIL;
+          console.log(`${icon} ${check.name}${check.message ? `: ${check.message}` : ""}`);
+        }
+      },
+      config?.output,
+      data.allOk ? 0 : 1,
+    );
   });
