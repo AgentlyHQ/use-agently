@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
-import { resolveOutputFormat, printJson } from "../output.js";
+import { resolveOutputFormat, outputResult } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
   return parts
@@ -65,11 +65,9 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    const response = extractAgentText(result);
+    const data = { response: extractAgentText(result) };
 
-    if (format === "json") {
-      printJson({ response });
-    } else {
-      console.log(response);
-    }
+    outputResult(data, format, (d) => {
+      console.log(d.response);
+    });
   });

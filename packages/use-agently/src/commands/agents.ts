@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../config.js";
-import { resolveOutputFormat, printJson } from "../output.js";
+import { resolveOutputFormat, outputResult } from "../output.js";
 
 const AGENTS_URL = `https://use-agently.com/marketplace.json`;
 
@@ -17,20 +17,14 @@ export const agentsCommand = new Command("agents")
     }
 
     const data: any = await response.json();
+    const agents: any[] = data.agents ?? [];
 
-    if (!data.agents || data.agents.length === 0) {
-      if (format === "json") {
-        printJson([]);
-      } else {
+    outputResult(agents, format, (list) => {
+      if (list.length === 0) {
         console.log("No agents available.");
+        return;
       }
-      return;
-    }
-
-    if (format === "json") {
-      printJson(data.agents);
-    } else {
-      for (const agent of data.agents) {
+      for (const agent of list) {
         console.log(`${agent.name ?? agent.uri}`);
         if (agent.description) {
           console.log(`  ${agent.description}`);
@@ -41,5 +35,5 @@ export const agentsCommand = new Command("agents")
         console.log(`  ${agent.uri}`);
         console.log();
       }
-    }
+    });
   });

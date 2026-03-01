@@ -9,3 +9,11 @@ export function resolveOutputFormat(optionValue: string | undefined, configValue
 export function printJson(data: unknown): void {
   console.log(JSON.stringify(data, null, 2));
 }
+
+export function outputResult<T>(data: T, format: OutputFormat, textFormatter: (data: T) => void): void {
+  if (format === "json") {
+    printJson(data);
+  } else {
+    textFormatter(data);
+  }
+}

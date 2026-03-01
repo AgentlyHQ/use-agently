@@ -3,7 +3,7 @@ import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { loadConfig } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { resolveOutputFormat, printJson } from "../output.js";
+import { resolveOutputFormat, outputResult } from "../output.js";
 
 const PASS = "✓";
 const FAIL = "✗";
@@ -58,18 +58,16 @@ export const doctorCommand = new Command("doctor")
     }
     checks.push({ name: "Network reachable (Base RPC)", ok: networkOk, message: networkMessage });
 
-    const allOk = checks.every((c) => c.ok);
+    const data = { checks, allOk: checks.every((c) => c.ok) };
 
-    if (format === "json") {
-      printJson({ checks, allOk });
-    } else {
-      for (const check of checks) {
+    outputResult(data, format, (d) => {
+      for (const check of d.checks) {
         const icon = check.ok ? PASS : FAIL;
         console.log(`${icon} ${check.name}${check.message ? `: ${check.message}` : ""}`);
       }
-    }
+    });
 
-    if (!allOk) {
+    if (!data.allOk) {
       process.exit(1);
     }
   });
