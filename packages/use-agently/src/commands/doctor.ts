@@ -3,7 +3,7 @@ import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { loadConfig } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { emit } from "../output.js";
+import { store } from "../output.js";
 
 const PASS = "✓";
 const FAIL = "✗";
@@ -12,6 +12,13 @@ interface Check {
   name: string;
   ok: boolean;
   message?: string;
+}
+
+export function printDoctor(d: { checks: Check[]; allOk: boolean }) {
+  for (const check of d.checks) {
+    const icon = check.ok ? PASS : FAIL;
+    console.log(`${icon} ${check.name}${check.message ? `: ${check.message}` : ""}`);
+  }
 }
 
 export const doctorCommand = new Command("doctor")
@@ -57,16 +64,5 @@ export const doctorCommand = new Command("doctor")
     checks.push({ name: "Network reachable (Base RPC)", ok: networkOk, message: networkMessage });
 
     const data = { checks, allOk: checks.every((c) => c.ok) };
-
-    emit(
-      data,
-      (d) => {
-        for (const check of d.checks) {
-          const icon = check.ok ? PASS : FAIL;
-          console.log(`${icon} ${check.name}${check.message ? `: ${check.message}` : ""}`);
-        }
-      },
-      config?.output,
-      data.allOk ? 0 : 1,
-    );
+    return store(data, config?.output, data.allOk ? 0 : 1);
   });

@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
-import { emit } from "../output.js";
+import { store } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
   return parts
@@ -42,6 +42,10 @@ function extractAgentText(result: any): string {
   return result.text || "The agent processed your request but returned no text response.";
 }
 
+export function printA2A(d: { response: string }) {
+  console.log(d.response);
+}
+
 export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
@@ -63,7 +67,5 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    const data = { response: extractAgentText(result) };
-
-    emit(data, (d) => console.log(d.response), config.output);
+    return store({ response: extractAgentText(result) }, config.output);
   });

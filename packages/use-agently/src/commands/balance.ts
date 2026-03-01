@@ -3,9 +3,14 @@ import { createPublicClient, erc20Abi, formatUnits, http } from "viem";
 import { base } from "viem/chains";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { emit } from "../output.js";
+import { store } from "../output.js";
 
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
+
+export function printBalance(d: { address: string; balance: string; token: string; chain: string }) {
+  console.log(`Address: ${d.address}`);
+  console.log(`Balance: ${d.balance} USDC (Base)`);
+}
 
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
@@ -27,14 +32,8 @@ export const balanceCommand = new Command("balance")
       args: [address],
     });
 
-    const data = { address: wallet.address, balance: formatUnits(balance, 6), token: "USDC", chain: "Base" };
-
-    emit(
-      data,
-      (d) => {
-        console.log(`Address: ${d.address}`);
-        console.log(`Balance: ${d.balance} USDC (Base)`);
-      },
+    return store(
+      { address: wallet.address, balance: formatUnits(balance, 6), token: "USDC", chain: "Base" },
       config.output,
     );
   });
