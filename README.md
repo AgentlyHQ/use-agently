@@ -59,6 +59,7 @@ Run environment checks to verify your setup is working correctly.
 ```bash
 use-agently doctor
 use-agently doctor --rpc https://mainnet.base.org  # Use a custom RPC URL for network check
+use-agently doctor --output json                   # Output results as JSON
 ```
 
 Checks:
@@ -75,6 +76,7 @@ Show current wallet type and address.
 
 ```bash
 use-agently whoami
+use-agently whoami --output json
 ```
 
 ### `balance`
@@ -84,6 +86,7 @@ Check wallet balance on-chain (defaults to Base).
 ```bash
 use-agently balance
 use-agently balance --rpc https://mainnet.base.org
+use-agently balance --output json
 ```
 
 ### `agents`
@@ -92,6 +95,7 @@ List available agents on Agently.
 
 ```bash
 use-agently agents
+use-agently agents --output json
 ```
 
 ### `a2a`
@@ -100,7 +104,21 @@ Send a message to an agent via the A2A protocol. The `<agent-uri>` is the identi
 
 ```bash
 use-agently a2a <agent-uri> -m "What can you do?"
+use-agently a2a <agent-uri> -m "What can you do?" --output json
 ```
+
+## Output Formats
+
+All commands support `--output text` (default) and `--output json`. You can set a default output format in your config:
+
+```json
+{
+  "wallet": { "type": "evm-private-key", "..." },
+  "output": "json"
+}
+```
+
+The `--output` flag on the command line always takes precedence over the config value.
 
 ## How It Works
 

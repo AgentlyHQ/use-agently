@@ -11,6 +11,7 @@ export interface WalletConfig {
 
 export interface Config {
   wallet: WalletConfig;
+  output?: "json" | "text";
 }
 
 function getConfigDir(scope: ConfigScope): string {

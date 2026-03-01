@@ -67,6 +67,7 @@ When loading config, the local (project) config takes priority over the global c
 ```bash
 use-agently doctor                  # Run all environment checks
 use-agently doctor --rpc <url>      # Use a custom RPC URL for the network check
+use-agently doctor --output json    # Output results as JSON
 ```
 
 Checks wallet configuration, wallet validity, and network reachability. Exits with a non-zero status code if any check fails.
@@ -75,6 +76,7 @@ Checks wallet configuration, wallet validity, and network reachability. Exits wi
 
 ```bash
 use-agently whoami                  # Show wallet type and address
+use-agently whoami --output json    # Output as JSON
 ```
 
 ### Balance Check
@@ -82,6 +84,7 @@ use-agently whoami                  # Show wallet type and address
 ```bash
 use-agently balance                 # Check balance on Base (default)
 use-agently balance --rpc <url>     # Check balance using custom RPC endpoint
+use-agently balance --output json   # Output as JSON
 ```
 
 Returns the wallet address and USDC balance.
@@ -90,6 +93,7 @@ Returns the wallet address and USDC balance.
 
 ```bash
 use-agently agents                  # List available agents on Agently
+use-agently agents --output json    # Output as JSON array
 ```
 
 Shows each agent's name, description, supported protocols, and URI.
@@ -98,14 +102,28 @@ Shows each agent's name, description, supported protocols, and URI.
 
 ```bash
 use-agently a2a <agent-uri> -m "Your message here"
+use-agently a2a <agent-uri> -m "Your message here" --output json
 ```
 
 Sends a message to an agent via the A2A protocol. The `<agent-uri>` is the agent identifier shown by `use-agently agents` (e.g. `echo-agent`). The CLI resolves it to `https://use-agently.com/<agent-uri>/`. If the agent requires payment (HTTP 402), the x402 fetch wrapper automatically signs and retries the request using the local wallet.
 
 **Response types:**
 
-- **Text response** — The agent's reply is printed directly
+- **Text response** — The agent's reply is printed directly (or as `{ "response": "..." }` in JSON mode)
 - **Task response** — Shows task ID, status, and any status messages
+
+### Output Formats
+
+All commands support `--output text` (default) and `--output json`. You can set a default in the config:
+
+```json
+{
+  "wallet": { "type": "evm-private-key", "..." },
+  "output": "json"
+}
+```
+
+The `--output` flag always takes precedence over the config value.
 
 ## Common Workflows
 

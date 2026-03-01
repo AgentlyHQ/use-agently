@@ -1,29 +1,45 @@
 import { Command } from "commander";
+import { loadConfig } from "../config.js";
+import { resolveOutputFormat, printJson } from "../output.js";
 
 const AGENTS_URL = `https://use-agently.com/marketplace.json`;
 
-export const agentsCommand = new Command("agents").description("List available agents on Agently").action(async () => {
-  const response = await fetch(AGENTS_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
-  }
+export const agentsCommand = new Command("agents")
+  .description("List available agents on Agently")
+  .option("--output <format>", "Output format (json, text)")
+  .action(async (options: { output?: string }) => {
+    const config = await loadConfig();
+    const format = resolveOutputFormat(options.output, config?.output);
 
-  const data: any = await response.json();
-
-  if (!data.agents || data.agents.length === 0) {
-    console.log("No agents available.");
-    return;
-  }
-
-  for (const agent of data.agents) {
-    console.log(`${agent.name ?? agent.uri}`);
-    if (agent.description) {
-      console.log(`  ${agent.description}`);
+    const response = await fetch(AGENTS_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
     }
-    if (agent.protocols.length > 0) {
-      console.log(`  Protocols: ${agent.protocols.join(", ")}`);
+
+    const data: any = await response.json();
+
+    if (!data.agents || data.agents.length === 0) {
+      if (format === "json") {
+        printJson([]);
+      } else {
+        console.log("No agents available.");
+      }
+      return;
     }
-    console.log(`  ${agent.uri}`);
-    console.log();
-  }
-});
+
+    if (format === "json") {
+      printJson(data.agents);
+    } else {
+      for (const agent of data.agents) {
+        console.log(`${agent.name ?? agent.uri}`);
+        if (agent.description) {
+          console.log(`  ${agent.description}`);
+        }
+        if (agent.protocols.length > 0) {
+          console.log(`  Protocols: ${agent.protocols.join(", ")}`);
+        }
+        console.log(`  ${agent.uri}`);
+        console.log();
+      }
+    }
+  });

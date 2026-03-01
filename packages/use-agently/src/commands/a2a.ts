@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
+import { resolveOutputFormat, printJson } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
   return parts
@@ -45,13 +46,15 @@ export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
   .requiredOption("-m, --message <text>", "Message to send")
-  .action(async (agentUri: string, options: { message: string }) => {
+  .option("--output <format>", "Output format (json, text)")
+  .action(async (agentUri: string, options: { message: string; output?: string }) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const paymentFetch = createPaymentFetch(wallet);
     const isDirectUrl = agentUri.startsWith("http://") || agentUri.startsWith("https://");
     const agentUrl = isDirectUrl ? agentUri : `https://use-agently.com/${agentUri}/`;
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
+    const format = resolveOutputFormat(options.output, config.output);
 
     const result = await client.sendMessage({
       message: {
@@ -62,5 +65,11 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    console.log(extractAgentText(result));
+    const response = extractAgentText(result);
+
+    if (format === "json") {
+      printJson({ response });
+    } else {
+      console.log(response);
+    }
   });
