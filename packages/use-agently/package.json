@@ -20,7 +20,8 @@
   "scripts": {
     "build": "bun build src/bin.ts --target node --outfile build/bin.js",
     "clean": "rm -rf build",
-    "dev": "bun run src/bin.ts"
+    "dev": "bun run src/bin.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@a2a-js/sdk": "^0.3.10",

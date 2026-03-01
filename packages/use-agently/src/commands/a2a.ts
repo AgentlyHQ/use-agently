@@ -11,7 +11,7 @@ function extractTextFromParts(parts: any[]): string {
     .join("");
 }
 
-function extractAgentText(result: any): string {
+export function extractAgentText(result: any): string {
   if (!result) {
     return "The agent processed your request but returned no response.";
   }
