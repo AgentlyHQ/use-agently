@@ -1,13 +1,5 @@
 import { createServer } from "node:net";
 
-let proc: ReturnType<typeof Bun.spawn>;
-let agentUrl: string;
-
-export function getAgentUrl(): string {
-  if (!agentUrl) throw new Error("Server has not been started. Call startServer() first.");
-  return agentUrl;
-}
-
 function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = createServer();
@@ -23,33 +15,45 @@ function getFreePort(): Promise<number> {
   });
 }
 
-async function waitForServer(url: string, timeout = 20000): Promise<void> {
-  const start = Date.now();
-  while (Date.now() - start < timeout) {
-    try {
-      const res = await fetch(`${url}/.well-known/agent-card.json`);
-      if (res.ok) return;
-    } catch {}
-    await Bun.sleep(200);
+export class AixyzTesting {
+  private proc: ReturnType<typeof Bun.spawn> | undefined;
+  private agentUrl: string | undefined;
+
+  getAgentUrl(): string {
+    if (!this.agentUrl) throw new Error("Server has not been started. Call start() first.");
+    return this.agentUrl;
   }
-  throw new Error(`Server at ${url} did not start within ${timeout}ms`);
-}
 
-export async function startServer(port?: number): Promise<void> {
-  const resolvedPort = port ?? (await getFreePort());
-  agentUrl = `http://localhost:${resolvedPort}`;
-  proc = Bun.spawn(["bun", "run", "dev", "--", "--port", String(resolvedPort)], {
-    cwd: import.meta.dir,
-    stdout: "ignore",
-    stderr: "ignore",
-    env: { ...process.env, PORT: String(resolvedPort) },
-  });
-  await waitForServer(agentUrl);
-}
+  async start(port?: number): Promise<void> {
+    const resolvedPort = port ?? (await getFreePort());
+    this.agentUrl = `http://localhost:${resolvedPort}`;
+    this.proc = Bun.spawn(["bun", "run", "dev", "--", "--port", String(resolvedPort)], {
+      cwd: import.meta.dir,
+      stdout: "ignore",
+      stderr: "ignore",
+      env: { ...process.env, PORT: String(resolvedPort) },
+    });
+    await this.waitForServer(this.agentUrl);
+  }
 
-export async function stopServer(): Promise<void> {
-  if (proc) {
-    proc.kill();
-    await proc.exited;
+  async stop(): Promise<void> {
+    if (this.proc) {
+      this.proc.kill();
+      await this.proc.exited;
+      this.proc = undefined;
+      this.agentUrl = undefined;
+    }
+  }
+
+  private async waitForServer(url: string, timeout = 20000): Promise<void> {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      try {
+        const res = await fetch(`${url}/.well-known/agent-card.json`);
+        if (res.ok) return;
+      } catch {}
+      await Bun.sleep(200);
+    }
+    throw new Error(`Server at ${url} did not start within ${timeout}ms`);
   }
 }
