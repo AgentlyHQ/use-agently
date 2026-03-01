@@ -9,10 +9,14 @@ import { flush } from "./output.js";
 
 export const cli = new Command();
 
-cli.name("use-agently").description("use-agently CLI").version("0.0.0");
+cli
+  .name("use-agently")
+  .description("use-agently CLI")
+  .version("0.0.0")
+  .option("--output <format>", "Output format (json, text)");
 
-cli.hook("postAction", (_thisCommand, actionCommand) => {
-  flush(actionCommand.opts().output as string | undefined);
+cli.hook("postAction", (thisCommand) => {
+  flush(thisCommand.opts().output as string | undefined);
 });
 
 cli.addCommand(initCommand);

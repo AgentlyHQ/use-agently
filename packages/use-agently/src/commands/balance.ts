@@ -10,7 +10,6 @@ const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
   .option("--rpc <url>", "Custom RPC URL")
-  .option("--output <format>", "Output format (json, text)")
   .action(async (options: { rpc?: string }) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);

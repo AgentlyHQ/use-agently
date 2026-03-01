@@ -17,7 +17,6 @@ interface Check {
 export const doctorCommand = new Command("doctor")
   .description("Run environment checks and report any issues")
   .option("--rpc <url>", "Custom RPC URL to use for network check")
-  .option("--output <format>", "Output format (json, text)")
   .action(async (options: { rpc?: string }) => {
     const checks: Check[] = [];
 

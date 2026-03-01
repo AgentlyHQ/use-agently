@@ -46,7 +46,6 @@ export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
   .requiredOption("-m, --message <text>", "Message to send")
-  .option("--output <format>", "Output format (json, text)")
   .action(async (agentUri: string, options: { message: string }) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);

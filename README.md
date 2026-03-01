@@ -59,7 +59,7 @@ Run environment checks to verify your setup is working correctly.
 ```bash
 use-agently doctor
 use-agently doctor --rpc https://mainnet.base.org  # Use a custom RPC URL for network check
-use-agently doctor --output json                   # Output results as JSON
+use-agently --output json doctor                   # Output results as JSON
 ```
 
 Checks:
@@ -76,7 +76,7 @@ Show current wallet type and address.
 
 ```bash
 use-agently whoami
-use-agently whoami --output json
+use-agently --output json whoami
 ```
 
 ### `balance`
@@ -86,7 +86,7 @@ Check wallet balance on-chain (defaults to Base).
 ```bash
 use-agently balance
 use-agently balance --rpc https://mainnet.base.org
-use-agently balance --output json
+use-agently --output json balance
 ```
 
 ### `agents`
@@ -95,7 +95,7 @@ List available agents on Agently.
 
 ```bash
 use-agently agents
-use-agently agents --output json
+use-agently --output json agents
 ```
 
 ### `a2a`
@@ -104,7 +104,7 @@ Send a message to an agent via the A2A protocol. The `<agent-uri>` is the identi
 
 ```bash
 use-agently a2a <agent-uri> -m "What can you do?"
-use-agently a2a <agent-uri> -m "What can you do?" --output json
+use-agently --output json a2a <agent-uri> -m "What can you do?"
 ```
 
 ## Output Formats
