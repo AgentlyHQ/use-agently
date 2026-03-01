@@ -42,6 +42,7 @@ export async function startServer(port?: number): Promise<void> {
     cwd: import.meta.dir,
     stdout: "ignore",
     stderr: "ignore",
+    env: { ...process.env, PORT: String(resolvedPort) },
   });
   await waitForServer(agentUrl);
 }

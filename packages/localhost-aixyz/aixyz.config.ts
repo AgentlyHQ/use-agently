@@ -4,6 +4,7 @@ const config: AixyzConfig = {
   name: "localhost-aixyz",
   description: "Local development agent for testing use-agently CLI.",
   version: "0.0.0",
+  url: process.env.PORT ? `http://localhost:${process.env.PORT}/` : undefined,
   x402: {
     payTo: process.env.X402_PAY_TO ?? "0x0000000000000000000000000000000000000000",
     network: "eip155:84532",
