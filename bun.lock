@@ -22,9 +22,6 @@
         "aixyz": "^0",
         "zod": "^4",
       },
-      "devDependencies": {
-        "@a2a-js/sdk": "^0.3.10",
-      },
     },
     "packages/use-agently": {
       "name": "use-agently",
