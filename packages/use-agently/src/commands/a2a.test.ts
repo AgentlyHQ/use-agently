@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { AixyzTesting } from "../../../localhost-aixyz/test.ts";
 import { createA2AClient } from "../client.js";
-import { extractAgentText } from "./a2a.js";
+import { extractAgentText, extractStreamText } from "./a2a.js";
 
 const agent = new AixyzTesting();
 
@@ -40,5 +40,49 @@ describe("a2a command", () => {
       },
     });
     expect(extractAgentText(result)).toBe(message);
+  });
+
+  test("sendMessageStream yields echoed text", async () => {
+    const client = await createA2AClient(agent.getAgentUrl(), fetch);
+    const stream = client.sendMessageStream({
+      message: {
+        kind: "message",
+        messageId: randomUUID(),
+        role: "user",
+        parts: [{ kind: "text", text: "stream test" }],
+      },
+    });
+    let text = "";
+    for await (const event of stream) {
+      text += extractStreamText(event);
+    }
+    expect(text).toBe("stream test");
+  });
+
+  test("extractStreamText extracts text from message event", () => {
+    const event = { kind: "message", parts: [{ kind: "text", text: "hello" }] };
+    expect(extractStreamText(event)).toBe("hello");
+  });
+
+  test("extractStreamText extracts text from status-update event", () => {
+    const event = {
+      kind: "status-update",
+      status: { message: { parts: [{ kind: "text", text: "working" }] } },
+    };
+    expect(extractStreamText(event)).toBe("working");
+  });
+
+  test("extractStreamText extracts text from artifact-update event", () => {
+    const event = {
+      kind: "artifact-update",
+      artifact: { parts: [{ kind: "text", text: "artifact text" }] },
+    };
+    expect(extractStreamText(event)).toBe("artifact text");
+  });
+
+  test("extractStreamText returns empty string for task events", () => {
+    // Task events do not carry incremental text in streaming; extractStreamText returns ""
+    const event = { kind: "task", id: "t1", contextId: "c1", status: { state: "working" as const }, history: [] };
+    expect(extractStreamText(event as any)).toBe("");
   });
 });
