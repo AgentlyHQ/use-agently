@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:
 import { captureOutput, TEST_ADDRESS } from "../testing";
 
 let mockExistingConfig: unknown = undefined;
-const saveConfigSpy = mock(async () => {});
+const saveConfigSpy = mock(async (_config: unknown, _scope: unknown) => {});
 
 mock.module("../config", () => ({
   loadConfig: async () => mockExistingConfig,
@@ -49,13 +49,19 @@ describe("init command", () => {
   test("text output on new wallet", async () => {
     await cli.parseAsync(["test", "use-agently", "init"]);
 
-    expect(out.yaml).toEqual({ address: TEST_ADDRESS });
+    expect(out.yaml).toEqual({
+      address: TEST_ADDRESS,
+      message: "fund this address to start using agents on use-agently.com",
+    });
   });
 
   test("json output on new wallet", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "init"]);
 
-    expect(out.json).toEqual({ address: TEST_ADDRESS });
+    expect(out.json).toEqual({
+      address: TEST_ADDRESS,
+      message: "fund this address to start using agents on use-agently.com",
+    });
   });
 
   test("calls saveConfig with generated wallet", async () => {
@@ -90,7 +96,10 @@ describe("init command", () => {
     mockExistingConfig = { wallet: { type: "evm-private-key" } };
     await cli.parseAsync(["test", "use-agently", "-o", "json", "init", "--regenerate"]);
 
-    expect(out.json).toEqual({ address: TEST_ADDRESS });
+    expect(out.json).toEqual({
+      address: TEST_ADDRESS,
+      message: "fund this address to start using agents on use-agently.com",
+    });
     expect(saveConfigSpy).toHaveBeenCalledTimes(1);
   });
 });
