@@ -2,7 +2,12 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { AixyzTesting } from "localhost-aixyz/test";
 import { createA2AClient } from "../client";
+import { captureOutput, mockConfigModule } from "../testing";
 import { extractAgentText } from "./a2a";
+
+mockConfigModule();
+
+const { cli } = await import("../cli");
 
 const agent = new AixyzTesting();
 
@@ -40,5 +45,19 @@ describe("a2a command", () => {
       },
     });
     expect(extractAgentText(result)).toBe(message);
+  });
+
+  describe("cli", () => {
+    const out = captureOutput();
+
+    test("text output", async () => {
+      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl(), "-m", "hello world"]);
+      expect(out.stdout).toBe("hello world");
+    });
+
+    test("json output", async () => {
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a", agent.getAgentUrl(), "-m", "hello world"]);
+      expect(out.json).toBe("hello world");
+    });
   });
 });
