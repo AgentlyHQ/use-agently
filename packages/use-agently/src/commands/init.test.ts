@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { parse } from "yaml";
-import { TEST_ADDRESS } from "../testing";
+import { captureOutput, TEST_ADDRESS } from "../testing";
 
 let mockExistingConfig: unknown = undefined;
 const saveConfigSpy = mock(async () => {});
@@ -32,38 +31,31 @@ mock.module("../wallets/evm-private-key", () => ({
 const { cli } = await import("../cli");
 
 describe("init command", () => {
-  let logSpy: ReturnType<typeof spyOn>;
-  let errorSpy: ReturnType<typeof spyOn>;
+  const out = captureOutput();
+  let exitSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     mockExistingConfig = undefined;
     saveConfigSpy.mockClear();
-    logSpy = spyOn(console, "log").mockImplementation(() => {});
-    errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    exitSpy = spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit");
+    });
   });
 
   afterEach(() => {
-    logSpy.mockRestore();
-    errorSpy.mockRestore();
+    exitSpy.mockRestore();
   });
 
-  test("text output shows address on new wallet", async () => {
+  test("text output on new wallet", async () => {
     await cli.parseAsync(["test", "use-agently", "init"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const output = logSpy.mock.calls[0][0] as string;
-    expect(output).toContain(TEST_ADDRESS);
-
-    const parsed = parse(output);
-    expect(parsed).toEqual({ address: TEST_ADDRESS });
+    expect(out.yaml).toEqual({ address: TEST_ADDRESS });
   });
 
-  test("json output returns address on new wallet", async () => {
+  test("json output on new wallet", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "init"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
-    expect(parsed).toEqual({ address: TEST_ADDRESS });
+    expect(out.json).toEqual({ address: TEST_ADDRESS });
   });
 
   test("calls saveConfig with generated wallet", async () => {
@@ -83,9 +75,6 @@ describe("init command", () => {
 
   test("errors when wallet already exists without --regenerate", async () => {
     mockExistingConfig = { wallet: { type: "evm-private-key" } };
-    const exitSpy = spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("process.exit");
-    });
 
     try {
       await cli.parseAsync(["test", "use-agently", "init"]);
@@ -93,19 +82,15 @@ describe("init command", () => {
       // expected: process.exit throws
     }
 
-    expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(errorSpy.mock.calls[0][0]).toContain("Wallet already configured");
+    expect(out.stderr).toContain("Wallet already configured");
     expect(exitSpy).toHaveBeenCalledWith(1);
-    exitSpy.mockRestore();
   });
 
   test("regenerate creates new wallet with json output", async () => {
     mockExistingConfig = { wallet: { type: "evm-private-key" } };
     await cli.parseAsync(["test", "use-agently", "-o", "json", "init", "--regenerate"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
-    expect(parsed).toEqual({ address: TEST_ADDRESS });
+    expect(out.json).toEqual({ address: TEST_ADDRESS });
     expect(saveConfigSpy).toHaveBeenCalledTimes(1);
   });
 });

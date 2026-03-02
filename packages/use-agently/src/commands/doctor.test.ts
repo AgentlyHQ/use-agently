@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { parse } from "yaml";
-import { mockConfigModule, testConfig } from "../testing";
+import { captureOutput, mockConfigModule, testConfig } from "../testing";
 
 let mockConfig: unknown = testConfig();
 mockConfigModule(() => mockConfig);
@@ -20,55 +19,46 @@ mock.module("viem", () => ({
 const { cli } = await import("../cli");
 
 describe("doctor command", () => {
-  let logSpy: ReturnType<typeof spyOn>;
+  const out = captureOutput();
   let exitSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     mockConfig = testConfig();
     mockGetChainId = async () => 8453n;
-    logSpy = spyOn(console, "log").mockImplementation(() => {});
     exitSpy = spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
     });
   });
 
   afterEach(() => {
-    logSpy.mockRestore();
     exitSpy.mockRestore();
   });
 
   test("all checks pass - text output", async () => {
     await cli.parseAsync(["test", "use-agently", "doctor"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const output = logSpy.mock.calls[0][0] as string;
-    expect(output).toContain("ok: true");
-    expect(output).toContain("Wallet configured");
-    expect(output).toContain("Wallet loadable");
-    expect(output).toContain("Network reachable (Base RPC)");
+    expect(out.yaml).toEqual({
+      ok: true,
+      checks: [
+        { name: "Wallet configured", ok: true },
+        { name: "Wallet loadable", ok: true },
+        { name: "Network reachable (Base RPC)", ok: true },
+      ],
+    });
     expect(exitSpy).not.toHaveBeenCalled();
-  });
-
-  test("all checks pass - valid yaml", async () => {
-    await cli.parseAsync(["test", "use-agently", "doctor"]);
-
-    const output = logSpy.mock.calls[0][0] as string;
-    const parsed = parse(output);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.checks).toHaveLength(3);
-    expect(parsed.checks.every((c: { ok: boolean }) => c.ok)).toBe(true);
   });
 
   test("all checks pass - json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.checks).toHaveLength(3);
-    expect(parsed.checks[0]).toEqual({ name: "Wallet configured", ok: true });
-    expect(parsed.checks[1]).toEqual({ name: "Wallet loadable", ok: true });
-    expect(parsed.checks[2]).toEqual({ name: "Network reachable (Base RPC)", ok: true });
+    expect(out.json).toEqual({
+      ok: true,
+      checks: [
+        { name: "Wallet configured", ok: true },
+        { name: "Wallet loadable", ok: true },
+        { name: "Network reachable (Base RPC)", ok: true },
+      ],
+    });
   });
 
   test("no wallet configured - fails with exit 1", async () => {
@@ -80,8 +70,7 @@ describe("doctor command", () => {
       // expected: process.exit throws
     }
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
+    const parsed = out.json as any;
     expect(parsed.ok).toBe(false);
     expect(parsed.checks[0]).toEqual({
       name: "Wallet configured",
@@ -107,7 +96,7 @@ describe("doctor command", () => {
       // expected: process.exit throws
     }
 
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
+    const parsed = out.json as any;
     expect(parsed.ok).toBe(false);
     expect(parsed.checks[2]).toEqual({
       name: "Network reachable (Base RPC)",

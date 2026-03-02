@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { parse } from "yaml";
-import { mockConfigModule } from "../testing";
+import { captureOutput, mockConfigModule } from "../testing";
 
 mockConfigModule();
 
@@ -21,45 +20,30 @@ const TEST_AGENTS = [
 ];
 
 describe("agents command", () => {
-  let logSpy: ReturnType<typeof spyOn>;
+  const out = captureOutput();
   let fetchSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    logSpy = spyOn(console, "log").mockImplementation(() => {});
     fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ agents: TEST_AGENTS })));
   });
 
   afterEach(() => {
-    logSpy.mockRestore();
     fetchSpy.mockRestore();
   });
 
-  test("text output lists agents", async () => {
+  test("text output", async () => {
     await cli.parseAsync(["test", "use-agently", "agents"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const output = logSpy.mock.calls[0][0] as string;
-    expect(output).toContain("Test Agent");
-    expect(output).toContain("Another Agent");
-    expect(output).toContain("eip155:8453/erc-8004:0x1234/1");
-  });
-
-  test("text output is valid yaml", async () => {
-    await cli.parseAsync(["test", "use-agently", "agents"]);
-
-    const output = logSpy.mock.calls[0][0] as string;
-    const parsed = parse(output);
+    const parsed = out.yaml as any;
     expect(parsed.agents).toHaveLength(2);
-    expect(parsed.agents[0].name).toBe("Test Agent");
-    expect(parsed.agents[0].protocols).toEqual(["a2a", "mcp"]);
-    expect(parsed.agents[1].name).toBe("Another Agent");
+    expect(parsed.agents[0]).toEqual(TEST_AGENTS[0]);
+    expect(parsed.agents[1]).toEqual(TEST_AGENTS[1]);
   });
 
-  test("json output returns structured data", async () => {
+  test("json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
+    const parsed = out.json as any;
     expect(parsed.agents).toHaveLength(2);
     expect(parsed.agents[0]).toEqual(TEST_AGENTS[0]);
     expect(parsed.agents[1]).toEqual(TEST_AGENTS[1]);
@@ -67,11 +51,9 @@ describe("agents command", () => {
 
   test("empty agents list", async () => {
     fetchSpy.mockResolvedValue(new Response(JSON.stringify({ agents: [] })));
-
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
-    const parsed = JSON.parse(logSpy.mock.calls[0][0] as string);
-    expect(parsed).toEqual({ agents: [] });
+    expect(out.json).toEqual({ agents: [] });
   });
 
   test("fetches from marketplace url", async () => {
