@@ -10,7 +10,7 @@ export const whoamiCommand = new Command("whoami")
     const wallet = loadWallet(config.wallet);
 
     output(command, {
-      type: wallet.type,
+      namespace: "eip155",
       address: wallet.address,
     });
   });

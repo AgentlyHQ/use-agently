@@ -63,9 +63,5 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    if (command.optsWithGlobals().output === "json") {
-      output(command, result);
-    } else {
-      console.log(extractAgentText(result));
-    }
+    output(command, extractAgentText(result));
   });

@@ -12,7 +12,7 @@ describe("whoami command", () => {
     await cli.parseAsync(["test", "use-agently", "whoami"]);
 
     expect(out.yaml).toEqual({
-      type: "evm-private-key",
+      namespace: "eip155",
       address: TEST_ADDRESS,
     });
   });
@@ -21,7 +21,7 @@ describe("whoami command", () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "whoami"]);
 
     expect(out.json).toEqual({
-      type: "evm-private-key",
+      namespace: "eip155",
       address: TEST_ADDRESS,
     });
   });

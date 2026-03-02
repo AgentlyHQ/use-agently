@@ -23,5 +23,6 @@ export const initCommand = new Command("init")
 
     output(command, {
       address: walletConfig.address,
+      message: "fund this address to start using agents on use-agently.com",
     });
   });
