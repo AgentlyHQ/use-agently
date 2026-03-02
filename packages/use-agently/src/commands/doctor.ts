@@ -2,10 +2,8 @@ import { Command } from "commander";
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { loadConfig } from "../config.js";
+import { output } from "../output.js";
 import { loadWallet } from "../wallets/wallet.js";
-
-const PASS = "✓";
-const FAIL = "✗";
 
 interface Check {
   name: string;
@@ -16,7 +14,7 @@ interface Check {
 export const doctorCommand = new Command("doctor")
   .description("Run environment checks and report any issues")
   .option("--rpc <url>", "Custom RPC URL to use for network check")
-  .action(async (options: { rpc?: string }) => {
+  .action(async (options: { rpc?: string }, command: Command) => {
     const checks: Check[] = [];
 
     // Check 1: config file exists and has a wallet
@@ -55,13 +53,12 @@ export const doctorCommand = new Command("doctor")
     }
     checks.push({ name: "Network reachable (Base RPC)", ok: networkOk, message: networkMessage });
 
-    // Print results
-    let allOk = true;
-    for (const check of checks) {
-      const icon = check.ok ? PASS : FAIL;
-      console.log(`${icon} ${check.name}${check.message ? `: ${check.message}` : ""}`);
-      if (!check.ok) allOk = false;
-    }
+    const allOk = checks.every((c) => c.ok);
+
+    output(command, {
+      ok: allOk,
+      checks,
+    });
 
     if (!allOk) {
       process.exit(1);

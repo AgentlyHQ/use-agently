@@ -1,11 +1,16 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../config.js";
+import { output } from "../output.js";
 import { loadWallet } from "../wallets/wallet.js";
 
-export const whoamiCommand = new Command("whoami").description("Show current wallet info").action(async () => {
-  const config = await getConfigOrThrow();
-  const wallet = loadWallet(config.wallet);
+export const whoamiCommand = new Command("whoami")
+  .description("Show current wallet info")
+  .action(async (_options: Record<string, never>, command: Command) => {
+    const config = await getConfigOrThrow();
+    const wallet = loadWallet(config.wallet);
 
-  console.log(`Type:    ${wallet.type}`);
-  console.log(`Address: ${wallet.address}`);
-});
+    output(command, {
+      type: wallet.type,
+      address: wallet.address,
+    });
+  });

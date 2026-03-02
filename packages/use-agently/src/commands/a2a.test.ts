@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { AixyzTesting } from "../../../localhost-aixyz/test.ts";
+import { AixyzTesting } from "localhost-aixyz/test";
 import { createA2AClient } from "../client.js";
 import { extractAgentText } from "./a2a.js";
 
