@@ -1,6 +1,6 @@
 import { stepCountIs, ToolLoopAgent } from "ai";
 import type { Accepts } from "aixyz/accepts";
-import { lastUserText } from "./utils";
+import { lastUserText } from "./_utils";
 
 const echoModel = {
   specificationVersion: "v3" as const,
