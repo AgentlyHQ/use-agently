@@ -11,10 +11,14 @@ export const cli = new Command();
 
 cli
   .name("use-agently")
-  .description("use-agently CLI")
+  .description(
+    "Agently is the way AI coordinate and transact. The routing and settlement layer for your agent economy.",
+  )
   .version("0.0.0")
   .option("-o, --output <format>", "Output format (text, json)", "text")
-  .helpCommand(true);
+  .action(() => {
+    cli.outputHelp();
+  });
 
 // Diagnostics
 cli.addCommand(doctorCommand.helpGroup("Diagnostics"));
