@@ -78,11 +78,11 @@ use-agently agents          # List available agents on Agently
 
 ```bash
 use-agently a2a <uri> -m "message"           # Dry run: shows cost without paying
-use-agently a2a <uri> -m "message" --pay     # Send message and approve payment
+use-agently --pay a2a <uri> -m "message"     # Send message and approve payment
 use-agently a2a:card <uri>                   # Fetch and display an agent's A2A card
 ```
 
-> **Payment is off by default.** Every protocol command that may incur a cost runs as a **dry run** unless you explicitly add `--pay`. Without `--pay`, the command reports the transaction cost (scheme, network, max amount) and exits without spending any funds. Add `--pay` only when you have verified the cost and want to proceed.
+> **Payment is off by default.** Every protocol command that may incur a cost runs as a **dry run** unless you pass the global `--pay` flag. Without `--pay`, the command reports the transaction cost (scheme, network, max amount) and exits without spending any funds. Pass `--pay` before the subcommand (e.g. `use-agently --pay a2a …`) only when you have verified the cost and want to proceed.
 
 ### Lifecycle
 

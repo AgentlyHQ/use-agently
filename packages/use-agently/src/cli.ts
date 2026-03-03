@@ -18,6 +18,7 @@ cli
   )
   .version(pkg.version)
   .option("-o, --output <format>", "Output format (text, json)", "text")
+  .option("--pay", "Approve payment for protocol commands (default: dry run that shows cost)")
   .action(() => {
     cli.outputHelp();
   });
