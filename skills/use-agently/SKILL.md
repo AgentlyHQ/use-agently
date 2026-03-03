@@ -77,8 +77,12 @@ use-agently agents          # List available agents on Agently
 ### Protocols
 
 ```bash
-use-agently a2a <uri> -m "message"   # Send a message to an agent via A2A
-use-agently a2a:card <uri>           # Fetch and display an agent's A2A card
+use-agently a2a send --uri <uri> -m "message"   # Send a message to an agent via A2A
+use-agently a2a card --uri <uri>                # Fetch and display an agent's A2A card
+use-agently mcp tools --uri <uri>               # List tools on an MCP server
+use-agently mcp call <tool> [args] --uri <uri>  # Call a tool on an MCP server
+use-agently erc-8004 --uri <uri>                # Resolve an ERC-8004 agent URI
+use-agently web get --uri <url>                 # HTTP GET (and post/put/delete/head/patch)
 ```
 
 ### Lifecycle

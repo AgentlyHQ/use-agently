@@ -51,25 +51,57 @@ describe("a2a command", () => {
     const out = captureOutput();
 
     test("text output", async () => {
-      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo/", "-m", "hello world"]);
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "a2a",
+        "send",
+        "--uri",
+        agent.getAgentUrl() + "/free-echo/",
+        "-m",
+        "hello world",
+      ]);
       expect(out.stdout).toBe("hello world");
     });
 
     test("streams text output 10 times", async () => {
-      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo-10/", "-m", "hi"]);
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "a2a",
+        "send",
+        "--uri",
+        agent.getAgentUrl() + "/free-echo-10/",
+        "-m",
+        "hi",
+      ]);
       // free-echo-10 streams the message back 10 times with 200ms delays between each chunk
       const expected = "hi\nhi\nhi\nhi\nhi\nhi\nhi\nhi\nhi\nhi";
       expect(out.stdout).toBe(expected);
     }, 15000);
+
+    test("--url alias works", async () => {
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "a2a",
+        "send",
+        "--url",
+        agent.getAgentUrl() + "/free-echo/",
+        "-m",
+        "hello url",
+      ]);
+      expect(out.stdout).toBe("hello url");
+    });
   });
 });
 
-describe("a2a:card command", () => {
+describe("a2a card command", () => {
   describe("cli", () => {
     const out = captureOutput();
 
     test("text output returns agent card fields", async () => {
-      await cli.parseAsync(["test", "use-agently", "a2a:card", agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "a2a", "card", "--uri", agent.getAgentUrl()]);
       const card = out.yaml as Record<string, unknown>;
       expect(card).toHaveProperty("name");
       expect(card).toHaveProperty("description");
@@ -77,7 +109,7 @@ describe("a2a:card command", () => {
     });
 
     test("json output returns agent card as JSON", async () => {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a:card", agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a", "card", "--uri", agent.getAgentUrl()]);
       const card = out.json as Record<string, unknown>;
       expect(card).toHaveProperty("name");
       expect(card).toHaveProperty("description");

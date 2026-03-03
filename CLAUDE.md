@@ -36,7 +36,7 @@ All top-level commands use Turborepo (`turbo`) to orchestrate across packages.
 bun run --filter localhost-aixyz dev
 
 # Terminal 2 — send a message via the CLI
-use-agently a2a http://localhost:3000 -m "Hello!"
+use-agently a2a send --uri http://localhost:3000 -m "Hello!"
 ```
 
 The agent exposes a free endpoint (`accepts: { scheme: "free" }`), so no wallet balance is needed. Set `OPENAI_API_KEY` in `packages/localhost-aixyz/.env.local` before starting the dev server.
@@ -108,20 +108,19 @@ Commands are grouped into four categories. New commands must be placed in one of
 
 ### Subcommand Pattern
 
-Commands that have subcommands use a **colon separator**: `<command>:<subcommand>`.
+Commands that have subcommands use a **space separator**: `<command> <subcommand>`.
 
 ```
-use-agently marketplace:agents "query"
-use-agently a2a:card "uri"
-use-agently web:get "url"
+use-agently a2a send --uri "uri"
+use-agently a2a card --uri "uri"
+use-agently mcp tools --uri "uri"
+use-agently mcp call "tool" "args" --uri "uri"
+use-agently web get --uri "url"
 ```
 
-Shorthands (aliases) are allowed for frequently used commands:
+### URI / URL Interchangeability
 
-```
-use-agently m "query"           # alias for: use-agently marketplace
-use-agently m:agents "query"    # alias for: use-agently marketplace:agents
-```
+All protocol commands accept both `--uri` and `--url` as equivalent options. Either flag resolves to the same value.
 
 ### Full Command Reference
 
@@ -138,39 +137,33 @@ use-agently balance                # Show on-chain wallet balance
 #### Discovery
 
 ```bash
-use-agently marketplace            # List all agents/tools/skills on the marketplace
-use-agently marketplace "query"    # Search the marketplace
-use-agently marketplace:agents "query"   # Search agents specifically
-use-agently marketplace:tools "query"    # Search tools specifically
-use-agently marketplace:skills "query"   # Search skills specifically
-
-# Shorthands
-use-agently m "query"
-use-agently m:agents "query"
-use-agently m:tools "query"
-use-agently m:skills "query"
+use-agently agents                 # List all agents on the marketplace
+use-agently search [query]         # Search the marketplace
+use-agently search [query] --protocol a2a,mcp,web  # Filter by protocol(s)
 ```
 
 #### Operations
 
 ```bash
 use-agently init                   # Initialize a wallet and config
-use-agently config                 # Show or edit current configuration
 use-agently update                 # Update the CLI to the latest version
-use-agently wallets                # List and manage configured wallets
 ```
 
 #### Protocols
 
 ```bash
-use-agently erc-8004 "uri"         # Resolve an ERC-8004 agent URI
-use-agently a2a "uri/url"          # Send a message to an agent via A2A protocol
-use-agently a2a:card "uri/url"     # Fetch and display the A2A agent card
-use-agently mcp "uri/url"          # Connect to an MCP server
+use-agently erc-8004 --uri "uri"                    # Resolve an ERC-8004 agent URI
+use-agently a2a send --uri "uri/url" -m "message"   # Send a message via A2A protocol
+use-agently a2a card --uri "uri/url"                # Fetch and display the A2A agent card
+use-agently mcp tools --uri "uri/url"               # List tools on an MCP server
+use-agently mcp call "tool" ["args"] --uri "uri/url" # Call a tool on an MCP server
 
-use-agently web "url"              # HTTP GET (default method)
-use-agently web:get "url"          # HTTP GET
-use-agently web:put "url"          # HTTP PUT
+use-agently web get    --uri "url"                  # HTTP GET
+use-agently web post   --uri "url" -d '{"k":"v"}'  # HTTP POST
+use-agently web put    --uri "url" -d '{"k":"v"}'  # HTTP PUT
+use-agently web delete --uri "url"                  # HTTP DELETE
+use-agently web head   --uri "url"                  # HTTP HEAD
+use-agently web patch  --uri "url" -d '{"k":"v"}'  # HTTP PATCH
 ```
 
 ### Design Rules for New Commands
@@ -191,7 +184,7 @@ use-agently web:put "url"          # HTTP PUT
 
 5. **Structured output** — use exit codes to signal success/failure. For `--output json`, emit valid JSON to stdout so agents can parse results.
 
-6. **Colon subcommand convention** — use `command:subcommand` (colon separator) for protocol variants and marketplace filters. Register these as Commander.js commands named `"command:subcommand"`.
+6. **Space subcommand convention** — use `command subcommand` (space separator) for protocol variants. Do not use colon separators.
 
 ## Documentation
 

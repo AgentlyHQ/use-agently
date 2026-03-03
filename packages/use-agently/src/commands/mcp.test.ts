@@ -16,7 +16,7 @@ describe("mcp command", () => {
     const out = captureOutput();
 
     test("lists available tools", async () => {
-      await cli.parseAsync(["test", "use-agently", "mcp", agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--uri", agent.getAgentUrl()]);
       const tools = out.yaml as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toBe(true);
       expect(tools.length).toBeGreaterThan(0);
@@ -25,10 +25,16 @@ describe("mcp command", () => {
     });
 
     test("json output lists tools as JSON array", async () => {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "mcp", agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "mcp", "tools", "--uri", agent.getAgentUrl()]);
       const tools = out.json as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toBe(true);
       expect(tools.length).toBeGreaterThan(0);
+    });
+
+    test("--url alias works", async () => {
+      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--url", agent.getAgentUrl()]);
+      const tools = out.yaml as Array<Record<string, unknown>>;
+      expect(Array.isArray(tools)).toBe(true);
     });
   });
 
@@ -40,11 +46,11 @@ describe("mcp command", () => {
         "test",
         "use-agently",
         "mcp",
-        agent.getAgentUrl(),
-        "--tool",
+        "call",
         "echo",
-        "--args",
         '{"message":"hello from mcp"}',
+        "--uri",
+        agent.getAgentUrl(),
       ]);
       const result = out.yaml as Record<string, unknown>;
       expect(result).toHaveProperty("content");

@@ -29,7 +29,7 @@ use-agently balance
 use-agently agents
 
 # Send a message to an agent (use the URI from `use-agently agents`)
-use-agently a2a <agent-uri> -m "Hello, agent!"
+use-agently a2a send --uri <agent-uri> -m "Hello, agent!"
 ```
 
 ## Commands
@@ -94,19 +94,67 @@ List available agents on Agently.
 use-agently agents
 ```
 
-### `a2a`
+### `search`
 
-Send a message to an agent via the A2A protocol. The `<agent-uri>` is the identifier shown by `use-agently agents` (e.g. `echo-agent`). The CLI resolves it to `https://use-agently.com/<agent-uri>/`. Payments are handled automatically via x402 when agents require them.
+Search the Agently marketplace for agents, optionally filtering by query and/or protocol.
 
 ```bash
-use-agently a2a <agent-uri> -m "What can you do?"
+use-agently search
+use-agently search "echo"
+use-agently search --protocol a2a
+use-agently search "assistant" --protocol "a2a,mcp"
+```
+
+### `a2a`
+
+Interact with agents via the A2A protocol. Both `--uri` and `--url` are accepted. The identifier is resolved to `https://use-agently.com/<agent-uri>/` if it is not a full URL. Payments are handled automatically via x402 when agents require them.
+
+```bash
+# Send a message
+use-agently a2a send --uri <agent-uri> -m "What can you do?"
+
+# Fetch the agent card
+use-agently a2a card --uri <agent-uri>
+```
+
+### `mcp`
+
+Connect to an MCP server to list or call tools.
+
+```bash
+# List tools
+use-agently mcp tools --uri http://localhost:3000
+
+# Call a tool
+use-agently mcp call echo '{"message":"hello"}' --uri http://localhost:3000
+```
+
+### `erc-8004`
+
+Resolve an ERC-8004 agent URI and display its details from the Agently marketplace.
+
+```bash
+use-agently erc-8004 --uri eip155:8453/erc-8004:0x1234/1
+```
+
+### `web`
+
+Make HTTP requests. Supports all standard HTTP methods. Both `--uri` and `--url` are accepted.
+
+```bash
+use-agently web get    --uri https://example.com/api
+use-agently web post   --uri https://example.com/api -d '{"key":"value"}'
+use-agently web put    --uri https://example.com/api -d '{"key":"value"}'
+use-agently web delete --uri https://example.com/api
+use-agently web head   --uri https://example.com/api
+use-agently web patch  --uri https://example.com/api -d '{"key":"value"}'
 ```
 
 ## How It Works
 
 1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services.
-2. **Discovery** — `agents` fetches the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
-3. **Communication** — `a2a` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
+2. **Discovery** — `agents` and `search` fetch the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
+3. **Communication** — `a2a send` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
 
 ## Development
 
