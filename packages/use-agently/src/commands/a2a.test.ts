@@ -21,7 +21,7 @@ describe("a2a command", () => {
   });
 
   test("sendMessage returns echoed text via extractAgentText", async () => {
-    const client = await createA2AClient(agent.getAgentUrl() + "/free-echo", fetch);
+    const client = await createA2AClient(agent.getAgentUrl() + "/free-echo/", fetch);
     const result = await client.sendMessage({
       message: {
         kind: "message",
@@ -34,7 +34,7 @@ describe("a2a command", () => {
   });
 
   test("extractAgentText handles different messages", async () => {
-    const client = await createA2AClient(agent.getAgentUrl() + "/free-echo", fetch);
+    const client = await createA2AClient(agent.getAgentUrl() + "/free-echo/", fetch);
     const message = "use-agently integration test";
     const result = await client.sendMessage({
       message: {
@@ -51,12 +51,12 @@ describe("a2a command", () => {
     const out = captureOutput();
 
     test("text output", async () => {
-      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo", "-m", "hello world"]);
+      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo/", "-m", "hello world"]);
       expect(out.stdout).toBe("hello world");
     });
 
     test("streams text output 10 times", async () => {
-      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo-10", "-m", "hi"]);
+      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo-10/", "-m", "hi"]);
       expect(out.stdout).toBe(Array(10).fill("hi").join("\n"));
     }, 15000);
   });
