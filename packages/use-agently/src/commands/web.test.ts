@@ -1,115 +1,130 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { captureOutput, mockConfigModule } from "../testing";
 
 mockConfigModule();
 
-// Mock the createPaymentFetch to return a controlled fetch
-mock.module("../client", () => ({
-  createPaymentFetch: () => mockFetch,
-  createA2AClient: async () => ({}),
-}));
-
-let mockFetch: typeof fetch;
-
 const { cli } = await import("../cli");
 
-describe("web command", () => {
-  const out = captureOutput();
+interface RequestRecord {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body: string;
+}
 
-  test("web GET returns JSON response as YAML text", async () => {
-    mockFetch = async (_url: string | URL | Request, _init?: RequestInit) =>
-      new Response(JSON.stringify({ hello: "world" }), { status: 200 });
+let lastRequest: RequestRecord | null = null;
+let nextResponse: { status: number; body: string; contentType?: string } = {
+  status: 200,
+  body: JSON.stringify({ ok: true }),
+};
 
-    await cli.parseAsync(["test", "use-agently", "web", "https://example.com/api"]);
-    expect(out.yaml).toEqual({ hello: "world" });
-  });
+const server = Bun.serve({
+  port: 0,
+  fetch(req) {
+    return req.text().then((body) => {
+      lastRequest = {
+        method: req.method,
+        url: req.url,
+        headers: Object.fromEntries(req.headers.entries()),
+        body,
+      };
+      return new Response(nextResponse.body, {
+        status: nextResponse.status,
+        headers: { "content-type": nextResponse.contentType ?? "application/json" },
+      });
+    });
+  },
+});
 
-  test("web GET returns plain text response", async () => {
-    mockFetch = async (_url: string | URL | Request, _init?: RequestInit) =>
-      new Response("plain text response", { status: 200 });
+const baseUrl = `http://localhost:${server.port}`;
 
-    await cli.parseAsync(["test", "use-agently", "web", "https://example.com/api"]);
-    expect(out.stdout).toBe("plain text response");
-  });
+beforeEach(() => {
+  lastRequest = null;
+  nextResponse = { status: 200, body: JSON.stringify({ ok: true }) };
+});
+
+afterAll(() => {
+  server.stop();
 });
 
 describe("web:get command", () => {
   const out = captureOutput();
 
-  test("GET request sends correct method", async () => {
-    let capturedMethod: string | undefined;
-    mockFetch = async (_url: string | URL | Request, init?: RequestInit) => {
-      capturedMethod = init?.method;
-      return new Response(JSON.stringify({ ok: true }), { status: 200 });
-    };
-
-    await cli.parseAsync(["test", "use-agently", "web:get", "https://example.com/api"]);
-    expect(capturedMethod).toBe("GET");
-    expect(out.yaml).toEqual({ ok: true });
+  test("sends GET request and outputs JSON response as YAML", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({ hello: "world" }) };
+    await cli.parseAsync(["test", "use-agently", "web:get", `${baseUrl}/api`]);
+    expect(lastRequest?.method).toBe("GET");
+    expect(out.yaml).toEqual({ hello: "world" });
   });
 
-  test("GET with --header sends custom headers", async () => {
-    let capturedHeaders: Record<string, string> = {};
-    mockFetch = async (_url: string | URL | Request, init?: RequestInit) => {
-      capturedHeaders = Object.fromEntries(new Headers(init?.headers as HeadersInit).entries());
-      return new Response(JSON.stringify({}), { status: 200 });
-    };
-
-    await cli.parseAsync(["test", "use-agently", "web:get", "https://example.com/api", "-H", "X-Custom: value"]);
-    expect(capturedHeaders["x-custom"]).toBe("value");
+  test("sends custom header", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({}) };
+    await cli.parseAsync(["test", "use-agently", "web:get", `${baseUrl}/api`, "-H", "X-Custom: test-value"]);
+    expect(lastRequest?.headers["x-custom"]).toBe("test-value");
   });
 
-  test("json output returns response as JSON", async () => {
-    mockFetch = async (_url: string | URL | Request, _init?: RequestInit) =>
-      new Response(JSON.stringify({ status: "ok" }), { status: 200 });
-
-    await cli.parseAsync(["test", "use-agently", "-o", "json", "web:get", "https://example.com/api"]);
+  test("json output format", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({ status: "ok" }) };
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "web:get", `${baseUrl}/api`]);
     expect(out.json).toEqual({ status: "ok" });
+  });
+
+  test("outputs plain text for non-JSON response", async () => {
+    const textServer = Bun.serve({
+      port: 0,
+      fetch() {
+        return new Response("plain text", { status: 200, headers: { "content-type": "text/plain" } });
+      },
+    });
+    try {
+      await cli.parseAsync(["test", "use-agently", "web:get", `http://localhost:${textServer.port}/text`]);
+      expect(out.stdout).toBe("plain text");
+    } finally {
+      textServer.stop();
+    }
   });
 });
 
 describe("web:put command", () => {
   const out = captureOutput();
 
-  test("PUT request sends correct method and body", async () => {
-    let capturedMethod: string | undefined;
-    let capturedBody: string | undefined;
-    mockFetch = async (_url: string | URL | Request, init?: RequestInit) => {
-      capturedMethod = init?.method;
-      capturedBody = init?.body as string;
-      return new Response(JSON.stringify({ updated: true }), { status: 200 });
-    };
-
-    await cli.parseAsync(["test", "use-agently", "web:put", "https://example.com/api", "-d", '{"key":"value"}']);
-    expect(capturedMethod).toBe("PUT");
-    expect(capturedBody).toBe('{"key":"value"}');
+  test("sends PUT request with body", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({ updated: true }) };
+    await cli.parseAsync(["test", "use-agently", "web:put", `${baseUrl}/resource`, "-d", '{"key":"value"}']);
+    expect(lastRequest?.method).toBe("PUT");
+    expect(lastRequest?.body).toBe('{"key":"value"}');
     expect(out.yaml).toEqual({ updated: true });
   });
 
-  test("PUT with data sets Content-Type header automatically", async () => {
-    let capturedHeaders: Record<string, string> = {};
-    mockFetch = async (_url: string | URL | Request, init?: RequestInit) => {
-      capturedHeaders = Object.fromEntries(new Headers(init?.headers as HeadersInit).entries());
-      return new Response(JSON.stringify({}), { status: 200 });
-    };
+  test("auto-sets content-type header when --data is provided", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({}) };
+    await cli.parseAsync(["test", "use-agently", "web:put", `${baseUrl}/resource`, "-d", '{"a":1}']);
+    expect(lastRequest?.headers["content-type"]).toBe("application/json");
+  });
 
-    await cli.parseAsync(["test", "use-agently", "web:put", "https://example.com/api", "-d", '{"a":1}']);
-    expect(capturedHeaders["content-type"]).toBe("application/json");
+  test("does not override explicit content-type header", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({}) };
+    await cli.parseAsync([
+      "test",
+      "use-agently",
+      "web:put",
+      `${baseUrl}/resource`,
+      "-H",
+      "content-type: text/plain",
+      "-d",
+      "raw body",
+    ]);
+    expect(lastRequest?.headers["content-type"]).toBe("text/plain");
   });
 });
 
 describe("web:delete command", () => {
   const out = captureOutput();
 
-  test("DELETE request sends correct method", async () => {
-    let capturedMethod: string | undefined;
-    mockFetch = async (_url: string | URL | Request, init?: RequestInit) => {
-      capturedMethod = init?.method;
-      return new Response(JSON.stringify({ deleted: true }), { status: 200 });
-    };
-
-    await cli.parseAsync(["test", "use-agently", "web:delete", "https://example.com/resource/123"]);
-    expect(capturedMethod).toBe("DELETE");
+  test("sends DELETE request", async () => {
+    nextResponse = { status: 200, body: JSON.stringify({ deleted: true }) };
+    await cli.parseAsync(["test", "use-agently", "web:delete", `${baseUrl}/resource/123`]);
+    expect(lastRequest?.method).toBe("DELETE");
     expect(out.yaml).toEqual({ deleted: true });
   });
 });
