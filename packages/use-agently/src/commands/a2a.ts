@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { createPaymentFetch, createA2AClient } from "../client.js";
+import { createPaymentFetch, createDryRunFetch, createA2AClient, PaymentRequiredError } from "../client.js";
 import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
@@ -62,37 +62,47 @@ export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
   .requiredOption("-m, --message <text>", "Message to send")
-  .action(async (agentUri: string, options: { message: string }) => {
+  .option("--pay", "Approve payment and send the message (default: dry run that shows cost)")
+  .action(async (agentUri: string, options: { message: string; pay?: boolean }) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
-    const paymentFetch = createPaymentFetch(wallet);
     const agentUrl = resolveAgentUrl(agentUri);
-    const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
+    const fetchImpl = options.pay ? createPaymentFetch(wallet) : createDryRunFetch();
+    const client = await createA2AClient(agentUrl, fetchImpl as typeof fetch);
 
-    const stream = client.sendMessageStream({
-      message: {
-        kind: "message",
-        messageId: randomUUID(),
-        role: "user",
-        parts: [{ kind: "text", text: options.message }],
-      },
-    });
+    try {
+      const stream = client.sendMessageStream({
+        message: {
+          kind: "message",
+          messageId: randomUUID(),
+          role: "user",
+          parts: [{ kind: "text", text: options.message }],
+        },
+      });
 
-    let wroteText = false;
-    let lastResult: any = null;
-    for await (const event of stream) {
-      lastResult = event;
-      const chunk = extractStreamEventText(event);
-      if (chunk) {
-        process.stdout.write(chunk);
-        wroteText = true;
+      let wroteText = false;
+      let lastResult: any = null;
+      for await (const event of stream) {
+        lastResult = event;
+        const chunk = extractStreamEventText(event);
+        if (chunk) {
+          process.stdout.write(chunk);
+          wroteText = true;
+        }
       }
-    }
 
-    if (wroteText) {
-      process.stdout.write("\n");
-    } else {
-      console.log(extractAgentText(lastResult));
+      if (wroteText) {
+        process.stdout.write("\n");
+      } else {
+        console.log(extractAgentText(lastResult));
+      }
+    } catch (err) {
+      if (err instanceof PaymentRequiredError) {
+        console.error(err.message);
+        console.error("Tip: run the same command with --pay to approve the transaction.");
+        process.exit(1);
+      }
+      throw err;
     }
   });
 
