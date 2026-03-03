@@ -5,6 +5,7 @@ import { balanceCommand } from "./commands/balance.js";
 import { agentsCommand } from "./commands/agents.js";
 import { a2aCommand } from "./commands/a2a.js";
 import { doctorCommand } from "./commands/doctor.js";
+import { updateCommand } from "./commands/update.js";
 
 export const cli = new Command();
 
@@ -20,3 +21,4 @@ cli.addCommand(balanceCommand);
 cli.addCommand(agentsCommand);
 cli.addCommand(a2aCommand);
 cli.addCommand(doctorCommand);
+cli.addCommand(updateCommand);
