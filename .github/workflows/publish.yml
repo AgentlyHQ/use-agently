@@ -52,14 +52,14 @@ jobs:
 
           echo "✓ Valid semver tag: v$VERSION (dist-tag: $([ "$VERSION" == *-* ] && echo "next" || echo "latest"))"
 
-      - name: Build all packages
-        run: bun run build
-
       - name: Set version and resolve workspace dependencies
         run: |
           VERSION="${{ steps.info.outputs.version }}"
           sed -i 's/"version": "0.0.0"/"version": "'"$VERSION"'"/g' packages/*/package.json
           sed -i 's/"workspace:\*"/"'"$VERSION"'"/g' packages/*/package.json
+
+      - name: Build all packages
+        run: bun run build
 
       - name: Publish all packages
         run: |
