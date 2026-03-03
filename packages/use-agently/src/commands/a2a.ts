@@ -4,6 +4,7 @@ import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
+import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
   return parts
