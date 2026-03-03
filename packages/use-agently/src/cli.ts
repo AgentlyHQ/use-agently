@@ -1,11 +1,11 @@
 import { Command } from "commander";
-import { initCommand } from "./commands/init.js";
-import { whoamiCommand } from "./commands/whoami.js";
-import { balanceCommand } from "./commands/balance.js";
-import { agentsCommand } from "./commands/agents.js";
-import { a2aCommand, a2aCardCommand } from "./commands/a2a.js";
-import { doctorCommand } from "./commands/doctor.js";
-import { updateCommand } from "./commands/update.js";
+import { initCommand } from "./commands/init";
+import { whoamiCommand } from "./commands/whoami";
+import { balanceCommand } from "./commands/balance";
+import { agentsCommand } from "./commands/agents";
+import { a2aCommand, a2aCardCommand } from "./commands/a2a";
+import { doctorCommand } from "./commands/doctor";
+import { updateCommand } from "./commands/update";
 
 export const cli = new Command();
 
@@ -14,8 +14,7 @@ cli
   .description("use-agently CLI")
   .version("0.0.0")
   .option("-o, --output <format>", "Output format (text, json)", "text")
-  .addHelpCommand("help", "Print available commands")
-  .action(() => cli.outputHelp());
+  .helpCommand(true);
 
 // Diagnostics
 cli.addCommand(doctorCommand.helpGroup("Diagnostics"));

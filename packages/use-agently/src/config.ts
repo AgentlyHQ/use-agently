@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export type ConfigScope = "global" | "local";
 
-export const WalletConfigSchema = z.object({ type: z.string() }).passthrough();
+export const WalletConfigSchema = z.object({ type: z.string() }).loose();
 
 export const ConfigSchema = z.object({
   wallet: WalletConfigSchema,
