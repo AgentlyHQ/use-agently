@@ -16,10 +16,15 @@ cli
   .addHelpCommand("help", "Print available commands")
   .action(() => cli.outputHelp());
 
-cli.addCommand(initCommand);
-cli.addCommand(whoamiCommand);
-cli.addCommand(balanceCommand);
-cli.addCommand(agentsCommand);
-cli.addCommand(a2aCommand);
-cli.addCommand(a2aCardCommand);
-cli.addCommand(doctorCommand);
+// Lifecycle & Health
+cli.addCommand(initCommand.helpGroup("Lifecycle & Health"));
+cli.addCommand(doctorCommand.helpGroup("Lifecycle & Health"));
+cli.addCommand(whoamiCommand.helpGroup("Lifecycle & Health"));
+cli.addCommand(balanceCommand.helpGroup("Lifecycle & Health"));
+
+// Discovery
+cli.addCommand(agentsCommand.helpGroup("Discovery"));
+
+// Protocols
+cli.addCommand(a2aCommand.helpGroup("Protocols"));
+cli.addCommand(a2aCardCommand.helpGroup("Protocols"));
