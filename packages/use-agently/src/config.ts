@@ -45,8 +45,8 @@ export async function loadConfig(scope?: ConfigScope): Promise<Config | undefine
   return (await loadConfigFromPath(getConfigPath("local"))) ?? (await loadConfigFromPath(getConfigPath("global")));
 }
 
-// Ignore everything in the config dir except the ignore files themselves (so they can be tracked if desired)
-const IGNORE_CONTENT = "*\n!.gitignore\n!.aiignore\n";
+// Ignore everything in the config dir
+const IGNORE_CONTENT = "*\n";
 
 async function writeIgnoreFiles(configDir: string): Promise<void> {
   for (const filename of [".gitignore", ".aiignore"]) {
