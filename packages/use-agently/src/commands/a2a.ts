@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { randomUUID } from "node:crypto";
+import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { getConfigOrThrow } from "../config.js";
 import { output } from "../output.js";
 import { loadWallet } from "../wallets/wallet.js";
@@ -10,6 +11,11 @@ function extractTextFromParts(parts: any[]): string {
     .filter((p) => p.kind === "text")
     .map((p) => p.text)
     .join("");
+}
+
+function resolveAgentUrl(agentInput: string): string {
+  const isDirectUrl = agentInput.startsWith("http://") || agentInput.startsWith("https://");
+  return isDirectUrl ? agentInput : `https://use-agently.com/${agentInput}/`;
 }
 
 export function extractAgentText(result: any): string {
@@ -50,8 +56,7 @@ export const a2aCommand = new Command("a2a")
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const paymentFetch = createPaymentFetch(wallet);
-    const isDirectUrl = agentUri.startsWith("http://") || agentUri.startsWith("https://");
-    const agentUrl = isDirectUrl ? agentUri : `https://use-agently.com/${agentUri}/`;
+    const agentUrl = resolveAgentUrl(agentUri);
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
 
     const result = await client.sendMessage({
@@ -64,4 +69,18 @@ export const a2aCommand = new Command("a2a")
     });
 
     output(command, extractAgentText(result));
+  });
+
+export const a2aCardCommand = new Command("a2a:card")
+  .description("Fetch and display the A2A agent card")
+  .argument("<agent>", "Agent URL or URI (e.g. https://example.com/agent or my-agent)")
+  .addHelpText(
+    "after",
+    "\nExamples:\n  use-agently a2a:card https://example.com/agent\n  use-agently a2a:card my-agent",
+  )
+  .action(async (agentInput: string, _options: Record<string, never>, command: Command) => {
+    const agentUrl = resolveAgentUrl(agentInput);
+    const resolver = new DefaultAgentCardResolver();
+    const card = await resolver.resolve(agentUrl);
+    output(command, card);
   });

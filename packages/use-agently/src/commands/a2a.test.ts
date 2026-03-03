@@ -61,3 +61,25 @@ describe("a2a command", () => {
     });
   });
 });
+
+describe("a2a:card command", () => {
+  describe("cli", () => {
+    const out = captureOutput();
+
+    test("text output returns agent card fields", async () => {
+      await cli.parseAsync(["test", "use-agently", "a2a:card", agent.getAgentUrl()]);
+      const card = out.yaml as Record<string, unknown>;
+      expect(card).toHaveProperty("name");
+      expect(card).toHaveProperty("description");
+      expect(card).toHaveProperty("url");
+    });
+
+    test("json output returns agent card as JSON", async () => {
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a:card", agent.getAgentUrl()]);
+      const card = out.json as Record<string, unknown>;
+      expect(card).toHaveProperty("name");
+      expect(card).toHaveProperty("description");
+      expect(card).toHaveProperty("url");
+    });
+  });
+});
