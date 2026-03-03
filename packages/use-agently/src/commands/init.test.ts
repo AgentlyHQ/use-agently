@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { captureOutput, TEST_ADDRESS } from "../testing";
 
+const TEST_MNEMONIC = "test test test test test test test test test test test junk";
+
 let mockExistingConfig: unknown = undefined;
 const saveConfigSpy = mock(async (_config: unknown, _scope: unknown) => {});
 
@@ -21,6 +23,21 @@ mock.module("../wallets/evm-private-key", () => ({
   }),
   EvmPrivateKeyWallet: class {
     type = "evm-private-key";
+    address = TEST_ADDRESS;
+    getX402Schemes() {
+      return [];
+    }
+  },
+}));
+
+mock.module("../wallets/secp256k1-bip39", () => ({
+  generateSecp256k1Bip39Config: () => ({
+    type: "secp256k1-bip39",
+    mnemonic: TEST_MNEMONIC,
+    address: TEST_ADDRESS,
+  }),
+  Secp256k1Bip39Wallet: class {
+    type = "secp256k1-bip39";
     address = TEST_ADDRESS;
     getX402Schemes() {
       return [];
@@ -101,5 +118,29 @@ describe("init command", () => {
       message: "fund this address to start using agents on use-agently.com",
     });
     expect(saveConfigSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("--mnemonic generates a mnemonic wallet", async () => {
+    await cli.parseAsync(["test", "use-agently", "init", "--mnemonic"]);
+
+    expect(saveConfigSpy).toHaveBeenCalledTimes(1);
+    const [config, scope] = saveConfigSpy.mock.calls[0];
+    expect(config).toEqual({
+      wallet: {
+        type: "secp256k1-bip39",
+        mnemonic: TEST_MNEMONIC,
+        address: TEST_ADDRESS,
+      },
+    });
+    expect(scope).toBe("global");
+  });
+
+  test("--mnemonic json output on new mnemonic wallet", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "init", "--mnemonic"]);
+
+    expect(out.json).toEqual({
+      address: TEST_ADDRESS,
+      message: "fund this address to start using agents on use-agently.com",
+    });
   });
 });
