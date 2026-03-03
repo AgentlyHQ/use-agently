@@ -58,15 +58,35 @@ function extractStreamEventText(event: any): string {
   return "";
 }
 
+function resolveUriOption(options: { uri?: string }, commandName: string): string {
+  if (!options.uri) {
+    throw new Error(
+      `Missing required option --uri for '${commandName}'.\nExpected a URL or agent URI, e.g. --uri https://example.com/agent or --uri echo-agent`,
+    );
+  }
+  return options.uri;
+}
+
 export const a2aCommand = new Command("a2a")
+  .description("Interact with agents via the A2A protocol")
+  .action(function () {
+    (this as Command).outputHelp();
+  });
+
+const a2aSendCommand = new Command("send")
   .description("Send a message to an agent via A2A protocol")
-  .argument("<agent>", "Agent URI")
+  .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
   .requiredOption("-m, --message <text>", "Message to send")
-  .action(async (agentUri: string, options: { message: string }) => {
+  .addHelpText(
+    "after",
+    '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri echo-agent -m "Hello!"',
+  )
+  .action(async (options: { uri?: string; message: string }) => {
+    const agentInput = resolveUriOption(options, "a2a send");
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const paymentFetch = createPaymentFetch(wallet);
-    const agentUrl = resolveAgentUrl(agentUri);
+    const agentUrl = resolveAgentUrl(agentInput);
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
 
     const stream = client.sendMessageStream({
@@ -96,16 +116,20 @@ export const a2aCommand = new Command("a2a")
     }
   });
 
-export const a2aCardCommand = new Command("a2a:card")
+const a2aCardSubCommand = new Command("card")
   .description("Fetch and display the A2A agent card")
-  .argument("<agent>", "Agent URL or URI (e.g. https://example.com/agent or my-agent)")
+  .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
   .addHelpText(
     "after",
-    "\nExamples:\n  use-agently a2a:card https://example.com/agent\n  use-agently a2a:card my-agent",
+    "\nExamples:\n  use-agently a2a card --uri https://example.com/agent\n  use-agently a2a card --uri echo-agent",
   )
-  .action(async (agentInput: string, _options: Record<string, never>, command: Command) => {
+  .action(async (options: { uri?: string }, command: Command) => {
+    const agentInput = resolveUriOption(options, "a2a card");
     const agentUrl = resolveAgentUrl(agentInput);
     const resolver = new DefaultAgentCardResolver();
     const card = await resolver.resolve(agentUrl);
     output(command, card);
   });
+
+a2aCommand.addCommand(a2aSendCommand);
+a2aCommand.addCommand(a2aCardSubCommand);
