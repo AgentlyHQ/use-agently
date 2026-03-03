@@ -115,12 +115,7 @@ use-agently a2a send --uri "uri"
 use-agently a2a card --uri "uri"
 use-agently mcp tools --uri "uri"
 use-agently mcp call "tool" "args" --uri "uri"
-use-agently web get --uri "url"
 ```
-
-### URI / URL Interchangeability
-
-All protocol commands accept both `--uri` and `--url` as equivalent options. Either flag resolves to the same value.
 
 ### Full Command Reference
 
@@ -152,18 +147,11 @@ use-agently update                 # Update the CLI to the latest version
 #### Protocols
 
 ```bash
-use-agently erc-8004 --uri "uri"                    # Resolve an ERC-8004 agent URI
-use-agently a2a send --uri "uri/url" -m "message"   # Send a message via A2A protocol
-use-agently a2a card --uri "uri/url"                # Fetch and display the A2A agent card
-use-agently mcp tools --uri "uri/url"               # List tools on an MCP server
+use-agently erc-8004 --uri "uri"                     # Resolve an ERC-8004 agent URI
+use-agently a2a send --uri "uri/url" -m "message"    # Send a message via A2A protocol
+use-agently a2a card --uri "uri/url"                 # Fetch and display the A2A agent card
+use-agently mcp tools --uri "uri/url"                # List tools on an MCP server
 use-agently mcp call "tool" ["args"] --uri "uri/url" # Call a tool on an MCP server
-
-use-agently web get    --uri "url"                  # HTTP GET
-use-agently web post   --uri "url" -d '{"k":"v"}'  # HTTP POST
-use-agently web put    --uri "url" -d '{"k":"v"}'  # HTTP PUT
-use-agently web delete --uri "url"                  # HTTP DELETE
-use-agently web head   --uri "url"                  # HTTP HEAD
-use-agently web patch  --uri "url" -d '{"k":"v"}'  # HTTP PATCH
 ```
 
 ### Design Rules for New Commands

@@ -21,14 +21,13 @@ async function createMcpClient(mcpUrl: string): Promise<Client> {
   return client;
 }
 
-function resolveUriOption(options: { uri?: string; url?: string }, commandName: string): string {
-  const value = options.uri || options.url;
-  if (!value) {
+function resolveUriOption(options: { uri?: string }, commandName: string): string {
+  if (!options.uri) {
     throw new Error(
       `Missing required option --uri for '${commandName}'.\nExpected a URL or agent URI, e.g. --uri http://localhost:3000 or --uri my-agent`,
     );
   }
-  return value;
+  return options.uri;
 }
 
 export const mcpCommand = new Command("mcp")
@@ -40,12 +39,11 @@ export const mcpCommand = new Command("mcp")
 const mcpToolsCommand = new Command("tools")
   .description("List available tools on an MCP server")
   .option("--uri <value>", "MCP server URI or URL")
-  .option("--url <value>", "MCP server URI or URL (alias for --uri)")
   .addHelpText(
     "after",
     "\nExamples:\n  use-agently mcp tools --uri http://localhost:3000\n  use-agently mcp tools --uri my-agent",
   )
-  .action(async (options: { uri?: string; url?: string }, command: Command) => {
+  .action(async (options: { uri?: string }, command: Command) => {
     const mcpUrl = resolveMcpUrl(resolveUriOption(options, "mcp tools"));
     const client = await createMcpClient(mcpUrl);
     try {
@@ -61,31 +59,28 @@ const mcpCallCommand = new Command("call")
   .argument("<tool>", "Tool name to call")
   .argument("[args]", "JSON arguments to pass to the tool")
   .option("--uri <value>", "MCP server URI or URL")
-  .option("--url <value>", "MCP server URI or URL (alias for --uri)")
   .addHelpText(
     "after",
     '\nExamples:\n  use-agently mcp call echo \'{"message":"hello"}\' --uri http://localhost:3000\n  use-agently mcp call echo --uri my-agent',
   )
-  .action(
-    async (tool: string, argsStr: string | undefined, options: { uri?: string; url?: string }, command: Command) => {
-      const mcpUrl = resolveMcpUrl(resolveUriOption(options, "mcp call"));
-      let args: Record<string, unknown> = {};
-      if (argsStr !== undefined) {
-        try {
-          args = JSON.parse(argsStr);
-        } catch {
-          throw new Error(`Invalid JSON in <args>: ${argsStr}\nExpected a JSON object, e.g. '{"message":"hello"}'`);
-        }
-      }
-      const client = await createMcpClient(mcpUrl);
+  .action(async (tool: string, argsStr: string | undefined, options: { uri?: string }, command: Command) => {
+    const mcpUrl = resolveMcpUrl(resolveUriOption(options, "mcp call"));
+    let args: Record<string, unknown> = {};
+    if (argsStr !== undefined) {
       try {
-        const result = await client.callTool({ name: tool, arguments: args });
-        output(command, result);
-      } finally {
-        await client.close();
+        args = JSON.parse(argsStr);
+      } catch {
+        throw new Error(`Invalid JSON in <args>: ${argsStr}\nExpected a JSON object, e.g. '{"message":"hello"}'`);
       }
-    },
-  );
+    }
+    const client = await createMcpClient(mcpUrl);
+    try {
+      const result = await client.callTool({ name: tool, arguments: args });
+      output(command, result);
+    } finally {
+      await client.close();
+    }
+  });
 
 mcpCommand.addCommand(mcpToolsCommand);
 mcpCommand.addCommand(mcpCallCommand);

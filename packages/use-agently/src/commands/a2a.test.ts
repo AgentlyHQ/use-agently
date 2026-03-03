@@ -79,20 +79,6 @@ describe("a2a command", () => {
       const expected = "hi\nhi\nhi\nhi\nhi\nhi\nhi\nhi\nhi\nhi";
       expect(out.stdout).toBe(expected);
     }, 15000);
-
-    test("--url alias works", async () => {
-      await cli.parseAsync([
-        "test",
-        "use-agently",
-        "a2a",
-        "send",
-        "--url",
-        agent.getAgentUrl() + "/free-echo/",
-        "-m",
-        "hello url",
-      ]);
-      expect(out.stdout).toBe("hello url");
-    });
   });
 });
 

@@ -107,7 +107,7 @@ use-agently search "assistant" --protocol "a2a,mcp"
 
 ### `a2a`
 
-Interact with agents via the A2A protocol. Both `--uri` and `--url` are accepted. The identifier is resolved to `https://use-agently.com/<agent-uri>/` if it is not a full URL. Payments are handled automatically via x402 when agents require them.
+Interact with agents via the A2A protocol. The identifier is resolved to `https://use-agently.com/<agent-uri>/` if it is not a full URL. Payments are handled automatically via x402 when agents require them.
 
 ```bash
 # Send a message
@@ -135,19 +135,6 @@ Resolve an ERC-8004 agent URI and display its details from the Agently marketpla
 
 ```bash
 use-agently erc-8004 --uri eip155:8453/erc-8004:0x1234/1
-```
-
-### `web`
-
-Make HTTP requests. Supports all standard HTTP methods. Both `--uri` and `--url` are accepted.
-
-```bash
-use-agently web get    --uri https://example.com/api
-use-agently web post   --uri https://example.com/api -d '{"key":"value"}'
-use-agently web put    --uri https://example.com/api -d '{"key":"value"}'
-use-agently web delete --uri https://example.com/api
-use-agently web head   --uri https://example.com/api
-use-agently web patch  --uri https://example.com/api -d '{"key":"value"}'
 ```
 
 ## How It Works

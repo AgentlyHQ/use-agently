@@ -50,10 +50,4 @@ describe("erc-8004 command", () => {
       cli.parseAsync(["test", "use-agently", "erc-8004", "--uri", "eip155:8453/erc-8004:0xDEAD/99"]),
     ).rejects.toThrow("No agent found for URI");
   });
-
-  test("--url alias works", async () => {
-    await cli.parseAsync(["test", "use-agently", "erc-8004", "--url", "eip155:8453/erc-8004:0x1234/1"]);
-    const parsed = out.yaml as Record<string, unknown>;
-    expect(parsed).toHaveProperty("name", "Echo Agent");
-  });
 });

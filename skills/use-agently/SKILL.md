@@ -82,7 +82,6 @@ use-agently a2a card --uri <uri>                # Fetch and display an agent's A
 use-agently mcp tools --uri <uri>               # List tools on an MCP server
 use-agently mcp call <tool> [args] --uri <uri>  # Call a tool on an MCP server
 use-agently erc-8004 --uri <uri>                # Resolve an ERC-8004 agent URI
-use-agently web get --uri <url>                 # HTTP GET (and post/put/delete/head/patch)
 ```
 
 ### Lifecycle

@@ -30,12 +30,6 @@ describe("mcp command", () => {
       expect(Array.isArray(tools)).toBe(true);
       expect(tools.length).toBeGreaterThan(0);
     });
-
-    test("--url alias works", async () => {
-      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--url", agent.getAgentUrl()]);
-      const tools = out.yaml as Array<Record<string, unknown>>;
-      expect(Array.isArray(tools)).toBe(true);
-    });
   });
 
   describe("call tool", () => {

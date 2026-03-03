@@ -58,14 +58,13 @@ function extractStreamEventText(event: any): string {
   return "";
 }
 
-function resolveUriOption(options: { uri?: string; url?: string }, commandName: string): string {
-  const value = options.uri || options.url;
-  if (!value) {
+function resolveUriOption(options: { uri?: string }, commandName: string): string {
+  if (!options.uri) {
     throw new Error(
       `Missing required option --uri for '${commandName}'.\nExpected a URL or agent URI, e.g. --uri https://example.com/agent or --uri echo-agent`,
     );
   }
-  return value;
+  return options.uri;
 }
 
 export const a2aCommand = new Command("a2a")
@@ -77,13 +76,12 @@ export const a2aCommand = new Command("a2a")
 const a2aSendCommand = new Command("send")
   .description("Send a message to an agent via A2A protocol")
   .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
-  .option("--url <value>", "Agent URI or URL (alias for --uri)")
   .requiredOption("-m, --message <text>", "Message to send")
   .addHelpText(
     "after",
     '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri echo-agent -m "Hello!"',
   )
-  .action(async (options: { uri?: string; url?: string; message: string }) => {
+  .action(async (options: { uri?: string; message: string }) => {
     const agentInput = resolveUriOption(options, "a2a send");
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
@@ -121,12 +119,11 @@ const a2aSendCommand = new Command("send")
 const a2aCardSubCommand = new Command("card")
   .description("Fetch and display the A2A agent card")
   .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
-  .option("--url <value>", "Agent URI or URL (alias for --uri)")
   .addHelpText(
     "after",
     "\nExamples:\n  use-agently a2a card --uri https://example.com/agent\n  use-agently a2a card --uri echo-agent",
   )
-  .action(async (options: { uri?: string; url?: string }, command: Command) => {
+  .action(async (options: { uri?: string }, command: Command) => {
     const agentInput = resolveUriOption(options, "a2a card");
     const agentUrl = resolveAgentUrl(agentInput);
     const resolver = new DefaultAgentCardResolver();
