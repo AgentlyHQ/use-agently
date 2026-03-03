@@ -12,7 +12,9 @@ cli
   .name("use-agently")
   .description("use-agently CLI")
   .version("0.0.0")
-  .option("-o, --output <format>", "Output format (text, json)", "text");
+  .option("-o, --output <format>", "Output format (text, json)", "text")
+  .addHelpCommand("help", "Print available commands")
+  .action(() => cli.outputHelp());
 
 cli.addCommand(initCommand);
 cli.addCommand(whoamiCommand);
