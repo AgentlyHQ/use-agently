@@ -1,6 +1,7 @@
 import type { SchemeRegistration } from "@x402/fetch";
 import type { WalletConfig } from "../config.js";
 import { EvmPrivateKeyWallet } from "./evm-private-key.js";
+import { EvmMnemonicWallet } from "./evm-mnemonic.js";
 
 export interface Wallet {
   type: string;
@@ -12,6 +13,8 @@ export function loadWallet(walletConfig: WalletConfig): Wallet {
   switch (walletConfig.type) {
     case "evm-private-key":
       return new EvmPrivateKeyWallet(walletConfig.privateKey as `0x${string}`);
+    case "evm-mnemonic":
+      return new EvmMnemonicWallet(walletConfig.mnemonic as string);
     default:
       throw new Error(`Unknown wallet type: ${walletConfig.type}`);
   }
