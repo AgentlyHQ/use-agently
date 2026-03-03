@@ -45,10 +45,25 @@ export async function loadConfig(scope?: ConfigScope): Promise<Config | undefine
   return (await loadConfigFromPath(getConfigPath("local"))) ?? (await loadConfigFromPath(getConfigPath("global")));
 }
 
+// Ignore everything in the config dir
+const IGNORE_CONTENT = "*\n";
+
+async function writeIgnoreFiles(configDir: string): Promise<void> {
+  for (const filename of [".gitignore", ".aiignore"]) {
+    const filePath = join(configDir, filename);
+    try {
+      await writeFile(filePath, IGNORE_CONTENT, { encoding: "utf8", flag: "wx" });
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+    }
+  }
+}
+
 export async function saveConfig(config: Config, scope: ConfigScope = "global"): Promise<void> {
   const configDir = getConfigDir(scope);
   const configPath = getConfigPath(scope);
   await mkdir(configDir, { recursive: true });
+  await writeIgnoreFiles(configDir);
   await writeFile(configPath, JSON.stringify(config, null, 2) + "\n", "utf8");
 }
 
