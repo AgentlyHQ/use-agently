@@ -2,9 +2,9 @@ import { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { getConfigOrThrow } from "../config.js";
-import { output } from "../output.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
+import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
   return parts
@@ -48,18 +48,28 @@ export function extractAgentText(result: any): string {
   return result.text || "The agent processed your request but returned no text response.";
 }
 
+function extractStreamEventText(event: any): string {
+  if (event.kind === "artifact-update") {
+    return extractTextFromParts(event.artifact?.parts || []);
+  }
+  if (event.kind === "message" && event.role === "agent") {
+    return extractTextFromParts(event.parts || []);
+  }
+  return "";
+}
+
 export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
   .requiredOption("-m, --message <text>", "Message to send")
-  .action(async (agentUri: string, options: { message: string }, command: Command) => {
+  .action(async (agentUri: string, options: { message: string }) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const paymentFetch = createPaymentFetch(wallet);
     const agentUrl = resolveAgentUrl(agentUri);
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
 
-    const result = await client.sendMessage({
+    const stream = client.sendMessageStream({
       message: {
         kind: "message",
         messageId: randomUUID(),
@@ -68,7 +78,22 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    output(command, extractAgentText(result));
+    let wroteText = false;
+    let lastResult: any = null;
+    for await (const event of stream) {
+      lastResult = event;
+      const chunk = extractStreamEventText(event);
+      if (chunk) {
+        process.stdout.write(chunk);
+        wroteText = true;
+      }
+    }
+
+    if (wroteText) {
+      process.stdout.write("\n");
+    } else {
+      console.log(extractAgentText(lastResult));
+    }
   });
 
 export const a2aCardCommand = new Command("a2a:card")
