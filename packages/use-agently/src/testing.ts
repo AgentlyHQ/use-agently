@@ -24,20 +24,30 @@ export function testConfig() {
 export function captureOutput() {
   let logSpy: ReturnType<typeof spyOn>;
   let errorSpy: ReturnType<typeof spyOn>;
+  let writeSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     logSpy = spyOn(console, "log").mockImplementation(() => {});
     errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true);
   });
 
   afterEach(() => {
     logSpy.mockRestore();
     errorSpy.mockRestore();
+    writeSpy.mockRestore();
   });
 
   return {
-    /** Raw stdout string from the first console.log call */
+    /**
+     * All text written to process.stdout.write (streamed output), concatenated.
+     * Falls back to the first console.log call for non-streaming output.
+     */
     get stdout(): string {
+      const written = (writeSpy.mock.calls as [string | Uint8Array][])
+        .map(([chunk]) => (typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk)))
+        .join("");
+      if (written) return written.replace(/\n+$/, "");
       return logSpy.mock.calls[0]?.[0] as string;
     },
     /** Raw stderr string from the first console.error call */
@@ -46,7 +56,7 @@ export function captureOutput() {
     },
     /** Parse stdout as JSON */
     get json(): unknown {
-      return JSON.parse(this.stdout);
+      return JSON.parse(logSpy.mock.calls[0]?.[0] as string);
     },
     /** Parse stdout as YAML */
     get yaml(): unknown {

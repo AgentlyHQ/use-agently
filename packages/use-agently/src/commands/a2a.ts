@@ -48,6 +48,16 @@ export function extractAgentText(result: any): string {
   return result.text || "The agent processed your request but returned no text response.";
 }
 
+function extractStreamEventText(event: any): string {
+  if (event.kind === "artifact-update") {
+    return extractTextFromParts(event.artifact?.parts || []);
+  }
+  if (event.kind === "message" && event.role === "agent") {
+    return extractTextFromParts(event.parts || []);
+  }
+  return "";
+}
+
 export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
@@ -58,8 +68,9 @@ export const a2aCommand = new Command("a2a")
     const paymentFetch = createPaymentFetch(wallet);
     const agentUrl = resolveAgentUrl(agentUri);
     const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
+    const isJson = command.optsWithGlobals().output === "json";
 
-    const result = await client.sendMessage({
+    const stream = client.sendMessageStream({
       message: {
         kind: "message",
         messageId: randomUUID(),
@@ -68,7 +79,24 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    output(command, extractAgentText(result));
+    let streamedText = "";
+    let lastResult: any = null;
+    for await (const event of stream) {
+      lastResult = event;
+      const chunk = extractStreamEventText(event);
+      if (chunk) {
+        streamedText += chunk;
+        if (!isJson) process.stdout.write(chunk);
+      }
+    }
+
+    if (isJson) {
+      output(command, streamedText || extractAgentText(lastResult));
+    } else if (streamedText) {
+      process.stdout.write("\n");
+    } else {
+      console.log(extractAgentText(lastResult));
+    }
   });
 
 export const a2aCardCommand = new Command("a2a:card")
