@@ -8,7 +8,11 @@ import { doctorCommand } from "./commands/doctor.js";
 
 export const cli = new Command();
 
-cli.name("use-agently").description("use-agently CLI").version("0.0.0");
+cli
+  .name("use-agently")
+  .description("use-agently CLI")
+  .version("0.0.0")
+  .option("-o, --output <format>", "Output format (text, json)", "text");
 
 cli.addCommand(initCommand);
 cli.addCommand(whoamiCommand);

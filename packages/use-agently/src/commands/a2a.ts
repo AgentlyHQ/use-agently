@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import { getConfigOrThrow } from "../config.js";
+import { output } from "../output.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient } from "../client.js";
 
@@ -45,7 +46,7 @@ export const a2aCommand = new Command("a2a")
   .description("Send a message to an agent via A2A protocol")
   .argument("<agent>", "Agent URI")
   .requiredOption("-m, --message <text>", "Message to send")
-  .action(async (agentUri: string, options: { message: string }) => {
+  .action(async (agentUri: string, options: { message: string }, command: Command) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     const paymentFetch = createPaymentFetch(wallet);
@@ -62,5 +63,5 @@ export const a2aCommand = new Command("a2a")
       },
     });
 
-    console.log(extractAgentText(result));
+    output(command, extractAgentText(result));
   });

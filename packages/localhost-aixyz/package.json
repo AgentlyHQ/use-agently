@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "aixyz build",
     "dev": "aixyz dev",
     "test": "bun test"
   },
