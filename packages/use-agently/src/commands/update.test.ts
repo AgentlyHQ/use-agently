@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:
 import { captureOutput } from "../testing";
 
 const mockReadFile = mock(async (_path: string, _encoding: unknown) => JSON.stringify({}));
-const mockWriteFile = mock(async () => {});
+const mockWriteFile = mock(async (_path: string, _data: string, _encoding?: unknown) => {});
 const mockMkdir = mock(async () => {});
 const mockLoadConfig = mock(async () => undefined as unknown);
 
@@ -28,6 +28,7 @@ mock.module("node:child_process", () => ({
 
 const { cli } = await import("../cli");
 const { CURRENT_VERSION, checkAutoUpdate } = await import("./update");
+const updateModule = await import("./update");
 
 describe("update command", () => {
   const out = captureOutput();
@@ -111,6 +112,7 @@ describe("update command", () => {
 
 describe("checkAutoUpdate", () => {
   let fetchSpy: ReturnType<typeof spyOn>;
+  let devVersionSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     mockReadFile.mockClear();
@@ -124,10 +126,12 @@ describe("checkAutoUpdate", () => {
       ok: true,
       json: async () => ({ version: "9.9.9" }),
     } as Response);
+    devVersionSpy = spyOn(updateModule, "isDevVersion").mockReturnValue(false);
   });
 
   afterEach(() => {
     fetchSpy.mockRestore();
+    devVersionSpy.mockRestore();
   });
 
   test("skips update check when checked within 24h", async () => {

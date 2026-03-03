@@ -35,6 +35,10 @@ async function saveUpdateState(state: UpdateState): Promise<void> {
 
 export const CURRENT_VERSION: string = pkg.version;
 
+export function isDevVersion(): boolean {
+  return CURRENT_VERSION === "0.0.0";
+}
+
 export async function getLatestVersion(): Promise<string> {
   const res = await fetch("https://registry.npmjs.org/use-agently/latest");
   if (!res.ok) throw new Error(`Failed to check npm registry: ${res.status}`);
@@ -66,7 +70,7 @@ export async function checkAndUpdate(): Promise<{ current: string; latest: strin
 
 export async function checkAutoUpdate(): Promise<void> {
   try {
-    if (CURRENT_VERSION === "0.0.0") return;
+    if (isDevVersion()) return;
 
     const config = await loadConfig();
     if ((config?.env?.USE_AGENTLY_AUTO_UPDATE ?? 1) === 0) return;
