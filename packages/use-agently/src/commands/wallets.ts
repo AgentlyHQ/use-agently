@@ -15,7 +15,7 @@ export const walletsCommand = new Command("wallets")
       address: wallet.address,
     };
 
-    if (config.wallet.type === "evm-mnemonic") {
+    if (config.wallet.type === "secp256k1-bip39") {
       result.mnemonic = options.showMnemonic
         ? (config.wallet.mnemonic as string)
         : "[hidden - use --show-mnemonic to reveal]";

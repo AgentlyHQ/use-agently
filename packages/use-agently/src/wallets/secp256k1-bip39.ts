@@ -7,24 +7,24 @@ import type { SchemeRegistration } from "@x402/fetch";
 import type { Wallet } from "./wallet.js";
 import type { WalletConfig } from "../config.js";
 
-export interface EvmMnemonicConfig extends WalletConfig {
-  type: "evm-mnemonic";
+export interface Secp256k1Bip39Config extends WalletConfig {
+  type: "secp256k1-bip39";
   mnemonic: string;
   address: string;
 }
 
-export function generateEvmMnemonicConfig(): EvmMnemonicConfig {
+export function generateSecp256k1Bip39Config(): Secp256k1Bip39Config {
   const mnemonic = generateMnemonic(english);
   const account = mnemonicToAccount(mnemonic);
   return {
-    type: "evm-mnemonic",
+    type: "secp256k1-bip39",
     mnemonic,
     address: account.address,
   };
 }
 
-export class EvmMnemonicWallet implements Wallet {
-  readonly type = "evm-mnemonic";
+export class Secp256k1Bip39Wallet implements Wallet {
+  readonly type = "secp256k1-bip39";
   readonly address: string;
   private readonly mnemonic: string;
   private readonly publicClient = createPublicClient({ chain: base, transport: http() });

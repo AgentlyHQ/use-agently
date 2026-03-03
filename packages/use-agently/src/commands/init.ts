@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { loadConfig, saveConfig, backupConfig, type ConfigScope } from "../config.js";
 import { output } from "../output.js";
 import { generateEvmPrivateKeyConfig } from "../wallets/evm-private-key.js";
-import { generateEvmMnemonicConfig } from "../wallets/evm-mnemonic.js";
+import { generateSecp256k1Bip39Config } from "../wallets/secp256k1-bip39.js";
 
 export const initCommand = new Command("init")
   .description("Generate a new local wallet and save it to config")
@@ -20,7 +20,7 @@ export const initCommand = new Command("init")
       await backupConfig(scope);
     }
 
-    const walletConfig = options.mnemonic ? generateEvmMnemonicConfig() : generateEvmPrivateKeyConfig();
+    const walletConfig = options.mnemonic ? generateSecp256k1Bip39Config() : generateEvmPrivateKeyConfig();
     await saveConfig({ wallet: walletConfig }, scope);
 
     output(command, {

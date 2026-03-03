@@ -61,10 +61,10 @@ describe("wallets command", () => {
     });
   });
 
-  describe("evm-mnemonic wallet", () => {
+  describe("secp256k1-bip39 wallet", () => {
     test("text output shows type, address, and hidden mnemonic by default", async () => {
       mockWalletConfig = {
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         mnemonic: TEST_MNEMONIC,
         address: TEST_ADDRESS,
       };
@@ -72,7 +72,7 @@ describe("wallets command", () => {
       await cli.parseAsync(["test", "use-agently", "wallets"]);
 
       expect(out.yaml).toEqual({
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         address: TEST_ADDRESS,
         mnemonic: "[hidden - use --show-mnemonic to reveal]",
       });
@@ -80,7 +80,7 @@ describe("wallets command", () => {
 
     test("--show-mnemonic reveals mnemonic in output", async () => {
       mockWalletConfig = {
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         mnemonic: TEST_MNEMONIC,
         address: TEST_ADDRESS,
       };
@@ -88,7 +88,7 @@ describe("wallets command", () => {
       await cli.parseAsync(["test", "use-agently", "wallets", "--show-mnemonic"]);
 
       expect(out.yaml).toEqual({
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         address: TEST_ADDRESS,
         mnemonic: TEST_MNEMONIC,
       });
@@ -96,7 +96,7 @@ describe("wallets command", () => {
 
     test("json output shows type, address, and hidden mnemonic by default", async () => {
       mockWalletConfig = {
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         mnemonic: TEST_MNEMONIC,
         address: TEST_ADDRESS,
       };
@@ -104,7 +104,7 @@ describe("wallets command", () => {
       await cli.parseAsync(["test", "use-agently", "-o", "json", "wallets"]);
 
       expect(out.json).toEqual({
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         address: TEST_ADDRESS,
         mnemonic: "[hidden - use --show-mnemonic to reveal]",
       });
@@ -112,7 +112,7 @@ describe("wallets command", () => {
 
     test("--show-mnemonic json output reveals mnemonic", async () => {
       mockWalletConfig = {
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         mnemonic: TEST_MNEMONIC,
         address: TEST_ADDRESS,
       };
@@ -120,7 +120,7 @@ describe("wallets command", () => {
       await cli.parseAsync(["test", "use-agently", "-o", "json", "wallets", "--show-mnemonic"]);
 
       expect(out.json).toEqual({
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         address: TEST_ADDRESS,
         mnemonic: TEST_MNEMONIC,
       });

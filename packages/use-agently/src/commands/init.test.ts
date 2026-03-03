@@ -30,14 +30,14 @@ mock.module("../wallets/evm-private-key", () => ({
   },
 }));
 
-mock.module("../wallets/evm-mnemonic", () => ({
-  generateEvmMnemonicConfig: () => ({
-    type: "evm-mnemonic",
+mock.module("../wallets/secp256k1-bip39", () => ({
+  generateSecp256k1Bip39Config: () => ({
+    type: "secp256k1-bip39",
     mnemonic: TEST_MNEMONIC,
     address: TEST_ADDRESS,
   }),
-  EvmMnemonicWallet: class {
-    type = "evm-mnemonic";
+  Secp256k1Bip39Wallet: class {
+    type = "secp256k1-bip39";
     address = TEST_ADDRESS;
     getX402Schemes() {
       return [];
@@ -127,7 +127,7 @@ describe("init command", () => {
     const [config, scope] = saveConfigSpy.mock.calls[0];
     expect(config).toEqual({
       wallet: {
-        type: "evm-mnemonic",
+        type: "secp256k1-bip39",
         mnemonic: TEST_MNEMONIC,
         address: TEST_ADDRESS,
       },
