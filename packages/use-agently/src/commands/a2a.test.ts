@@ -57,7 +57,9 @@ describe("a2a command", () => {
 
     test("streams text output 10 times", async () => {
       await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo-10/", "-m", "hi"]);
-      expect(out.stdout).toBe(Array(10).fill("hi").join("\n"));
+      // free-echo-10 streams the message back 10 times with 200ms delays between each chunk
+      const expected = "hi\nhi\nhi\nhi\nhi\nhi\nhi\nhi\nhi\nhi";
+      expect(out.stdout).toBe(expected);
     }, 15000);
   });
 });
