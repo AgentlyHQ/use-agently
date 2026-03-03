@@ -8,6 +8,8 @@ runs:
       with:
         bun-version: latest
 
+    - uses: foundry-rs/foundry-toolchain@v1
+
     - run: |
         echo "DO_NOT_TRACK=1" >> $GITHUB_ENV
         echo "NEXT_TELEMETRY_DISABLED=1" >> $GITHUB_ENV
