@@ -91,9 +91,112 @@ npm publishing is triggered by GitHub releases. Version is extracted from git ta
 - **Machine-readable output** — prefer structured output (exit codes, predictable stdout) so agents can parse results without screen-scraping
 - When in doubt, ask: _"Would an AI agent love to use this?"_
 
+## CLI Design Specification
+
+This section is the authoritative design plan for the `use-agently` CLI command surface. All new commands **must** follow these conventions.
+
+### Command Taxonomy
+
+Commands are grouped into four categories. New commands must be placed in one of these categories:
+
+| Category               | Purpose                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| **Lifecycle & Health** | Setup, diagnostics, identity, and wallet balance               |
+| **Discovery**          | Browsing the Agently marketplace for agents, tools, and skills |
+| **Operations**         | Configuration, wallet management, and CLI updates              |
+| **Protocols**          | Direct protocol invocations (A2A, MCP, ERC-8004, HTTP)         |
+
+### Subcommand Pattern
+
+Commands that have subcommands use a **colon separator**: `<command>:<subcommand>`.
+
+```
+use-agently marketplace:agents "query"
+use-agently a2a:card "uri"
+use-agently web:get "url"
+```
+
+Shorthands (aliases) are allowed for frequently used commands:
+
+```
+use-agently m "query"           # alias for: use-agently marketplace
+use-agently m:agents "query"    # alias for: use-agently marketplace:agents
+```
+
+### Full Command Reference
+
+#### Lifecycle & Health
+
+```bash
+use-agently                        # Default: print available commands (same as --help)
+use-agently help                   # Print available commands
+use-agently doctor                 # Run environment and configuration health checks
+use-agently whoami                 # Show current wallet type and address
+use-agently balance                # Show on-chain wallet balance
+```
+
+#### Discovery
+
+```bash
+use-agently marketplace            # List all agents/tools/skills on the marketplace
+use-agently marketplace "query"    # Search the marketplace
+use-agently marketplace:agents "query"   # Search agents specifically
+use-agently marketplace:tools "query"    # Search tools specifically
+use-agently marketplace:skills "query"   # Search skills specifically
+
+# Shorthands
+use-agently m "query"
+use-agently m:agents "query"
+use-agently m:tools "query"
+use-agently m:skills "query"
+```
+
+#### Operations
+
+```bash
+use-agently init                   # Initialize a wallet and config
+use-agently config                 # Show or edit current configuration
+use-agently update                 # Update the CLI to the latest version
+use-agently wallets                # List and manage configured wallets
+```
+
+#### Protocols
+
+```bash
+use-agently erc-8004 "uri"         # Resolve an ERC-8004 agent URI
+use-agently a2a "uri/url"          # Send a message to an agent via A2A protocol
+use-agently a2a:card "uri/url"     # Fetch and display the A2A agent card
+use-agently mcp "uri/url"          # Connect to an MCP server
+
+use-agently web "url"              # HTTP GET (default method)
+use-agently web:get "url"          # HTTP GET
+use-agently web:put "url"          # HTTP PUT
+```
+
+### Design Rules for New Commands
+
+1. **No TTY assumed** — every command must work in a non-interactive, non-TTY environment (scripts, CI, agent pipelines). Never prompt for input.
+
+2. **2-attempt error recovery** — if a command fails due to bad input, the error message must include enough information (expected type, shape, example) that the caller can succeed on the **second** attempt. A third attempt required is a design failure.
+
+   Example of a good error:
+
+   ```
+   Error: <agent-uri> must be a URL (e.g. https://use-agently.com/echo-agent/) or a short name resolvable on Agently (e.g. echo-agent).
+   ```
+
+3. **Self-describing** — `use-agently`, `use-agently -h`, `use-agently help`, and `use-agently --help` must all print the same top-level help output listing available commands by category.
+
+4. **Include examples in help** — every command's `--help` output should include at least one concrete usage example so agents can use it without guessing argument shapes.
+
+5. **Structured output** — use exit codes to signal success/failure. For `--output json`, emit valid JSON to stdout so agents can parse results.
+
+6. **Colon subcommand convention** — use `command:subcommand` (colon separator) for protocol variants and marketplace filters. Register these as Commander.js commands named `"command:subcommand"`.
+
 ## Documentation
 
 When CLI commands, features, or behavior change, always update these files to keep them in sync:
 
 - `README.md` — Project README (install, quick start, command reference, how it works)
+- `CLAUDE.md` / `AGENTS.md` — Development guidance and CLI design specification (keep in sync)
 - `skills/use-agently/SKILL.md` — General skill reference for AI agents; keep it focused on discovery (`doctor`, `--help`) rather than enumerating every flag
