@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { execSync } from "node:child_process";
 import { output } from "../output.js";
 import { loadState, saveState } from "../state.js";
+import { loadConfig } from "../config.js";
 import pkg from "../../package.json" with { type: "json" };
 
 const PACKAGE_NAME = "use-agently";
@@ -50,6 +51,9 @@ export async function checkAndUpdate(): Promise<{ current: string; latest: strin
 
 export async function checkAutoUpdate(): Promise<void> {
   try {
+    const config = await loadConfig();
+    if ((config?.env?.USE_AGENTLY_AUTO_UPDATE ?? 1) === 0) return;
+
     const state = await loadState();
     const lastCheck = state.lastUpdateCheck ? new Date(state.lastUpdateCheck).getTime() : 0;
     const hoursSinceLastCheck = (Date.now() - lastCheck) / (1000 * 60 * 60);

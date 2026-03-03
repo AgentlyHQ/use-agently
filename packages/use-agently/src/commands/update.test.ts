@@ -3,10 +3,20 @@ import { captureOutput } from "../testing";
 
 const mockLoadState = mock(async () => ({}));
 const mockSaveState = mock(async (_state: unknown) => {});
+const mockLoadConfig = mock(async () => undefined as unknown);
 
 mock.module("../state", () => ({
   loadState: mockLoadState,
   saveState: mockSaveState,
+}));
+
+mock.module("../config", () => ({
+  loadConfig: mockLoadConfig,
+  saveConfig: async () => {},
+  backupConfig: async () => "",
+  getConfigOrThrow: async () => {
+    throw new Error("No wallet configured.");
+  },
 }));
 
 mock.module("node:child_process", () => ({
@@ -121,6 +131,7 @@ describe("checkAutoUpdate", () => {
   beforeEach(() => {
     mockLoadState.mockClear();
     mockSaveState.mockClear();
+    mockLoadConfig.mockImplementation(async () => undefined);
     fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({ version: "9.9.9" }),
@@ -152,6 +163,23 @@ describe("checkAutoUpdate", () => {
 
   test("runs update check when no prior check recorded", async () => {
     mockLoadState.mockImplementation(async () => ({}));
+
+    await checkAutoUpdate();
+
+    expect(mockSaveState).toHaveBeenCalledTimes(1);
+  });
+
+  test("skips when USE_AGENTLY_AUTO_UPDATE is 0 in config", async () => {
+    mockLoadConfig.mockImplementation(async () => ({ env: { USE_AGENTLY_AUTO_UPDATE: 0 } }));
+
+    await checkAutoUpdate();
+
+    expect(mockSaveState).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("runs when USE_AGENTLY_AUTO_UPDATE is 1 in config", async () => {
+    mockLoadConfig.mockImplementation(async () => ({ env: { USE_AGENTLY_AUTO_UPDATE: 1 } }));
 
     await checkAutoUpdate();
 

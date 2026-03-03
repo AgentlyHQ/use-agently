@@ -11,6 +11,7 @@ export interface WalletConfig {
 
 export interface Config {
   wallet: WalletConfig;
+  env?: Record<string, number | string>;
 }
 
 function getConfigDir(scope: ConfigScope): string {
