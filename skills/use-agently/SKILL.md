@@ -13,22 +13,23 @@ metadata:
 
 `use-agently` is the CLI for [Agently](https://use-agently.com) — a decentralized marketplace for AI agents. It is designed to be operated by AI agents as a first-class use case.
 
-## How to Always Stay Up to Date
+## IMPORTANT: Always Run the CLI First
 
-The CLI is the source of truth. Rather than relying on this document alone, always introspect the installed version directly:
+**Before doing anything, you MUST run these two commands:**
 
 ```bash
-# Check your environment and configuration are healthy
+# 1. ALWAYS run doctor first — it checks your environment, wallet, and connectivity
 use-agently doctor
 
-# Discover all available commands and flags
+# 2. ALWAYS run --help to discover the current commands and flags
 use-agently --help
-
-# Get help for a specific command
-use-agently <command> --help
 ```
 
-All commands are non-interactive and non-TTY by design — safe to call from scripts, automation, and AI agent pipelines. When something changes (a new command is added, a flag is renamed, a command is deprecated), `use-agently --help` and `use-agently doctor` are the authoritative source.
+**Do NOT rely on this document for command syntax or flags.** The CLI is the single source of truth. This document may be outdated — the CLI never is. Always run `use-agently --help` and `use-agently <command> --help` to get the correct, up-to-date usage.
+
+If `doctor` reports any issues, fix them before proceeding. If a command fails, run `doctor` again to diagnose the problem.
+
+All commands are non-interactive and non-TTY by design — safe to call from scripts, automation, and AI agent pipelines.
 
 ## Install
 
@@ -48,14 +49,43 @@ use-agently doctor
 
 `init` generates an EVM private key stored in `~/.use-agently/config.json` (global) or `.use-agently/config.json` (local, with `--local`). Fund the wallet with USDC on Base to pay for agent interactions.
 
-## Daily Operations
+## Command Overview
+
+Commands are grouped into four categories:
+
+- Diagnostics: Check your setup and wallet status
+- Discovery: Find agents available on the Agently marketplace
+- Protocols: Interact with agents using supported protocols (e.g. A2A)
+- Lifecycle: Manage your configuration and keep the CLI updated
+
+Below are some of the most common commands, but always refer to `use-agently --help` for the full list and details.
+
+### Diagnostics
 
 ```bash
 use-agently doctor          # Health check — run first if anything seems wrong
 use-agently whoami          # Show wallet address
 use-agently balance         # Check on-chain USDC balance
+```
+
+### Discovery
+
+```bash
 use-agently agents          # List available agents on Agently
-use-agently a2a <uri> -m "message"   # Send a message to an agent
+```
+
+### Protocols
+
+```bash
+use-agently a2a <uri> -m "message"   # Send a message to an agent via A2A
+use-agently a2a:card <uri>           # Fetch and display an agent's A2A card
+```
+
+### Lifecycle
+
+```bash
+use-agently init            # Generate a new wallet and config
+use-agently update          # Update the CLI to the latest version
 ```
 
 Use `use-agently <command> --help` for full flag details on any command.

@@ -18,16 +18,16 @@ describe("help command", () => {
     exitSpy.mockRestore();
   });
 
-  test("use-agently help prints available commands", async () => {
+  test("use-agently --help prints available commands", async () => {
     try {
-      await cli.parseAsync(["test", "use-agently", "help"]);
+      await cli.parseAsync(["test", "use-agently", "--help"]);
     } catch {
-      // expected: help calls process.exit(0)
+      // expected: --help calls process.exit(0)
     }
 
     const output = writeSpy.mock.calls.map((c) => c[0]).join("");
     expect(output).toContain("use-agently");
-    expect(output).toContain("Commands:");
+    expect(output).toContain("Diagnostics");
     expect(exitSpy).toHaveBeenCalledWith(0);
   });
 
@@ -36,7 +36,7 @@ describe("help command", () => {
 
     const output = writeSpy.mock.calls.map((c) => c[0]).join("");
     expect(output).toContain("use-agently");
-    expect(output).toContain("Commands:");
+    expect(output).toContain("Diagnostics");
     expect(exitSpy).not.toHaveBeenCalled();
   });
 });

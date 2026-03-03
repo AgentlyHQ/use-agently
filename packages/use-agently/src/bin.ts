@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
 import { cli } from "./cli";
+import { checkAutoUpdate } from "./commands/update.js";
 
-cli.parse();
+await cli.parseAsync();
+await checkAutoUpdate();

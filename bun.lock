@@ -36,6 +36,7 @@
         "commander": "^14.0.3",
         "viem": "^2.46.3",
         "yaml": "^2.8.2",
+        "zod": "^4",
       },
       "devDependencies": {
         "@types/bun": "^1.3.9",
