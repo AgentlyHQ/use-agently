@@ -186,10 +186,13 @@ describe("checkAutoUpdate", () => {
     expect(mockSaveState).toHaveBeenCalledTimes(1);
   });
 
-  test("silently swallows errors", async () => {
+  test("logs warning but does not throw on errors", async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
     mockLoadState.mockImplementation(async () => ({}));
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
     await expect(checkAutoUpdate()).resolves.toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith("Auto-update failed:", expect.any(String));
+    warnSpy.mockRestore();
   });
 });

@@ -61,8 +61,8 @@ export async function checkAutoUpdate(): Promise<void> {
     if (hoursSinceLastCheck < 24) return;
 
     await checkAndUpdate();
-  } catch {
-    // Auto-update errors are silently swallowed
+  } catch (err) {
+    console.warn("Auto-update failed:", err instanceof Error ? err.message : String(err));
   }
 }
 
