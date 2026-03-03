@@ -54,6 +54,11 @@ describe("a2a command", () => {
       await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo", "-m", "hello world"]);
       expect(out.stdout).toBe("hello world");
     });
+
+    test("streams text output 10 times", async () => {
+      await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl() + "/free-echo-10", "-m", "hi"]);
+      expect(out.stdout).toBe(Array(10).fill("hi").join("\n"));
+    }, 15000);
   });
 });
 
