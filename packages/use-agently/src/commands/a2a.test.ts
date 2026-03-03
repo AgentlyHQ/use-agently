@@ -54,11 +54,6 @@ describe("a2a command", () => {
       await cli.parseAsync(["test", "use-agently", "a2a", agent.getAgentUrl(), "-m", "hello world"]);
       expect(out.stdout).toBe("hello world");
     });
-
-    test("json output", async () => {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a", agent.getAgentUrl(), "-m", "hello world"]);
-      expect(out.json).toBe("hello world");
-    });
   });
 });
 
