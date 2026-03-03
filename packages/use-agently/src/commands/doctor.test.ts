@@ -1,8 +1,27 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { captureOutput, mockConfigModule, testConfig } from "../testing";
+import { captureOutput, testConfig } from "../testing";
 
 let mockConfig: unknown = testConfig();
-mockConfigModule(() => mockConfig);
+let mockLoadConfigError: Error | null = null;
+let mockSavedConfig: unknown = null;
+
+mock.module("../config", () => ({
+  loadConfig: async () => {
+    if (mockLoadConfigError) throw mockLoadConfigError;
+    return mockConfig;
+  },
+  saveConfig: async (cfg: unknown) => {
+    mockSavedConfig = cfg;
+    mockConfig = cfg;
+  },
+  backupConfig: async () => "backup.json",
+  getConfigOrThrow: async () => {
+    if (mockLoadConfigError) throw mockLoadConfigError;
+    const cfg = mockConfig;
+    if (!cfg || !(cfg as any).wallet) throw new Error("No wallet configured. Run `use-agently init` first.");
+    return cfg;
+  },
+}));
 
 let mockGetChainId: () => Promise<bigint> = async () => 8453n;
 
@@ -24,6 +43,8 @@ describe("doctor command", () => {
 
   beforeEach(() => {
     mockConfig = testConfig();
+    mockLoadConfigError = null;
+    mockSavedConfig = null;
     mockGetChainId = async () => 8453n;
     exitSpy = spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
@@ -104,5 +125,60 @@ describe("doctor command", () => {
       message: "Network error",
     });
     expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
+  test("bad config (corrupt) - reports error without --fix", async () => {
+    mockLoadConfigError = new Error("Config file at /home/.use-agently/config.json contains invalid JSON.");
+
+    try {
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor"]);
+    } catch {
+      // expected: process.exit throws
+    }
+
+    const parsed = out.json as any;
+    expect(parsed.ok).toBe(false);
+    expect(parsed.checks[0]).toEqual({
+      name: "Wallet configured",
+      ok: false,
+      message: "Config file at /home/.use-agently/config.json contains invalid JSON.",
+    });
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
+  test("bad config (corrupt) - auto-fixed with --fix", async () => {
+    mockLoadConfigError = new Error("Config file at /home/.use-agently/config.json contains invalid JSON.");
+
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor", "--fix"]);
+
+    const parsed = out.json as any;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.checks[0]).toEqual({
+      name: "Wallet configured",
+      ok: true,
+      fixed: true,
+    });
+    expect(parsed.checks[1]).toEqual({
+      name: "Wallet loadable",
+      ok: true,
+    });
+    expect(exitSpy).not.toHaveBeenCalled();
+    expect(mockSavedConfig).not.toBeNull();
+  });
+
+  test("no wallet - auto-fixed with --fix", async () => {
+    mockConfig = undefined;
+
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor", "--fix"]);
+
+    const parsed = out.json as any;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.checks[0]).toEqual({
+      name: "Wallet configured",
+      ok: true,
+      fixed: true,
+    });
+    expect(exitSpy).not.toHaveBeenCalled();
+    expect(mockSavedConfig).not.toBeNull();
   });
 });
