@@ -66,6 +66,8 @@ export async function checkAndUpdate(): Promise<{ current: string; latest: strin
 
 export async function checkAutoUpdate(): Promise<void> {
   try {
+    if (CURRENT_VERSION === "0.0.0") return;
+
     const config = await loadConfig();
     if ((config?.env?.USE_AGENTLY_AUTO_UPDATE ?? 1) === 0) return;
 
