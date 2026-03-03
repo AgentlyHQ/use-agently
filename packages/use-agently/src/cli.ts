@@ -7,6 +7,8 @@ import { a2aCommand, a2aCardCommand } from "./commands/a2a";
 import { doctorCommand } from "./commands/doctor";
 import { updateCommand } from "./commands/update";
 
+import pkg from "../package.json" with { type: "json" };
+
 export const cli = new Command();
 
 cli
@@ -14,7 +16,7 @@ cli
   .description(
     "Agently is the way AI coordinate and transact. The routing and settlement layer for your agent economy.",
   )
-  .version("0.0.0")
+  .version(pkg.version)
   .option("-o, --output <format>", "Output format (text, json)", "text")
   .action(() => {
     cli.outputHelp();
