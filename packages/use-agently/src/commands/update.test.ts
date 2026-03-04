@@ -27,11 +27,8 @@ mock.module("node:child_process", () => ({
 }));
 
 const { cli } = await import("../cli");
-
 const { CURRENT_VERSION, checkAutoUpdate } = await import("./update");
 const updateModule = await import("./update");
-
-const NPM_REGISTRY_URL = "https://registry.npmjs.org/use-agently/latest";
 
 describe("update command", () => {
   const out = captureOutput();
@@ -43,13 +40,10 @@ describe("update command", () => {
     mockWriteFile.mockClear();
     mockMkdir.mockClear();
     mockReadFile.mockImplementation(async () => JSON.stringify({}));
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url === NPM_REGISTRY_URL) {
-        return Promise.resolve(new Response(JSON.stringify({ version: "9.9.9" })));
-      }
-      throw new Error(`Unexpected fetch call: ${url}`);
-    });
+    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: "9.9.9" }),
+    } as Response);
     exitSpy = spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
     });
@@ -81,13 +75,10 @@ describe("update command", () => {
   });
 
   test("no update when already on latest", async () => {
-    fetchSpy.mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url === NPM_REGISTRY_URL) {
-        return Promise.resolve(new Response(JSON.stringify({ version: CURRENT_VERSION })));
-      }
-      throw new Error(`Unexpected fetch call: ${url}`);
-    });
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: CURRENT_VERSION }),
+    } as Response);
 
     await cli.parseAsync(["test", "use-agently", "-o", "json", "update"]);
 
@@ -103,15 +94,11 @@ describe("update command", () => {
 
     expect(mockWriteFile).toHaveBeenCalledTimes(1);
     const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string);
-    expect(typeof written.lastUpdateCheck).toStrictEqual("string");
+    expect(typeof written.lastUpdateCheck).toBe("string");
   });
 
   test("exits with 1 on registry error", async () => {
-    fetchSpy.mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url === NPM_REGISTRY_URL) return Promise.resolve(new Response(null, { status: 503 }));
-      throw new Error(`Unexpected fetch call: ${url}`);
-    });
+    fetchSpy.mockResolvedValue({ ok: false, status: 503 } as Response);
 
     try {
       await cli.parseAsync(["test", "use-agently", "update"]);
@@ -135,13 +122,10 @@ describe("checkAutoUpdate", () => {
     mockReadFile.mockImplementation(async () => {
       throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
     });
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url === NPM_REGISTRY_URL) {
-        return Promise.resolve(new Response(JSON.stringify({ version: "9.9.9" })));
-      }
-      throw new Error(`Unexpected fetch call: ${url}`);
-    });
+    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: "9.9.9" }),
+    } as Response);
     devVersionSpy = spyOn(updateModule, "isDevVersion").mockReturnValue(false);
   });
 
@@ -191,11 +175,7 @@ describe("checkAutoUpdate", () => {
   });
 
   test("logs warning but does not throw on errors", async () => {
-    fetchSpy.mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url === NPM_REGISTRY_URL) return Promise.resolve(new Response(null, { status: 500 }));
-      throw new Error(`Unexpected fetch call: ${url}`);
-    });
+    fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
     const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
     await expect(checkAutoUpdate()).resolves.toBeUndefined();

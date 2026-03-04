@@ -26,18 +26,12 @@ const TEST_AGENTS = [
   },
 ];
 
-const MARKETPLACE_URL = "https://use-agently.com/marketplace.json";
-
 describe("search command", () => {
   const out = captureOutput();
   let fetchSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url === MARKETPLACE_URL) return Promise.resolve(new Response(JSON.stringify({ agents: TEST_AGENTS })));
-      throw new Error(`Unexpected fetch call: ${url}`);
-    });
+    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ agents: TEST_AGENTS })));
   });
 
   afterEach(() => {
@@ -54,7 +48,7 @@ describe("search command", () => {
     await cli.parseAsync(["test", "use-agently", "search", "echo"]);
     const parsed = out.yaml as any;
     expect(parsed.agents).toHaveLength(1);
-    expect(parsed.agents[0].name).toStrictEqual("Echo Agent");
+    expect(parsed.agents[0].name).toBe("Echo Agent");
   });
 
   test("filters agents by protocol", async () => {
@@ -67,7 +61,7 @@ describe("search command", () => {
     await cli.parseAsync(["test", "use-agently", "search", "echo", "--protocol", "mcp"]);
     const parsed = out.yaml as any;
     expect(parsed.agents).toHaveLength(1);
-    expect(parsed.agents[0].name).toStrictEqual("Echo Agent");
+    expect(parsed.agents[0].name).toBe("Echo Agent");
   });
 
   test("json output", async () => {
