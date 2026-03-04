@@ -7,9 +7,11 @@ import {
   mockConfigModule,
   startX402FacilitatorLocal,
   stopX402FacilitatorLocal,
+  TEST_ADDRESS,
   TEST_PRIVATE_KEY,
   type X402FacilitatorLocal,
 } from "../testing";
+import { accounts } from "x402-fl/testcontainers";
 import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
 import pkg from "../../package.json" with { type: "json" };
 
@@ -80,14 +82,24 @@ describe("mcp x402 payment (paid)", () => {
     return client;
   }
 
-  test("paid tool call succeeds with funded wallet", async () => {
+  test("paid tool call succeeds with funded wallet and debits sender exactly $0.001", async () => {
     const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
     const client = await createMcpClient();
     try {
+      const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+      const receiverBefore = await fixture.container.balance(accounts.facilitator.address);
+
       const x402Client = createMcpPaymentClient(client, wallet);
       const result = await x402Client.callTool("paid-echo-tool", { message: "hello mcp x402" });
       const content = result.content as Array<{ type: string; text: string }>;
       expect(content[0].text).toStrictEqual("hello mcp x402");
+
+      const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+      const receiverAfter = await fixture.container.balance(accounts.facilitator.address);
+
+      // $0.001 USDC = 1000 raw units (6 decimals)
+      expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
+      expect(receiverAfter.value - receiverBefore.value).toStrictEqual(1000n);
     } finally {
       await client.close();
     }

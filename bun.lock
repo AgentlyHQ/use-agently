@@ -974,7 +974,7 @@
 
     "ws": ["ws@8.18.3", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg=="],
 
-    "x402-fl": ["x402-fl@0.2.2", "", { "dependencies": { "@x402/core": "^2.5.0", "@x402/evm": "^2.5.0", "boxen": "^8.0.1", "chalk": "^5.6.2", "commander": "^12.1.0", "express": "^4.21.2", "viem": "^2.39.3" }, "peerDependencies": { "testcontainers": "^11.0.0" }, "optionalPeers": ["testcontainers"], "bin": { "x402-fl": "dist/cli.js" } }, "sha512-KiuK8tHFOl57KnXmfWKUAL6b73eNCcWWIOcr2mX6pDhgp07pimTzXZqRMO8KJWUBKzzGnbBkTV/weBCTE4/bXw=="],
+    "x402-fl": ["x402-fl@0.3.0", "", { "dependencies": { "@x402/core": "^2.5.0", "@x402/evm": "^2.5.0", "boxen": "^8.0.1", "chalk": "^5.6.2", "commander": "^12.1.0", "express": "^4.21.2", "viem": "^2.39.3" }, "peerDependencies": { "testcontainers": "^11.0.0" }, "optionalPeers": ["testcontainers"], "bin": { "x402-fl": "dist/cli.js" } }, "sha512-QJpEYVyRUmnVCWpi/0xDgfEepabnMlEmmZQmT/jLFueAfD5kybF78q46shQbiO0Us5ZQ2dBFcTiLHbET+g9AKA=="],
 
     "y18n": ["y18n@5.0.8", "", {}, "sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA=="],
 

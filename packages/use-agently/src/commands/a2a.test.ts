@@ -6,9 +6,11 @@ import {
   mockConfigModule,
   startX402FacilitatorLocal,
   stopX402FacilitatorLocal,
+  TEST_ADDRESS,
   TEST_PRIVATE_KEY,
   type X402FacilitatorLocal,
 } from "../testing";
+import { accounts } from "x402-fl/testcontainers";
 import { extractAgentText } from "./a2a";
 import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
 
@@ -115,10 +117,13 @@ describe("a2a card command (free)", () => {
 });
 
 describe("a2a x402 payment (paid)", () => {
-  test("paid send succeeds with funded wallet", async () => {
+  test("paid send succeeds with funded wallet and debits sender exactly $0.001", async () => {
     const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
     const paymentFetch = createPaymentFetch(wallet);
     const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", paymentFetch as typeof fetch);
+
+    const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+    const receiverBefore = await fixture.container.balance(accounts.facilitator.address);
 
     const result = await client.sendMessage({
       message: {
@@ -130,6 +135,13 @@ describe("a2a x402 payment (paid)", () => {
     });
 
     expect(extractAgentText(result)).toStrictEqual("hello x402");
+
+    const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+    const receiverAfter = await fixture.container.balance(accounts.facilitator.address);
+
+    // $0.001 USDC = 1000 raw units (6 decimals)
+    expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
+    expect(receiverAfter.value - receiverBefore.value).toStrictEqual(1000n);
   });
 
   test("unpaid send returns 402", async () => {
