@@ -1,30 +1,31 @@
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { captureOutput, mockConfigModule, testConfig } from "../testing";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import {
+  captureOutput,
+  mockConfigModule,
+  startX402FacilitatorLocal,
+  stopX402FacilitatorLocal,
+  testConfig,
+  type X402FacilitatorLocal,
+} from "../testing";
 
 let mockConfig: unknown = testConfig();
 mockConfigModule(() => mockConfig);
-
-let mockGetChainId: () => Promise<bigint> = async () => 8453n;
-
-mock.module("viem", () => ({
-  createPublicClient: () => ({
-    readContract: async () => 0n,
-    getChainId: () => mockGetChainId(),
-  }),
-  http: () => ({}),
-  erc20Abi: [],
-  formatUnits: () => "0",
-}));
 
 const { cli } = await import("../cli");
 
 describe("doctor command", () => {
   const out = captureOutput();
+  let fixture: X402FacilitatorLocal;
   let exitSpy: ReturnType<typeof spyOn>;
+
+  beforeAll(async () => {
+    fixture = await startX402FacilitatorLocal();
+  }, 120_000);
+
+  afterAll(() => stopX402FacilitatorLocal(fixture), 30_000);
 
   beforeEach(() => {
     mockConfig = testConfig();
-    mockGetChainId = async () => 8453n;
     exitSpy = spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
     });
@@ -35,7 +36,7 @@ describe("doctor command", () => {
   });
 
   test("all checks pass - text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "doctor"]);
+    await cli.parseAsync(["test", "use-agently", "doctor", "--rpc", fixture.container.getRpcUrl()]);
 
     expect(out.yaml).toEqual({
       ok: true,
@@ -49,7 +50,7 @@ describe("doctor command", () => {
   });
 
   test("all checks pass - json output", async () => {
-    await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor", "--rpc", fixture.container.getRpcUrl()]);
 
     expect(out.json).toEqual({
       ok: true,
@@ -65,13 +66,13 @@ describe("doctor command", () => {
     mockConfig = undefined;
 
     try {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor"]);
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor", "--rpc", fixture.container.getRpcUrl()]);
     } catch {
       // expected: process.exit throws
     }
 
     const parsed = out.json as any;
-    expect(parsed.ok).toBe(false);
+    expect(parsed.ok).toStrictEqual(false);
     expect(parsed.checks[0]).toEqual({
       name: "Wallet configured",
       ok: false,
@@ -86,23 +87,16 @@ describe("doctor command", () => {
   });
 
   test("network unreachable - fails with exit 1", async () => {
-    mockGetChainId = async () => {
-      throw new Error("Network error");
-    };
-
     try {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor"]);
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor", "--rpc", "http://127.0.0.1:1"]);
     } catch {
       // expected: process.exit throws
     }
 
     const parsed = out.json as any;
-    expect(parsed.ok).toBe(false);
-    expect(parsed.checks[2]).toEqual({
-      name: "Network reachable (Base RPC)",
-      ok: false,
-      message: "Network error",
-    });
+    expect(parsed.ok).toStrictEqual(false);
+    expect(parsed.checks[2].name).toStrictEqual("Network reachable (Base RPC)");
+    expect(parsed.checks[2].ok).toStrictEqual(false);
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });

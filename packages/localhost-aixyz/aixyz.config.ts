@@ -7,7 +7,7 @@ const config: AixyzConfig = {
   url: process.env.PORT ? `http://localhost:${process.env.PORT}/` : undefined,
   x402: {
     payTo: process.env.X402_PAY_TO ?? "0x0000000000000000000000000000000000000000",
-    network: "eip155:84532",
+    network: process.env.X402_NETWORK ?? "eip155:84532",
   },
   skills: [
     {

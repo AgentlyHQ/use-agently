@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { captureOutput, TEST_ADDRESS } from "../testing";
+import { privateKeyToAccount } from "viem/accounts";
+import { captureOutput, TEST_PRIVATE_KEY } from "../testing";
+import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+
+const TEST_ADDRESS = privateKeyToAccount(TEST_PRIVATE_KEY).address;
 
 let mockExistingConfig: unknown = undefined;
 const saveConfigSpy = mock(async (_config: unknown, _scope: unknown) => {});
@@ -16,16 +20,10 @@ mock.module("../config", () => ({
 mock.module("../wallets/evm-private-key", () => ({
   generateEvmPrivateKeyConfig: () => ({
     type: "evm-private-key",
-    privateKey: "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    privateKey: TEST_PRIVATE_KEY,
     address: TEST_ADDRESS,
   }),
-  EvmPrivateKeyWallet: class {
-    type = "evm-private-key";
-    address = TEST_ADDRESS;
-    getX402Schemes() {
-      return [];
-    }
-  },
+  EvmPrivateKeyWallet,
 }));
 
 const { cli } = await import("../cli");
@@ -72,11 +70,11 @@ describe("init command", () => {
     expect(config).toEqual({
       wallet: {
         type: "evm-private-key",
-        privateKey: "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        privateKey: TEST_PRIVATE_KEY,
         address: TEST_ADDRESS,
       },
     });
-    expect(scope).toBe("global");
+    expect(scope).toStrictEqual("global");
   });
 
   test("errors when wallet already exists without --regenerate", async () => {

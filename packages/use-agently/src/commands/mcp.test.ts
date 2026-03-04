@@ -1,33 +1,47 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { AixyzTesting } from "localhost-aixyz/test";
-import { captureOutput, mockConfigModule } from "../testing";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { createMcpPaymentClient } from "../client";
+import {
+  captureOutput,
+  mockConfigModule,
+  startX402FacilitatorLocal,
+  stopX402FacilitatorLocal,
+  TEST_PRIVATE_KEY,
+  type X402FacilitatorLocal,
+} from "../testing";
+import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+import pkg from "../../package.json" with { type: "json" };
 
 mockConfigModule();
 
 const { cli } = await import("../cli");
 
-const agent = new AixyzTesting();
+let fixture: X402FacilitatorLocal;
 
-beforeAll(() => agent.start(), 30000);
-afterAll(() => agent.stop(), 10000);
+beforeAll(async () => {
+  fixture = await startX402FacilitatorLocal();
+}, 120_000);
 
-describe("mcp command", () => {
+afterAll(() => stopX402FacilitatorLocal(fixture), 30_000);
+
+describe("mcp command (free)", () => {
   describe("list tools", () => {
     const out = captureOutput();
 
     test("lists available tools", async () => {
-      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--uri", agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--uri", fixture.agent.getAgentUrl()]);
       const tools = out.yaml as Array<Record<string, unknown>>;
-      expect(Array.isArray(tools)).toBe(true);
+      expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
       expect(tools[0]).toHaveProperty("name");
       expect(tools[0]).toHaveProperty("description");
     });
 
     test("json output lists tools as JSON array", async () => {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "mcp", "tools", "--uri", agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "-o", "json", "mcp", "tools", "--uri", fixture.agent.getAgentUrl()]);
       const tools = out.json as Array<Record<string, unknown>>;
-      expect(Array.isArray(tools)).toBe(true);
+      expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
     });
   });
@@ -44,12 +58,48 @@ describe("mcp command", () => {
         "echo",
         '{"message":"hello from mcp"}',
         "--uri",
-        agent.getAgentUrl(),
+        fixture.agent.getAgentUrl(),
       ]);
       const result = out.yaml as Record<string, unknown>;
       expect(result).toHaveProperty("content");
       const content = result.content as Array<{ type: string; text: string }>;
-      expect(content[0].text).toBe("hello from mcp");
+      expect(content[0].text).toStrictEqual("hello from mcp");
     });
+  });
+});
+
+describe("mcp x402 payment (paid)", () => {
+  function mcpUrl(): string {
+    return fixture.agent.getAgentUrl().replace(/\/?$/, "/mcp");
+  }
+
+  async function createMcpClient(): Promise<Client> {
+    const client = new Client({ name: "use-agently-test", version: pkg.version });
+    const transport = new StreamableHTTPClientTransport(new URL(mcpUrl()));
+    await client.connect(transport);
+    return client;
+  }
+
+  test("paid tool call succeeds with funded wallet", async () => {
+    const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
+    const client = await createMcpClient();
+    try {
+      const x402Client = createMcpPaymentClient(client, wallet);
+      const result = await x402Client.callTool("paid-echo-tool", { message: "hello mcp x402" });
+      const content = result.content as Array<{ type: string; text: string }>;
+      expect(content[0].text).toStrictEqual("hello mcp x402");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("unpaid tool call returns error", async () => {
+    const client = await createMcpClient();
+    try {
+      const result = await client.callTool({ name: "paid-echo-tool", arguments: { message: "should fail" } });
+      expect(result.isError).toStrictEqual(true);
+    } finally {
+      await client.close();
+    }
   });
 });

@@ -19,12 +19,19 @@ const TEST_AGENTS = [
   },
 ];
 
+const MARKETPLACE_URL = "https://use-agently.com/marketplace.json";
+
 describe("agents command", () => {
   const out = captureOutput();
   let fetchSpy: ReturnType<typeof spyOn>;
+  const realFetch = globalThis.fetch;
 
   beforeEach(() => {
-    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ agents: TEST_AGENTS })));
+    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url === MARKETPLACE_URL) return Promise.resolve(new Response(JSON.stringify({ agents: TEST_AGENTS })));
+      return realFetch(input, init);
+    });
   });
 
   afterEach(() => {
@@ -50,7 +57,11 @@ describe("agents command", () => {
   });
 
   test("empty agents list", async () => {
-    fetchSpy.mockResolvedValue(new Response(JSON.stringify({ agents: [] })));
+    fetchSpy.mockImplementation((input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url === MARKETPLACE_URL) return Promise.resolve(new Response(JSON.stringify({ agents: [] })));
+      return realFetch(input, init);
+    });
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
     expect(out.json).toEqual({ agents: [] });
@@ -60,6 +71,6 @@ describe("agents command", () => {
     await cli.parseAsync(["test", "use-agently", "agents"]);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(fetchSpy.mock.calls[0][0]).toBe("https://use-agently.com/marketplace.json");
+    expect(fetchSpy.mock.calls[0][0]).toStrictEqual("https://use-agently.com/marketplace.json");
   });
 });
