@@ -5,7 +5,7 @@ describe("DryRunPaymentRequired", () => {
   test("formats USDC amount with network", () => {
     const err = new DryRunPaymentRequired([
       {
-        maxAmountRequired: "1000",
+        amount: "1000",
         network: "eip155:8453",
         description: "Payment required",
         payTo: "0xabc",
@@ -21,7 +21,7 @@ describe("DryRunPaymentRequired", () => {
   test("formats whole dollar amount without trailing decimals", () => {
     const err = new DryRunPaymentRequired([
       {
-        maxAmountRequired: "1000000",
+        amount: "1000000",
         network: "eip155:8453",
         description: "",
         payTo: "0xabc",
@@ -43,7 +43,7 @@ describe("DryRunPaymentRequired", () => {
   test("stores requirements on the error instance", () => {
     const reqs = [
       {
-        maxAmountRequired: "500",
+        amount: "500",
         network: "eip155:1",
         description: "",
         payTo: "0xabc",
@@ -76,7 +76,7 @@ describe("createDryRunFetch", () => {
       x402Version: 2,
       accepts: [
         {
-          maxAmountRequired: "1000",
+          amount: "1000",
           network: "eip155:8453",
           description: "Test payment",
           payTo: "0xabc",

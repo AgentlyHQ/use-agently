@@ -5,7 +5,7 @@ import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
 
 export interface PaymentRequirementsInfo {
-  maxAmountRequired: string;
+  amount: string;
   network: string;
   description: string;
   payTo: string;
@@ -27,13 +27,13 @@ export class DryRunPaymentRequired extends Error {
 
 function formatPaymentAmount(req: PaymentRequirementsInfo): string {
   try {
-    const raw = BigInt(req.maxAmountRequired);
+    const raw = BigInt(req.amount);
     const usd = Number(raw) / 1_000_000;
     const formatted = usd % 1 === 0 ? `$${usd}` : `$${usd.toFixed(6).replace(/\.?0+$/, "")}`;
     const network = req.network ? ` on ${req.network}` : "";
     return `${formatted} USDC${network}`;
   } catch {
-    return `${req.maxAmountRequired} (raw units)`;
+    return `${req.amount} (raw units)`;
   }
 }
 

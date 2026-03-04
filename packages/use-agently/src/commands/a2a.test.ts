@@ -170,7 +170,7 @@ describe("a2a x402 payment (paid)", () => {
       const err = e as DryRunPaymentRequired;
       // Assert the requirement shape exactly (1000 raw units = $0.001 USDC with 6 decimals)
       expect(err.requirements.length).toBeGreaterThan(0);
-      expect(err.requirements[0].maxAmountRequired).toBe("1000");
+      expect(err.requirements[0].amount).toBe("1000");
       expect(err.requirements[0].network).toBe("eip155:8453");
       // Formatted message surfaces the cost and --pay hint
       expect(err.message).toContain("$0.001");
