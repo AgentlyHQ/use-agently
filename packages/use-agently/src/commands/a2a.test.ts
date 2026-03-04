@@ -135,16 +135,20 @@ describe("a2a x402 payment (paid)", () => {
   test("unpaid send returns 402", async () => {
     const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", fetch);
 
-    const promise = client.sendMessage({
-      message: {
-        kind: "message",
-        messageId: randomUUID(),
-        role: "user",
-        parts: [{ kind: "text", text: "should fail" }],
-      },
-    });
-
-    expect(promise).rejects.toThrow();
+    try {
+      await client.sendMessage({
+        message: {
+          kind: "message",
+          messageId: randomUUID(),
+          role: "user",
+          parts: [{ kind: "text", text: "should fail" }],
+        },
+      });
+      throw new Error("Expected promise to reject, but it resolved");
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+      expect((e as Error).message).toContain("402");
+    }
   });
 
   test("unfunded wallet fails payment", async () => {
@@ -154,15 +158,19 @@ describe("a2a x402 payment (paid)", () => {
     const paymentFetch = createPaymentFetch(wallet);
     const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", paymentFetch as typeof fetch);
 
-    const promise = client.sendMessage({
-      message: {
-        kind: "message",
-        messageId: randomUUID(),
-        role: "user",
-        parts: [{ kind: "text", text: "should fail" }],
-      },
-    });
-
-    expect(promise).rejects.toThrow();
+    try {
+      await client.sendMessage({
+        message: {
+          kind: "message",
+          messageId: randomUUID(),
+          role: "user",
+          parts: [{ kind: "text", text: "should fail" }],
+        },
+      });
+      throw new Error("Expected promise to reject, but it resolved");
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+      expect((e as Error).message).toContain("402");
+    }
   });
 });

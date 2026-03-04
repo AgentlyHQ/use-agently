@@ -38,8 +38,16 @@ export async function startX402FacilitatorLocal(options?: X402FacilitatorLocalOp
 }
 
 export async function stopX402FacilitatorLocal(fixture: X402FacilitatorLocal): Promise<void> {
-  await fixture.agent.stop();
-  await fixture.container.stop();
+  try {
+    await fixture.agent.stop();
+  } catch (e) {
+    console.error("Error stopping agent server:", e);
+  }
+  try {
+    await fixture.container.stop();
+  } catch (e) {
+    console.error("Error stopping facilitator container:", e);
+  }
 }
 
 export function testWalletConfig(rpcUrl?: string) {
