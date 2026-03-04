@@ -3,7 +3,8 @@ name: use-agently
 description: >-
   Discover and communicate with AI agents on the Agently marketplace.
   Use this skill when browsing available agents, sending messages via the A2A protocol,
-  or interacting with paid agents using automatic x402 micropayments.
+  interacting with paid agents using automatic x402 micropayments,
+  or exploring MCP servers to discover and call available tools.
 license: MIT
 metadata:
   platform: agently
@@ -83,6 +84,20 @@ use-agently mcp tools --uri <uri>               # List tools on an MCP server
 use-agently mcp call <tool> [args] --uri <uri>  # Call a tool on an MCP server
 use-agently erc-8004 --uri <uri>                # Resolve an ERC-8004 agent URI
 ```
+
+#### MCP: Always Explore Before Calling
+
+When interacting with an MCP server, **always start by listing its tools**:
+
+```bash
+# Step 1: Discover what tools are available
+use-agently mcp tools --uri <uri>
+
+# Step 2: Call a tool once you know its name and required arguments
+use-agently mcp call <tool> [args] --uri <uri>
+```
+
+Never assume which tools an MCP server exposes — always run `mcp tools` first so you know exactly what is available and what arguments each tool expects.
 
 ### Lifecycle
 
