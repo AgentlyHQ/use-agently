@@ -1,44 +1,49 @@
-import { describe, expect, mock, test } from "bun:test";
-import { captureOutput, mockConfigModule, TEST_ADDRESS } from "../testing";
-
-const TEST_BALANCE = 100_500_000n; // 100.5 USDC (6 decimals)
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import {
+  captureOutput,
+  mockConfigModule,
+  startX402FacilitatorLocal,
+  stopX402FacilitatorLocal,
+  TEST_ADDRESS,
+  type X402FacilitatorLocal,
+} from "../testing";
 
 mockConfigModule();
-
-mock.module("viem", () => ({
-  createPublicClient: () => ({
-    readContract: async () => TEST_BALANCE,
-    getChainId: async () => 8453n,
-  }),
-  http: () => ({}),
-  erc20Abi: [],
-  formatUnits: (value: bigint, decimals: number) => (Number(value) / 10 ** decimals).toString(),
-}));
 
 const { cli } = await import("../cli");
 
 describe("balance command", () => {
   const out = captureOutput();
+  let fixture: X402FacilitatorLocal;
+
+  beforeAll(async () => {
+    fixture = await startX402FacilitatorLocal();
+  }, 120_000);
+
+  afterAll(async () => {
+    if (fixture) await stopX402FacilitatorLocal(fixture);
+  }, 30_000);
 
   test("text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "balance"]);
+    await cli.parseAsync(["test", "use-agently", "balance", "--rpc", fixture.container.getRpcUrl()]);
 
-    expect(out.yaml).toEqual({
-      address: TEST_ADDRESS,
-      balance: "100.5",
-      currency: "USDC",
-      network: "Base",
-    });
+    const parsed = out.yaml as Record<string, unknown>;
+    expect(parsed.address).toStrictEqual(TEST_ADDRESS);
+    expect(parsed.currency).toStrictEqual("USDC");
+    expect(parsed.network).toStrictEqual("Base");
+    expect(Number(parsed.balance)).toBeGreaterThan(0);
   });
 
   test("json output", async () => {
-    await cli.parseAsync(["test", "use-agently", "-o", "json", "balance"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "balance", "--rpc", fixture.container.getRpcUrl()]);
 
-    expect(out.json).toEqual({
+    const parsed = out.json as Record<string, unknown>;
+    expect(parsed).toStrictEqual({
       address: TEST_ADDRESS,
-      balance: "100.5",
       currency: "USDC",
       network: "Base",
+      balance: expect.any(String),
     });
+    expect(Number(parsed.balance)).toBeGreaterThan(0);
   });
 });

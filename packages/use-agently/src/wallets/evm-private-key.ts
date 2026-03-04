@@ -27,15 +27,18 @@ export class EvmPrivateKeyWallet implements Wallet {
   readonly type = "evm-private-key";
   readonly address: string;
   private readonly privateKey: `0x${string}`;
+  private readonly rpcUrl?: string;
 
-  constructor(privateKey: `0x${string}`) {
+  constructor(privateKey: `0x${string}`, rpcUrl?: string) {
     this.privateKey = privateKey;
     this.address = privateKeyToAccount(privateKey).address;
+    this.rpcUrl = rpcUrl;
   }
 
   getX402Schemes(): SchemeRegistration[] {
     const account = privateKeyToAccount(this.privateKey);
-    const publicClient = createPublicClient({ chain: base, transport: http() });
+    const transport = this.rpcUrl ? http(this.rpcUrl) : http();
+    const publicClient = createPublicClient({ chain: base, transport });
     const signer = toClientEvmSigner(account, publicClient);
     return [
       {

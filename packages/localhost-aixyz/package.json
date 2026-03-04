@@ -11,5 +11,8 @@
     "ai": "^6",
     "aixyz": "^0",
     "zod": "^4"
+  },
+  "devDependencies": {
+    "x402-fl": "^0"
   }
 }

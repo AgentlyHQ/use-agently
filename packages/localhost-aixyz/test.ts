@@ -15,6 +15,18 @@ function getFreePort(): Promise<number> {
   });
 }
 
+/**
+ * Test harness that spawns the localhost-aixyz dev server in a subprocess.
+ *
+ * The following environment variables can be overridden via `start({ env })`:
+ *
+ * | Variable               | Used in            | Default                                          |
+ * |------------------------|--------------------|--------------------------------------------------|
+ * | `PORT`                 | `aixyz.config.ts`  | Auto-assigned free port                           |
+ * | `X402_PAY_TO`          | `aixyz.config.ts`  | `0x0000000000000000000000000000000000000000`       |
+ * | `X402_NETWORK`         | `aixyz.config.ts`  | `eip155:84532`                                    |
+ * | `X402_FACILITATOR_URL` | `app/accepts.ts`   | `https://x402.use-agently.com/facilitator`        |
+ */
 export class AixyzTesting {
   private proc: ReturnType<typeof Bun.spawn> | undefined;
   private agentUrl: string | undefined;
@@ -24,14 +36,15 @@ export class AixyzTesting {
     return this.agentUrl;
   }
 
-  async start(port?: number): Promise<void> {
-    const resolvedPort = port ?? (await getFreePort());
+  async start(options?: number | { port?: number; env?: Record<string, string> }): Promise<void> {
+    const opts = typeof options === "number" ? { port: options } : options;
+    const resolvedPort = opts?.port ?? (await getFreePort());
     this.agentUrl = `http://localhost:${resolvedPort}`;
     this.proc = Bun.spawn(["bun", "run", "dev", "--", "--port", String(resolvedPort)], {
       cwd: import.meta.dir,
       stdout: "ignore",
       stderr: "ignore",
-      env: { ...process.env, PORT: String(resolvedPort) },
+      env: { ...process.env, PORT: String(resolvedPort), ...opts?.env },
     });
     await this.waitForServer(this.agentUrl);
   }
