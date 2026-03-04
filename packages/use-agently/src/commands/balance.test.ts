@@ -20,7 +20,9 @@ describe("balance command", () => {
     fixture = await startX402FacilitatorLocal();
   }, 120_000);
 
-  afterAll(() => stopX402FacilitatorLocal(fixture), 30_000);
+  afterAll(async () => {
+    if (fixture) await stopX402FacilitatorLocal(fixture);
+  }, 30_000);
 
   test("text output", async () => {
     await cli.parseAsync(["test", "use-agently", "balance", "--rpc", fixture.container.getRpcUrl()]);

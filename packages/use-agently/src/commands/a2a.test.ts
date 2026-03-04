@@ -24,7 +24,9 @@ beforeAll(async () => {
   fixture = await startX402FacilitatorLocal();
 }, 120_000);
 
-afterAll(() => stopX402FacilitatorLocal(fixture), 30_000);
+afterAll(async () => {
+  if (fixture) await stopX402FacilitatorLocal(fixture);
+}, 30_000);
 
 describe("a2a command (free)", () => {
   test("createA2AClient connects to a free agent", async () => {

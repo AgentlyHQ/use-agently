@@ -25,13 +25,12 @@ const MARKETPLACE_URL = "https://use-agently.com/marketplace.json";
 describe("erc-8004 command", () => {
   const out = captureOutput();
   let fetchSpy: ReturnType<typeof spyOn>;
-  const realFetch = globalThis.fetch;
 
   beforeEach(() => {
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === MARKETPLACE_URL) return Promise.resolve(new Response(JSON.stringify({ agents: TEST_AGENTS })));
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
   });
 

@@ -37,19 +37,18 @@ describe("update command", () => {
   const out = captureOutput();
   let fetchSpy: ReturnType<typeof spyOn>;
   let exitSpy: ReturnType<typeof spyOn>;
-  const realFetch = globalThis.fetch;
 
   beforeEach(() => {
     mockReadFile.mockClear();
     mockWriteFile.mockClear();
     mockMkdir.mockClear();
     mockReadFile.mockImplementation(async () => JSON.stringify({}));
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === NPM_REGISTRY_URL) {
         return Promise.resolve(new Response(JSON.stringify({ version: "9.9.9" })));
       }
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
     exitSpy = spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
@@ -82,12 +81,12 @@ describe("update command", () => {
   });
 
   test("no update when already on latest", async () => {
-    fetchSpy.mockImplementation((input, init) => {
+    fetchSpy.mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === NPM_REGISTRY_URL) {
         return Promise.resolve(new Response(JSON.stringify({ version: CURRENT_VERSION })));
       }
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
 
     await cli.parseAsync(["test", "use-agently", "-o", "json", "update"]);
@@ -108,10 +107,10 @@ describe("update command", () => {
   });
 
   test("exits with 1 on registry error", async () => {
-    fetchSpy.mockImplementation((input, init) => {
+    fetchSpy.mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === NPM_REGISTRY_URL) return Promise.resolve(new Response(null, { status: 503 }));
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
 
     try {
@@ -127,7 +126,6 @@ describe("update command", () => {
 describe("checkAutoUpdate", () => {
   let fetchSpy: ReturnType<typeof spyOn>;
   let devVersionSpy: ReturnType<typeof spyOn>;
-  const realFetch = globalThis.fetch;
 
   beforeEach(() => {
     mockReadFile.mockClear();
@@ -137,12 +135,12 @@ describe("checkAutoUpdate", () => {
     mockReadFile.mockImplementation(async () => {
       throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
     });
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === NPM_REGISTRY_URL) {
         return Promise.resolve(new Response(JSON.stringify({ version: "9.9.9" })));
       }
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
     devVersionSpy = spyOn(updateModule, "isDevVersion").mockReturnValue(false);
   });
@@ -193,10 +191,10 @@ describe("checkAutoUpdate", () => {
   });
 
   test("logs warning but does not throw on errors", async () => {
-    fetchSpy.mockImplementation((input, init) => {
+    fetchSpy.mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === NPM_REGISTRY_URL) return Promise.resolve(new Response(null, { status: 500 }));
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
     const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 

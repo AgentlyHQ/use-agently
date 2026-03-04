@@ -24,13 +24,11 @@ const MARKETPLACE_URL = "https://use-agently.com/marketplace.json";
 describe("agents command", () => {
   const out = captureOutput();
   let fetchSpy: ReturnType<typeof spyOn>;
-  const realFetch = globalThis.fetch;
-
   beforeEach(() => {
-    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    fetchSpy = spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === MARKETPLACE_URL) return Promise.resolve(new Response(JSON.stringify({ agents: TEST_AGENTS })));
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
   });
 
@@ -57,10 +55,10 @@ describe("agents command", () => {
   });
 
   test("empty agents list", async () => {
-    fetchSpy.mockImplementation((input, init) => {
+    fetchSpy.mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url === MARKETPLACE_URL) return Promise.resolve(new Response(JSON.stringify({ agents: [] })));
-      return realFetch(input, init);
+      throw new Error(`Unexpected fetch call: ${url}`);
     });
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
