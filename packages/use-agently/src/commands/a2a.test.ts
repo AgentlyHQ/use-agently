@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { createA2AClient, createPaymentFetch } from "../client";
+import { createA2AClient, createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "../client";
 import {
   captureOutput,
   mockConfigModule,
@@ -151,6 +151,34 @@ describe("a2a x402 payment (paid)", () => {
     expect(receiverAfter.value - receiverBefore.value).toStrictEqual(1000n);
   });
 
+  test("dry-run on paid endpoint throws DryRunPaymentRequired with cost info", async () => {
+    const dryRunFetch = createDryRunFetch();
+    const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", dryRunFetch);
+
+    try {
+      await client.sendMessage({
+        message: {
+          kind: "message",
+          messageId: randomUUID(),
+          role: "user",
+          parts: [{ kind: "text", text: "dry run" }],
+        },
+      });
+      throw new Error("Expected DryRunPaymentRequired to be thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(DryRunPaymentRequired);
+      const err = e as DryRunPaymentRequired;
+      // Assert the requirement shape exactly (1000 raw units = $0.001 USDC with 6 decimals)
+      expect(err.requirements.length).toBeGreaterThan(0);
+      expect(err.requirements[0].amount).toBe("1000");
+      expect(err.requirements[0].network).toBe("eip155:8453");
+      // Formatted message surfaces the cost and --pay hint
+      expect(err.message).toContain("$0.001");
+      expect(err.message).toContain("USDC");
+      expect(err.message).toContain("--pay");
+    }
+  });
+
   test("unpaid send returns 402", async () => {
     const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", fetch);
 
@@ -191,5 +219,38 @@ describe("a2a x402 payment (paid)", () => {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain("402");
     }
+  });
+
+  describe("cli", () => {
+    const out = captureOutput();
+
+    test("a2a send without --pay on paid agent shows dry-run cost message and exits 1", async () => {
+      let exitCode: number | undefined;
+      const origExit = process.exit.bind(process);
+      process.exit = ((code?: number) => {
+        exitCode = code;
+        throw new Error(`process.exit(${code})`);
+      }) as typeof process.exit;
+
+      try {
+        await cli.parseAsync([
+          "test",
+          "use-agently",
+          "a2a",
+          "send",
+          "--uri",
+          fixture.agent.getAgentUrl() + "/paid-echo/",
+          "-m",
+          "hello",
+        ]);
+      } catch {
+        // expected: process.exit throws
+      } finally {
+        process.exit = origExit;
+      }
+
+      expect(exitCode).toBe(1);
+      expect(out.stderr).toContain("--pay");
+    });
   });
 });

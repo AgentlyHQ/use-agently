@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createMcpPaymentClient } from "../client";
+import { createMcpPaymentClient, DryRunPaymentRequired } from "../client";
 import {
   captureOutput,
   mockConfigModule,
@@ -120,5 +120,38 @@ describe("mcp x402 payment (paid)", () => {
     } finally {
       await client.close();
     }
+  });
+
+  describe("cli dry-run and --pay", () => {
+    const out = captureOutput();
+
+    test("dry-run mcp call on paid tool shows cost and exits 1", async () => {
+      let exitCode: number | undefined;
+      const origExit = process.exit.bind(process);
+      process.exit = ((code?: number) => {
+        exitCode = code;
+        throw new Error(`process.exit(${code})`);
+      }) as typeof process.exit;
+
+      try {
+        await cli.parseAsync([
+          "test",
+          "use-agently",
+          "mcp",
+          "call",
+          "paid-echo-tool",
+          '{"message":"dry run"}',
+          "--uri",
+          fixture.agent.getAgentUrl(),
+        ]);
+      } catch {
+        // expected: process.exit throws
+      } finally {
+        process.exit = origExit;
+      }
+
+      expect(exitCode).toBe(1);
+      expect(out.stderr).toContain("--pay");
+    });
   });
 });

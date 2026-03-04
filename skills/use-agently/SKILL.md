@@ -78,12 +78,34 @@ use-agently agents          # List available agents on Agently
 ### Protocols
 
 ```bash
-use-agently a2a send --uri <uri> -m "message"   # Send a message to an agent via A2A
-use-agently a2a card --uri <uri>                # Fetch and display an agent's A2A card
-use-agently mcp tools --uri <uri>               # List tools on an MCP server
-use-agently mcp call <tool> [args] --uri <uri>  # Call a tool on an MCP server
-use-agently erc-8004 --uri <uri>                # Resolve an ERC-8004 agent URI
+use-agently a2a send --uri <uri> -m "message"         # Dry-run: shows cost if payment required
+use-agently a2a send --uri <uri> -m "message" --pay   # Send and authorize payment
+use-agently a2a card --uri <uri>                       # Fetch and display an agent's A2A card
+use-agently mcp tools --uri <uri>                      # List tools on an MCP server
+use-agently mcp call <tool> <args> --uri <uri>         # Dry-run: shows cost if payment required
+use-agently mcp call <tool> <args> --uri <uri> --pay   # Call tool and authorize payment
+use-agently erc-8004 --uri <uri>                       # Resolve an ERC-8004 agent URI
 ```
+
+#### Payment: Dry-Run by Default
+
+**Protocol commands that may involve payment are dry-run by default.** Without `--pay`, the command will:
+
+1. Attempt the request.
+2. If the agent requires payment, **print the transaction cost** and exit — no funds are spent.
+3. Re-run the same command with `--pay` to authorize the payment and proceed.
+
+```bash
+# Step 1 — Discover the cost (no payment made)
+use-agently a2a send --uri paid-agent -m "Hello"
+# → This request requires payment of $0.001 USDC on eip155:8453.
+# → Run the same command with --pay to authorize the transaction and proceed.
+
+# Step 2 — Approve and send (payment made)
+use-agently a2a send --uri paid-agent -m "Hello" --pay
+```
+
+Free agents (no payment required) work with or without `--pay`.
 
 #### MCP: Always Explore Before Calling
 

@@ -1,9 +1,10 @@
 import { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
+import boxen from "boxen";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { createPaymentFetch, createA2AClient } from "../client.js";
+import { createPaymentFetch, createA2AClient, createDryRunFetch, DryRunPaymentRequired } from "../client.js";
 import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
@@ -77,42 +78,65 @@ const a2aSendCommand = new Command("send")
   .description("Send a message to an agent via A2A protocol")
   .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
   .requiredOption("-m, --message <text>", "Message to send")
+  .option("--pay", "Authorize payment if the agent requires it (default: dry-run, shows cost only)")
   .addHelpText(
     "after",
-    '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri echo-agent -m "Hello!"',
+    '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri echo-agent -m "Hello!"\n  use-agently a2a send --uri paid-agent -m "Hello!" --pay',
   )
-  .action(async (options: { uri?: string; message: string }) => {
+  .action(async (options: { uri?: string; message: string; pay?: boolean }) => {
     const agentInput = resolveUriOption(options, "a2a send");
-    const config = await getConfigOrThrow();
-    const wallet = loadWallet(config.wallet);
-    const paymentFetch = createPaymentFetch(wallet);
     const agentUrl = resolveAgentUrl(agentInput);
-    const client = await createA2AClient(agentUrl, paymentFetch as typeof fetch);
 
-    const stream = client.sendMessageStream({
-      message: {
-        kind: "message",
-        messageId: randomUUID(),
-        role: "user",
-        parts: [{ kind: "text", text: options.message }],
-      },
-    });
-
-    let wroteText = false;
-    let lastResult: any = null;
-    for await (const event of stream) {
-      lastResult = event;
-      const chunk = extractStreamEventText(event);
-      if (chunk) {
-        process.stdout.write(chunk);
-        wroteText = true;
-      }
+    let fetchImpl: typeof fetch;
+    if (options.pay) {
+      const config = await getConfigOrThrow();
+      const wallet = loadWallet(config.wallet);
+      fetchImpl = createPaymentFetch(wallet) as typeof fetch;
+    } else {
+      fetchImpl = createDryRunFetch();
     }
 
-    if (wroteText) {
-      process.stdout.write("\n");
-    } else {
-      console.log(extractAgentText(lastResult));
+    try {
+      const client = await createA2AClient(agentUrl, fetchImpl);
+
+      const stream = client.sendMessageStream({
+        message: {
+          kind: "message",
+          messageId: randomUUID(),
+          role: "user",
+          parts: [{ kind: "text", text: options.message }],
+        },
+      });
+
+      let wroteText = false;
+      let lastResult: any = null;
+      for await (const event of stream) {
+        lastResult = event;
+        const chunk = extractStreamEventText(event);
+        if (chunk) {
+          process.stdout.write(chunk);
+          wroteText = true;
+        }
+      }
+
+      if (wroteText) {
+        process.stdout.write("\n");
+      } else {
+        console.log(extractAgentText(lastResult));
+      }
+    } catch (err) {
+      if (err instanceof DryRunPaymentRequired) {
+        console.error(
+          boxen(err.message, {
+            title: "Payment Required",
+            titleAlignment: "center",
+            borderColor: "yellow",
+            padding: 1,
+          }),
+        );
+        process.exit(1);
+      }
+      throw err;
     }
   });
 
