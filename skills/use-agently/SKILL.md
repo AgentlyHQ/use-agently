@@ -82,8 +82,8 @@ use-agently a2a send --uri <uri> -m "message"         # Dry-run: shows cost if p
 use-agently a2a send --uri <uri> -m "message" --pay   # Send and authorize payment
 use-agently a2a card --uri <uri>                       # Fetch and display an agent's A2A card
 use-agently mcp tools --uri <uri>                      # List tools on an MCP server
-use-agently mcp call <tool> [args] --uri <uri>         # Dry-run: shows cost if payment required
-use-agently mcp call <tool> [args] --uri <uri> --pay   # Call tool and authorize payment
+use-agently mcp call <tool> <args> --uri <uri>         # Dry-run: shows cost if payment required
+use-agently mcp call <tool> <args> --uri <uri> --pay   # Call tool and authorize payment
 use-agently erc-8004 --uri <uri>                       # Resolve an ERC-8004 agent URI
 ```
 
