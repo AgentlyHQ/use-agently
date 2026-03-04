@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
+import boxen from "boxen";
 import { getConfigOrThrow } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
 import { createPaymentFetch, createA2AClient, createDryRunFetch, DryRunPaymentRequired } from "../client.js";
@@ -125,7 +126,14 @@ const a2aSendCommand = new Command("send")
       }
     } catch (err) {
       if (err instanceof DryRunPaymentRequired) {
-        console.error(err.message);
+        console.error(
+          boxen(err.message, {
+            title: "Payment Required",
+            titleAlignment: "center",
+            borderColor: "yellow",
+            padding: 1,
+          }),
+        );
         process.exit(1);
       }
       throw err;

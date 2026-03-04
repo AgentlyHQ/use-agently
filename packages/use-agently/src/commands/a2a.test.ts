@@ -167,10 +167,9 @@ describe("a2a x402 payment (paid)", () => {
       throw new Error("Expected DryRunPaymentRequired to be thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(DryRunPaymentRequired);
-      // Message must include the cost amount so the caller knows what they'll pay
-      expect((e as DryRunPaymentRequired).message).toContain("$0.001");
-      expect((e as DryRunPaymentRequired).message).toContain("USDC");
-      expect((e as DryRunPaymentRequired).message).toContain("--pay");
+      expect((e as DryRunPaymentRequired).message).toBe(
+        "This request requires payment of $0.001 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
+      );
       expect((e as DryRunPaymentRequired).requirements.length).toBeGreaterThan(0);
     }
   });

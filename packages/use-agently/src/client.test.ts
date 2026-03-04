@@ -13,8 +13,9 @@ describe("DryRunPaymentRequired", () => {
       },
     ]);
     expect(err.name).toBe("DryRunPaymentRequired");
-    expect(err.message).toContain("$0.001 USDC on eip155:8453");
-    expect(err.message).toContain("--pay");
+    expect(err.message).toBe(
+      "This request requires payment of $0.001 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
+    );
   });
 
   test("formats whole dollar amount without trailing decimals", () => {
@@ -27,15 +28,16 @@ describe("DryRunPaymentRequired", () => {
         asset: "0xabc",
       },
     ]);
-    // $1.000000 should format as $1 (whole number path), not $1. or $1.000000
-    expect(err.message).toContain("$1 USDC");
-    expect(err.message).not.toContain("$1.");
+    expect(err.message).toBe(
+      "This request requires payment of $1 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
+    );
   });
 
   test("uses fallback message when requirements are empty", () => {
     const err = new DryRunPaymentRequired([]);
-    expect(err.message).toContain("an unknown amount");
-    expect(err.message).toContain("--pay");
+    expect(err.message).toBe(
+      "This request requires payment of an unknown amount.\nRun the same command with --pay to authorize the transaction and proceed.",
+    );
   });
 
   test("stores requirements on the error instance", () => {
@@ -103,7 +105,9 @@ describe("createDryRunFetch", () => {
       throw new Error("Expected DryRunPaymentRequired to be thrown");
     } catch (err) {
       expect(err).toBeInstanceOf(DryRunPaymentRequired);
-      expect((err as DryRunPaymentRequired).message).toContain("$0.001 USDC on eip155:8453");
+      expect((err as DryRunPaymentRequired).message).toBe(
+        "This request requires payment of $0.001 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
+      );
     } finally {
       globalThis.fetch = originalFetch;
     }

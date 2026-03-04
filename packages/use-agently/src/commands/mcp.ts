@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import boxen from "boxen";
 import { output } from "../output.js";
 import { loadConfig } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
@@ -110,7 +111,14 @@ const mcpCallCommand = new Command("call")
         }
       } catch (err) {
         if (err instanceof DryRunPaymentRequired) {
-          console.error(err.message);
+          console.error(
+            boxen(err.message, {
+              title: "Payment Required",
+              titleAlignment: "center",
+              borderColor: "yellow",
+              padding: 1,
+            }),
+          );
           process.exit(1);
         }
         throw err;
