@@ -1,9 +1,17 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
+import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
 import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
+import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
 
 export function createPaymentFetch(wallet: Wallet) {
   return wrapFetchWithPaymentFromConfig(fetch, {
+    schemes: wallet.getX402Schemes(),
+  });
+}
+
+export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {
+  return wrapMCPClientWithPaymentFromConfig(mcpClient, {
     schemes: wallet.getX402Schemes(),
   });
 }

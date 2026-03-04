@@ -2,6 +2,9 @@ import { Command } from "commander";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { output } from "../output.js";
+import { loadConfig } from "../config.js";
+import { loadWallet } from "../wallets/wallet.js";
+import { createMcpPaymentClient } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
 
 function resolveMcpUrl(input: string): string {
@@ -75,8 +78,16 @@ const mcpCallCommand = new Command("call")
     }
     const client = await createMcpClient(mcpUrl);
     try {
-      const result = await client.callTool({ name: tool, arguments: args });
-      output(command, result);
+      const config = await loadConfig();
+      if (config?.wallet) {
+        const wallet = loadWallet(config.wallet);
+        const x402Client = createMcpPaymentClient(client, wallet);
+        const result = await x402Client.callTool(tool, args);
+        output(command, result);
+      } else {
+        const result = await client.callTool({ name: tool, arguments: args });
+        output(command, result);
+      }
     } finally {
       await client.close();
     }
