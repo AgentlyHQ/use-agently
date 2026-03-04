@@ -54,6 +54,8 @@ describe("mcp command (free)", () => {
     const out = captureOutput();
 
     test("calls echo tool and returns text content", async () => {
+      const balanceBefore = await fixture.container.balance(TEST_ADDRESS);
+
       await cli.parseAsync([
         "test",
         "use-agently",
@@ -68,6 +70,9 @@ describe("mcp command (free)", () => {
       expect(result).toHaveProperty("content");
       const content = result.content as Array<{ type: string; text: string }>;
       expect(content[0].text).toStrictEqual("hello from mcp");
+
+      const balanceAfter = await fixture.container.balance(TEST_ADDRESS);
+      expect(balanceAfter.value).toStrictEqual(balanceBefore.value);
     });
   });
 });

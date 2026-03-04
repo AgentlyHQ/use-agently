@@ -36,6 +36,8 @@ describe("a2a command (free)", () => {
 
   test("sendMessage returns echoed text via extractAgentText", async () => {
     const client = await createA2AClient(fixture.agent.getAgentUrl() + "/free-echo/", fetch);
+    const balanceBefore = await fixture.container.balance(TEST_ADDRESS);
+
     const result = await client.sendMessage({
       message: {
         kind: "message",
@@ -45,6 +47,9 @@ describe("a2a command (free)", () => {
       },
     });
     expect(extractAgentText(result)).toStrictEqual("hello world");
+
+    const balanceAfter = await fixture.container.balance(TEST_ADDRESS);
+    expect(balanceAfter.value).toStrictEqual(balanceBefore.value);
   });
 
   test("extractAgentText handles different messages", async () => {
