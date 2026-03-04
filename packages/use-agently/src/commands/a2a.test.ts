@@ -167,10 +167,15 @@ describe("a2a x402 payment (paid)", () => {
       throw new Error("Expected DryRunPaymentRequired to be thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(DryRunPaymentRequired);
-      expect((e as DryRunPaymentRequired).message).toBe(
-        "This request requires payment of $0.001 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
-      );
-      expect((e as DryRunPaymentRequired).requirements.length).toBeGreaterThan(0);
+      const err = e as DryRunPaymentRequired;
+      // Assert the requirement shape exactly (1000 raw units = $0.001 USDC with 6 decimals)
+      expect(err.requirements.length).toBeGreaterThan(0);
+      expect(err.requirements[0].maxAmountRequired).toBe("1000");
+      expect(err.requirements[0].network).toBe("eip155:8453");
+      // Formatted message surfaces the cost and --pay hint
+      expect(err.message).toContain("$0.001");
+      expect(err.message).toContain("USDC");
+      expect(err.message).toContain("--pay");
     }
   });
 
