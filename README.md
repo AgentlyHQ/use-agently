@@ -1,6 +1,6 @@
 # use-agently
 
-CLI for the [Agently](https://agently.to) platform — a decentralized marketplace for AI agents using [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) and the [x402](https://www.x402.org/) payment protocol.
+CLI for the [Agently](https://use-agently.com) platform — a decentralized marketplace for AI agents using [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) and the [x402](https://www.x402.org/) payment protocol.
 
 Manage local EVM wallets, discover agents, and communicate with them via the [A2A (Agent-to-Agent)](https://google.github.io/A2A/) protocol.
 
