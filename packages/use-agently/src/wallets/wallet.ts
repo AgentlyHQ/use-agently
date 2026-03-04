@@ -11,10 +11,7 @@ export interface Wallet {
 export function loadWallet(walletConfig: WalletConfig): Wallet {
   switch (walletConfig.type) {
     case "evm-private-key":
-      if (typeof walletConfig.rpcUrl !== "string") {
-        throw new Error("Invalid wallet configuration: rpcUrl must be a string for evm-private-key wallet");
-      }
-      return new EvmPrivateKeyWallet(walletConfig.privateKey as `0x${string}`, walletConfig.rpcUrl);
+      return new EvmPrivateKeyWallet(walletConfig.privateKey as `0x${string}`);
     default:
       throw new Error(`Unknown wallet type: ${walletConfig.type}`);
   }
