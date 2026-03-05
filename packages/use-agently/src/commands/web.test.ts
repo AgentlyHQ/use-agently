@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseHeaders, resolveBody } from "./web";
@@ -63,7 +63,7 @@ describe("resolveBody", () => {
 
   test("reads file content with @ prefix", async () => {
     const filePath = join(tmpDir, "body.json");
-    await writeFile(filePath, '{"from":"file"}', "utf-8");
+    await Bun.write(filePath, '{"from":"file"}');
     expect(await resolveBody(`@${filePath}`)).toBe('{"from":"file"}');
   });
 
@@ -246,7 +246,7 @@ describe("web command cli", () => {
       const outPath = join(tmpDir, "out.txt");
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/f", "--output-file", outPath]);
-      const written = await readFile(outPath, "utf-8");
+      const written = await Bun.file(outPath).text();
       expect(written).toBe("file content");
       expect(out.stdout).toContain("HTTP 200");
     });

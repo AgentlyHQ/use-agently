@@ -149,7 +149,7 @@ use-agently web get https://api.example.com/data -v
 use-agently web post https://api.example.com/data -d '{"key":"value"}' -H "Content-Type: application/json"
 
 # Dry-run shows cost if payment required; add --pay to authorize
-use-agently web get https://paid-api.example.com/resource --pay
+use-agently web get https://paid-api.example.com/resource
 ```
 
 ## How It Works
