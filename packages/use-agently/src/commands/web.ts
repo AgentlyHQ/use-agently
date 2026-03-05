@@ -105,6 +105,44 @@ async function consumeBodyWithLimit(response: Response, maxSize: number): Promis
   return Buffer.concat(chunks);
 }
 
+/**
+ * Stream the response body directly to a file while enforcing a byte-size limit.
+ * Avoids buffering the entire response in memory for --output-file.
+ */
+async function streamBodyToFile(response: Response, filePath: string, maxSize: number): Promise<void> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    await Bun.write(filePath, Buffer.alloc(0));
+    return;
+  }
+
+  const file = Bun.file(filePath);
+  const writer = file.writer();
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxSize) {
+        await reader.cancel();
+        writer.end();
+        throw new Error(
+          `Response body exceeded --max-filesize limit of ${formatBytes(maxSize)} while streaming. ` +
+            `Increase the limit with --max-filesize <bytes>.`,
+        );
+      }
+      writer.write(value);
+    }
+    writer.end();
+  } catch (err) {
+    writer.end();
+    throw err;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 // ─── Core request execution ─────────────────────────────────────────────────
 
 interface WebOptions {
@@ -191,24 +229,27 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
       console.error("<");
     }
 
-    // Stream body with size limit — protects against OOM for chunked responses too.
+    // --output-file: stream directly to disk to avoid buffering large responses in memory.
     // Timer stays active so the timeout covers both headers AND body transfer.
-    const bodyBuf = await consumeBodyWithLimit(response, maxSize);
-    clearTimeout(timer);
-
-    // --output-file: write binary content to disk
     if (options.outputFile) {
       try {
-        await Bun.write(options.outputFile, bodyBuf);
+        await streamBodyToFile(response, options.outputFile, maxSize);
       } catch (e) {
+        // Re-throw max-filesize errors as-is
+        if (e instanceof Error && e.message.includes("--max-filesize")) throw e;
         throw new Error(
           `Could not write to "${options.outputFile}": ${e instanceof Error ? e.message : e}. Ensure the directory exists and is writable.`,
         );
       }
+      clearTimeout(timer);
       console.log(`Response body written to ${options.outputFile} (HTTP ${response.status})`);
       if (!response.ok) process.exit(1);
       return;
     }
+
+    // Stream body with size limit — protects against OOM for chunked responses too.
+    const bodyBuf = await consumeBodyWithLimit(response, maxSize);
+    clearTimeout(timer);
 
     const responseBody = bodyBuf.toString("utf-8");
 
