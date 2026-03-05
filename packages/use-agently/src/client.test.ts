@@ -36,7 +36,7 @@ describe("DryRunPaymentRequired", () => {
   test("uses fallback message when requirements are empty", () => {
     const err = new DryRunPaymentRequired([]);
     expect(err.message).toBe(
-      "This request requires payment of an unknown amount.\nRun the same command with --pay to authorize the transaction and proceed.",
+      "This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.",
     );
   });
 

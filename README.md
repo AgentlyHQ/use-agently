@@ -137,6 +137,21 @@ Resolve an ERC-8004 agent URI and display its details from the Agently marketpla
 use-agently erc-8004 --uri eip155:8453/erc-8004:0x1234/1
 ```
 
+### `web`
+
+Make raw HTTP requests with x402 payment support. Accepts curl-like flags.
+
+```bash
+# GET request with verbose output
+use-agently web get https://api.example.com/data -v
+
+# POST with JSON body
+use-agently web post https://api.example.com/data -d '{"key":"value"}' -H "Content-Type: application/json"
+
+# Dry-run shows cost if payment required; add --pay to authorize
+use-agently web get https://paid-api.example.com/resource --pay
+```
+
 ## How It Works
 
 1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services.
