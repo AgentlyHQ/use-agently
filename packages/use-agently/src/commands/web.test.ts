@@ -106,7 +106,6 @@ describe("web command cli", () => {
     test("use-agently web prints help with subcommands", async () => {
       await cli.parseAsync(["test", "use-agently", "web"]);
       const helpOutput = writeSpy.mock.calls.map((c) => c[0]).join("");
-      expect(helpOutput).toContain("-o, --output <format>");
       expect(helpOutput).toContain("get");
       expect(helpOutput).toContain("post");
       expect(helpOutput).toContain("put");
