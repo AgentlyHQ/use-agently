@@ -338,7 +338,6 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
 
 export const webCommand = new Command("web")
   .description("Make HTTP requests with x402 payment support")
-  .configureHelp({ showGlobalOptions: true })
   .action(function () {
     (this as Command).outputHelp();
   });
