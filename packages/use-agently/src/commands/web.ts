@@ -281,7 +281,8 @@ function addSharedOptions(cmd: Command, hasBody: boolean): Command {
 function createMethodSubcommand(method: string, description: string, hasBody: boolean): Command {
   const cmd = new Command(method)
     .description(description)
-    .argument("<url>", "Full URL to request (e.g. https://api.example.com/data)");
+    .argument("<url>", "Full URL to request (e.g. https://api.example.com/data)")
+    .showHelpAfterError(true);
 
   addSharedOptions(cmd, hasBody);
 
