@@ -1,4 +1,3 @@
-import { readFile, writeFile } from "node:fs/promises";
 import { Command } from "commander";
 import { resolveFetch, handleDryRunError, DryRunPaymentRequired } from "../client.js";
 import { output } from "../output.js";
@@ -43,7 +42,7 @@ export async function resolveBody(data?: string): Promise<string | undefined> {
       );
     }
     try {
-      return await readFile(filePath, "utf-8");
+      return await Bun.file(filePath).text();
     } catch {
       throw new Error(
         `Could not read file "${filePath}" (from -d @${filePath}). Ensure the file exists and is readable, or pass the body inline: -d '{"key":"value"}'`,
@@ -201,7 +200,7 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
     // --output-file: write binary content to disk
     if (options.outputFile) {
       try {
-        await writeFile(options.outputFile, bodyBuf);
+        await Bun.write(options.outputFile, bodyBuf);
       } catch (e) {
         throw new Error(
           `Could not write to "${options.outputFile}": ${e instanceof Error ? e.message : e}. Ensure the directory exists and is writable.`,
