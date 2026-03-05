@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -77,10 +77,14 @@ describe("resolveBody", () => {
 });
 
 describe("web command cli", () => {
-  const originalFetch = globalThis.fetch;
+  let fetchSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    fetchSpy = spyOn(globalThis, "fetch");
+  });
 
   afterEach(() => {
-    globalThis.fetch = originalFetch;
+    fetchSpy.mockRestore();
   });
 
   describe("help", () => {
@@ -102,6 +106,7 @@ describe("web command cli", () => {
     test("use-agently web prints help with subcommands", async () => {
       await cli.parseAsync(["test", "use-agently", "web"]);
       const helpOutput = writeSpy.mock.calls.map((c) => c[0]).join("");
+      expect(helpOutput).toContain("-o, --output <format>");
       expect(helpOutput).toContain("get");
       expect(helpOutput).toContain("post");
       expect(helpOutput).toContain("put");
@@ -114,27 +119,27 @@ describe("web command cli", () => {
     const out = captureOutput();
 
     test("GET request prints response body", async () => {
-      globalThis.fetch = (async () => new Response("hello world", { status: 200, statusText: "OK" })) as typeof fetch;
+      fetchSpy.mockImplementation(async () => new Response("hello world", { status: 200, statusText: "OK" }));
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/test"]);
       expect(out.stdout).toContain("hello world");
     });
 
     test("POST with -d sends body", async () => {
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         const body = init?.body as string;
         return new Response(`received: ${body}`, { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync(["test", "use-agently", "web", "post", "http://example.com/data", "-d", '{"test":1}']);
       expect(out.stdout).toContain('received: {"test":1}');
     });
 
     test("POST with --data-raw sends body without interpreting @", async () => {
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         const body = init?.body as string;
         return new Response(`received: ${body}`, { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync([
         "test",
@@ -166,10 +171,10 @@ describe("web command cli", () => {
 
     test("-H passes headers to fetch", async () => {
       let capturedHeaders: HeadersInit | undefined;
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         capturedHeaders = init?.headers;
         return new Response("ok", { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync([
         "test",
@@ -186,12 +191,14 @@ describe("web command cli", () => {
     });
 
     test("-i includes status and headers in output", async () => {
-      globalThis.fetch = (async () =>
-        new Response("body content", {
-          status: 200,
-          statusText: "OK",
-          headers: { "X-Test": "val" },
-        })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () =>
+          new Response("body content", {
+            status: 200,
+            statusText: "OK",
+            headers: { "X-Test": "val" },
+          }),
+      );
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/i", "-i"]);
       expect(out.stdout).toContain("HTTP 200 OK");
@@ -200,12 +207,14 @@ describe("web command cli", () => {
     });
 
     test("-v prints request/response headers to stderr", async () => {
-      globalThis.fetch = (async () =>
-        new Response("ok", {
-          status: 200,
-          statusText: "OK",
-          headers: { "X-Resp": "header" },
-        })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () =>
+          new Response("ok", {
+            status: 200,
+            statusText: "OK",
+            headers: { "X-Resp": "header" },
+          }),
+      );
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/v", "-v"]);
       expect(out.errorSpy.mock.calls.map((c) => c[0]).join("\n")).toContain("> GET http://example.com/v");
@@ -213,12 +222,14 @@ describe("web command cli", () => {
     });
 
     test("--output json returns structured JSON", async () => {
-      globalThis.fetch = (async () =>
-        new Response("json body", {
-          status: 201,
-          statusText: "Created",
-          headers: { "Content-Type": "text/plain" },
-        })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () =>
+          new Response("json body", {
+            status: 201,
+            statusText: "Created",
+            headers: { "Content-Type": "text/plain" },
+          }),
+      );
 
       await cli.parseAsync(["test", "use-agently", "-o", "json", "web", "get", "http://example.com/json"]);
       const result = out.json as Record<string, unknown>;
@@ -242,7 +253,7 @@ describe("web command cli", () => {
     });
 
     test("writes response body to file", async () => {
-      globalThis.fetch = (async () => new Response("file content", { status: 200, statusText: "OK" })) as typeof fetch;
+      fetchSpy.mockImplementation(async () => new Response("file content", { status: 200, statusText: "OK" }));
       const outPath = join(tmpDir, "out.txt");
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/f", "--output-file", outPath]);
@@ -252,8 +263,7 @@ describe("web command cli", () => {
     });
 
     test("includes HTTP status in log and exits 1 on error response", async () => {
-      globalThis.fetch = (async () =>
-        new Response("not found", { status: 404, statusText: "Not Found" })) as typeof fetch;
+      fetchSpy.mockImplementation(async () => new Response("not found", { status: 404, statusText: "Not Found" }));
       const outPath = join(tmpDir, "err.txt");
 
       let exitCode: number | undefined;
@@ -282,11 +292,11 @@ describe("web command cli", () => {
     test("PUT sends body", async () => {
       let capturedMethod: string | undefined;
       let capturedBody: string | undefined;
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         capturedMethod = init?.method;
         capturedBody = init?.body as string;
         return new Response(`put: ${capturedBody}`, { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync(["test", "use-agently", "web", "put", "http://example.com/r", "-d", '{"up":1}']);
       expect(capturedMethod).toBe("PUT");
@@ -295,10 +305,10 @@ describe("web command cli", () => {
 
     test("PATCH sends body", async () => {
       let capturedMethod: string | undefined;
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         capturedMethod = init?.method;
         return new Response("patched", { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync(["test", "use-agently", "web", "patch", "http://example.com/r", "-d", '{"p":1}']);
       expect(capturedMethod).toBe("PATCH");
@@ -307,10 +317,10 @@ describe("web command cli", () => {
 
     test("DELETE request", async () => {
       let capturedMethod: string | undefined;
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         capturedMethod = init?.method;
         return new Response("deleted", { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync(["test", "use-agently", "web", "delete", "http://example.com/r"]);
       expect(capturedMethod).toBe("DELETE");
@@ -348,12 +358,14 @@ describe("web command cli", () => {
     const out = captureOutput();
 
     test("rejects response exceeding default max size via content-length", async () => {
-      globalThis.fetch = (async () =>
-        new Response("big", {
-          status: 200,
-          statusText: "OK",
-          headers: { "Content-Length": String(200 * 1024 * 1024) },
-        })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () =>
+          new Response("big", {
+            status: 200,
+            statusText: "OK",
+            headers: { "Content-Length": String(200 * 1024 * 1024) },
+          }),
+      );
 
       await expect(cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/big"])).rejects.toThrow(
         "Response too large",
@@ -361,12 +373,14 @@ describe("web command cli", () => {
     });
 
     test("rejects response exceeding custom --max-filesize", async () => {
-      globalThis.fetch = (async () =>
-        new Response("medium", {
-          status: 200,
-          statusText: "OK",
-          headers: { "Content-Length": "2000" },
-        })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () =>
+          new Response("medium", {
+            status: 200,
+            statusText: "OK",
+            headers: { "Content-Length": "2000" },
+          }),
+      );
 
       await expect(
         cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/med", "--max-filesize", "1000"]),
@@ -374,12 +388,14 @@ describe("web command cli", () => {
     });
 
     test("allows response within custom --max-filesize", async () => {
-      globalThis.fetch = (async () =>
-        new Response("small", {
-          status: 200,
-          statusText: "OK",
-          headers: { "Content-Length": "500" },
-        })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () =>
+          new Response("small", {
+            status: 200,
+            statusText: "OK",
+            headers: { "Content-Length": "500" },
+          }),
+      );
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/sm", "--max-filesize", "1000"]);
       expect(out.stdout).toContain("small");
@@ -397,10 +413,10 @@ describe("web command cli", () => {
 
     test("without -L uses manual redirect mode", async () => {
       let capturedRedirect: RequestRedirect | undefined;
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         capturedRedirect = init?.redirect;
         return new Response("ok", { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/redir"]);
       expect(capturedRedirect).toBe("manual");
@@ -408,10 +424,10 @@ describe("web command cli", () => {
 
     test("with -L uses follow redirect mode", async () => {
       let capturedRedirect: RequestRedirect | undefined;
-      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSpy.mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
         capturedRedirect = init?.redirect;
         return new Response("ok", { status: 200, statusText: "OK" });
-      }) as typeof fetch;
+      });
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/redir", "-L"]);
       expect(capturedRedirect).toBe("follow");
@@ -422,8 +438,9 @@ describe("web command cli", () => {
     const out = captureOutput();
 
     test("exits 1 on 500 response", async () => {
-      globalThis.fetch = (async () =>
-        new Response("server error", { status: 500, statusText: "Internal Server Error" })) as typeof fetch;
+      fetchSpy.mockImplementation(
+        async () => new Response("server error", { status: 500, statusText: "Internal Server Error" }),
+      );
 
       let exitCode: number | undefined;
       const origExit = process.exit.bind(process);

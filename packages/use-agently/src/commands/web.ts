@@ -52,8 +52,7 @@ export async function resolveBody(data?: string): Promise<string | undefined> {
   return data;
 }
 
-// ─── Response size enforcement ──────────────────────────────────────────────
-
+/** Default maximum response size in bytes. */
 const DEFAULT_MAX_SIZE = 100 * 1024 * 1024; // 100 MB
 
 function formatBytes(bytes: number): string {
@@ -281,6 +280,7 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
   const cmd = new Command(method)
     .description(description)
     .argument("<url>", "Full URL to request (e.g. https://api.example.com/data)")
+    .configureHelp({ showGlobalOptions: true })
     .showHelpAfterError(true);
 
   addSharedOptions(cmd, hasBody);
@@ -297,6 +297,7 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
 
 export const webCommand = new Command("web")
   .description("Make HTTP requests with x402 payment support")
+  .configureHelp({ showGlobalOptions: true })
   .action(function () {
     (this as Command).outputHelp();
   });
