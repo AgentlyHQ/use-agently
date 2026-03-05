@@ -258,11 +258,9 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
 
 // ─── Command registration ───────────────────────────────────────────────────
 
-function addSharedOptions(cmd: Command): Command {
-  return cmd
+function addSharedOptions(cmd: Command, hasBody: boolean): Command {
+  cmd
     .option("-H, --header <value>", 'Request header, repeatable (e.g. "Content-Type: application/json")', collect, [])
-    .option("-d, --data <body>", "Request body (prefix @ to read from file, e.g. @body.json)")
-    .option("--data-raw <body>", "Request body sent as-is (@ is not treated as a file reference)")
     .option("--output-file <path>", "Save response body to file")
     .option("-L, --location", "Follow redirects")
     .option("-v, --verbose", "Show request/response headers on stderr")
@@ -270,6 +268,14 @@ function addSharedOptions(cmd: Command): Command {
     .option("--timeout <ms>", "Request timeout in milliseconds (default: 30000)")
     .option("--max-filesize <bytes>", "Maximum response size in bytes (default: 104857600 / 100 MB)")
     .option("--pay", "Authorize x402 payment (default: dry-run, shows cost only)");
+
+  if (hasBody) {
+    cmd
+      .option("-d, --data <body>", "Request body (prefix @ to read from file, e.g. @body.json)")
+      .option("--data-raw <body>", "Request body sent as-is (@ is not treated as a file reference)");
+  }
+
+  return cmd;
 }
 
 function createMethodSubcommand(method: string, description: string, hasBody: boolean): Command {
@@ -277,7 +283,7 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
     .description(description)
     .argument("<url>", "Full URL to request (e.g. https://api.example.com/data)");
 
-  addSharedOptions(cmd);
+  addSharedOptions(cmd, hasBody);
 
   const bodyExample = hasBody ? ' -d \'{"key":"value"}\' -H "Content-Type: application/json"' : "";
   cmd.addHelpText("after", `\nExamples:\n  use-agently web ${method} https://api.example.com/data${bodyExample} -v`);
