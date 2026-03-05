@@ -152,6 +152,11 @@ use-agently a2a send --uri "uri/url" -m "message"    # Send a message via A2A pr
 use-agently a2a card --uri "uri/url"                 # Fetch and display the A2A agent card
 use-agently mcp tools --uri "uri/url"                # List tools on an MCP server
 use-agently mcp call "tool" ["args"] --uri "uri/url" # Call a tool on an MCP server
+use-agently web get <url>                            # HTTP GET with x402 payment support
+use-agently web post <url>                           # HTTP POST with x402 payment support
+use-agently web put <url>                            # HTTP PUT with x402 payment support
+use-agently web patch <url>                          # HTTP PATCH with x402 payment support
+use-agently web delete <url>                         # HTTP DELETE with x402 payment support
 ```
 
 ### Design Rules for New Commands

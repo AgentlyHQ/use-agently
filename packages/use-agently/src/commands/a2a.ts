@@ -1,10 +1,7 @@
 import { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
-import boxen from "boxen";
-import { getConfigOrThrow } from "../config.js";
-import { loadWallet } from "../wallets/wallet.js";
-import { createPaymentFetch, createA2AClient, createDryRunFetch, DryRunPaymentRequired } from "../client.js";
+import { resolveFetch, createA2AClient, handleDryRunError, DryRunPaymentRequired } from "../client.js";
 import { output } from "../output.js";
 
 function extractTextFromParts(parts: any[]): string {
@@ -87,14 +84,7 @@ const a2aSendCommand = new Command("send")
     const agentInput = resolveUriOption(options, "a2a send");
     const agentUrl = resolveAgentUrl(agentInput);
 
-    let fetchImpl: typeof fetch;
-    if (options.pay) {
-      const config = await getConfigOrThrow();
-      const wallet = loadWallet(config.wallet);
-      fetchImpl = createPaymentFetch(wallet) as typeof fetch;
-    } else {
-      fetchImpl = createDryRunFetch();
-    }
+    const fetchImpl = await resolveFetch(options.pay);
 
     try {
       const client = await createA2AClient(agentUrl, fetchImpl);
@@ -125,17 +115,7 @@ const a2aSendCommand = new Command("send")
         console.log(extractAgentText(lastResult));
       }
     } catch (err) {
-      if (err instanceof DryRunPaymentRequired) {
-        console.error(
-          boxen(err.message, {
-            title: "Payment Required",
-            titleAlignment: "center",
-            borderColor: "yellow",
-            padding: 1,
-          }),
-        );
-        process.exit(1);
-      }
+      if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
       throw err;
     }
   });

@@ -1,11 +1,10 @@
 import { Command } from "commander";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import boxen from "boxen";
 import { output } from "../output.js";
 import { loadConfig } from "../config.js";
 import { loadWallet } from "../wallets/wallet.js";
-import { createMcpPaymentClient, DryRunPaymentRequired } from "../client.js";
+import { createMcpPaymentClient, handleDryRunError, DryRunPaymentRequired } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
 
 function resolveMcpUrl(input: string): string {
@@ -110,17 +109,7 @@ const mcpCallCommand = new Command("call")
           output(command, result);
         }
       } catch (err) {
-        if (err instanceof DryRunPaymentRequired) {
-          console.error(
-            boxen(err.message, {
-              title: "Payment Required",
-              titleAlignment: "center",
-              borderColor: "yellow",
-              padding: 1,
-            }),
-          );
-          process.exit(1);
-        }
+        if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
         throw err;
       } finally {
         await client.close();
