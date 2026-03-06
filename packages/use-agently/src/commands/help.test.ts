@@ -56,3 +56,58 @@ describe("help command", () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });
+
+describe("global options in subcommand help", () => {
+  let writeSpy: ReturnType<typeof spyOn>;
+  let exitSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    writeSpy = spyOn(process.stdout, "write").mockImplementation((..._args: any[]) => true);
+    exitSpy = spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit");
+    });
+  });
+
+  afterEach(() => {
+    writeSpy.mockRestore();
+    exitSpy.mockRestore();
+  });
+
+  const subcommands = [
+    ["a2a", "send"],
+    ["a2a", "card"],
+    ["mcp", "tools"],
+    ["mcp", "call"],
+    ["web", "get"],
+    ["web", "post"],
+    ["web", "put"],
+    ["web", "patch"],
+    ["web", "delete"],
+  ];
+
+  for (const args of subcommands) {
+    const label = args.join(" ");
+
+    test(`${label} --help includes Global Options section`, async () => {
+      try {
+        await cli.parseAsync(["test", "use-agently", ...args, "--help"]);
+      } catch {
+        // expected: --help calls process.exit(0)
+      }
+
+      const output = writeSpy.mock.calls.map((c) => c[0]).join("");
+      expect(output).toContain("Global Options");
+    });
+
+    test(`${label} --help includes -o, --output global option`, async () => {
+      try {
+        await cli.parseAsync(["test", "use-agently", ...args, "--help"]);
+      } catch {
+        // expected: --help calls process.exit(0)
+      }
+
+      const output = writeSpy.mock.calls.map((c) => c[0]).join("");
+      expect(output).toContain("-o, --output");
+    });
+  }
+});
