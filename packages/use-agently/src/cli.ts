@@ -49,3 +49,13 @@ cli.addCommand(webCommand.helpGroup("Protocols"));
 // Lifecycle
 cli.addCommand(initCommand.helpGroup("Lifecycle"));
 cli.addCommand(updateCommand.helpGroup("Lifecycle"));
+
+// Propagate showGlobalOptions to all subcommands added via addCommand(),
+// which does not inherit configureHelp from the parent.
+function enableGlobalOptionsInHelp(cmd: Command) {
+  for (const sub of cmd.commands) {
+    sub.configureHelp({ showGlobalOptions: true });
+    enableGlobalOptionsInHelp(sub);
+  }
+}
+enableGlobalOptionsInHelp(cli);

@@ -321,7 +321,6 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
   const cmd = new Command(method)
     .description(description)
     .argument("<url>", "Full URL to request (e.g. https://api.example.com/data)")
-    .configureHelp({ showGlobalOptions: true })
     .showHelpAfterError(true);
 
   addSharedOptions(cmd, hasBody);
