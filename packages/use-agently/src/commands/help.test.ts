@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { Command } from "commander";
 
 const { cli } = await import("../cli");
 
@@ -38,5 +39,16 @@ describe("help command", () => {
     expect(output).toContain("use-agently");
     expect(output).toContain("Diagnostics");
     expect(exitSpy).not.toHaveBeenCalled();
+  });
+
+  test("all commands and subcommands have showGlobalOptions enabled", () => {
+    function collectAll(cmd: Command): Command[] {
+      return [cmd, ...cmd.commands.flatMap(collectAll)];
+    }
+
+    const allCommands = collectAll(cli);
+    for (const cmd of allCommands) {
+      expect(cmd.configureHelp()).toMatchObject({ showGlobalOptions: true });
+    }
   });
 });

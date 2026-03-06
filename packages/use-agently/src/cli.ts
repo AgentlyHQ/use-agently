@@ -22,6 +22,7 @@ cli
   )
   .version(pkg.version)
   .option("-o, --output <format>", "Output format (text, json)", "text")
+  .configureHelp({ showGlobalOptions: true })
   .action(() => {
     cli.outputHelp();
   });
@@ -44,3 +45,12 @@ cli.addCommand(webCommand.helpGroup("Protocols"));
 // Lifecycle
 cli.addCommand(initCommand.helpGroup("Lifecycle"));
 cli.addCommand(updateCommand.helpGroup("Lifecycle"));
+
+// Apply showGlobalOptions to all subcommands so global options like --output are visible everywhere
+function applyShowGlobalOptions(cmd: Command): void {
+  cmd.configureHelp({ showGlobalOptions: true });
+  for (const sub of cmd.commands) {
+    applyShowGlobalOptions(sub);
+  }
+}
+applyShowGlobalOptions(cli);
