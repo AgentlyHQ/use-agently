@@ -22,7 +22,12 @@ cli
   )
   .version(pkg.version)
   .option("-o, --output <format>", "Output format (text, json)", "text")
-  .action(() => {
+  .argument("[args...]")
+  .action((args: string[]) => {
+    if (args.length > 0) {
+      cli.unknownCommand();
+      return;
+    }
     cli.outputHelp();
   });
 
