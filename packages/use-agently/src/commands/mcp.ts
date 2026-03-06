@@ -9,7 +9,7 @@ import pkg from "../../package.json" with { type: "json" };
 
 function resolveMcpUrl(input: string): string {
   const isDirectUrl = input.startsWith("http://") || input.startsWith("https://");
-  const base = isDirectUrl ? input : `https://use-agently.com/${input}/`;
+  const base = isDirectUrl ? input : `https://use-agently.com/${input}/services/mcp`;
   const url = new URL(base);
   if (!url.pathname.endsWith("/mcp") && !url.pathname.endsWith("/mcp/")) {
     url.pathname = url.pathname.replace(/\/?$/, "/mcp");
