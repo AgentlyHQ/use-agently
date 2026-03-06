@@ -39,4 +39,20 @@ describe("help command", () => {
     expect(output).toContain("Diagnostics");
     expect(exitSpy).not.toHaveBeenCalled();
   });
+
+  test("use-agently <unknown-command> shows unknown command error", async () => {
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation((..._args: any[]) => true);
+
+    try {
+      await cli.parseAsync(["test", "use-agently", "upgrade"]);
+    } catch {
+      // expected: unknown command calls process.exit(1)
+    }
+
+    const errOutput = stderrSpy.mock.calls.map((c) => c[0]).join("");
+    stderrSpy.mockRestore();
+
+    expect(errOutput).toContain("error: unknown command 'upgrade'");
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
 });
