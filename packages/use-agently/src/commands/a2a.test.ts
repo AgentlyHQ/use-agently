@@ -8,6 +8,7 @@ import {
   stopX402FacilitatorLocal,
   TEST_ADDRESS,
   TEST_PRIVATE_KEY,
+  testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
 import { accounts } from "x402-fl/testcontainers";
@@ -251,6 +252,31 @@ describe("a2a x402 payment (paid)", () => {
 
       expect(exitCode).toBe(1);
       expect(out.stderr).toContain("--pay");
+    });
+
+    test("a2a send with --pay on paid agent succeeds and debits sender", async () => {
+      mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
+
+      const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "a2a",
+        "send",
+        "--uri",
+        fixture.agent.getAgentUrl() + "/paid-echo/",
+        "-m",
+        "paid cli test",
+        "--pay",
+      ]);
+      expect(out.stdout).toStrictEqual("paid cli test");
+
+      const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+      expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
+
+      // Restore default mock
+      mockConfigModule();
     });
   });
 });

@@ -10,6 +10,7 @@ import {
   stopX402FacilitatorLocal,
   TEST_ADDRESS,
   TEST_PRIVATE_KEY,
+  testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
 import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "../client";
@@ -602,6 +603,47 @@ describe("web x402 payment", () => {
 
       expect(exitCode).toBe(1);
       expect(out.stderr).toContain("--pay");
+    });
+
+    test("web get with --pay on /http/paid succeeds and debits sender", async () => {
+      mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
+
+      const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+
+      await cli.parseAsync(["test", "use-agently", "web", "get", httpUrl("/http/paid"), "--pay"]);
+      expect(out.stdout).toContain("paid GET response");
+
+      const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+      expect(senderBefore.value - senderAfter.value).toStrictEqual(3000n);
+
+      // Restore default mock
+      mockConfigModule();
+    });
+
+    test("web post with --pay on /http/paid succeeds and debits sender", async () => {
+      mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
+
+      const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "web",
+        "post",
+        httpUrl("/http/paid"),
+        "-d",
+        '{"cli":"paid"}',
+        "-H",
+        "Content-Type: application/json",
+        "--pay",
+      ]);
+      expect(out.stdout).toContain("paid POST response");
+
+      const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+      expect(senderBefore.value - senderAfter.value).toStrictEqual(3000n);
+
+      // Restore default mock
+      mockConfigModule();
     });
   });
 });

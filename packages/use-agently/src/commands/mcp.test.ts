@@ -9,6 +9,7 @@ import {
   stopX402FacilitatorLocal,
   TEST_ADDRESS,
   TEST_PRIVATE_KEY,
+  testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
 import { accounts } from "x402-fl/testcontainers";
@@ -152,6 +153,34 @@ describe("mcp x402 payment (paid)", () => {
 
       expect(exitCode).toBe(1);
       expect(out.stderr).toContain("--pay");
+    });
+
+    test("mcp call with --pay on paid tool succeeds and debits sender", async () => {
+      mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
+
+      const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "mcp",
+        "call",
+        "paid-echo-tool",
+        '{"message":"paid cli test"}',
+        "--uri",
+        fixture.agent.getAgentUrl(),
+        "--pay",
+      ]);
+
+      const result = out.yaml as Record<string, unknown>;
+      const content = result.content as Array<{ type: string; text: string }>;
+      expect(content[0].text).toStrictEqual("paid cli test");
+
+      const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+      expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
+
+      // Restore default mock
+      mockConfigModule();
     });
   });
 });
