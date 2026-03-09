@@ -8,16 +8,14 @@ import pkg from "../package.json" with { type: "json" };
 
 export const USER_AGENT = `use-agently/${pkg.version} (use-agently.com)`;
 
-/** Wrap a fetch implementation to always send the use-agently User-Agent header. */
-export function withUserAgent(fetchImpl: typeof fetch): typeof fetch {
-  return (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const headers = new Headers(init?.headers);
-    if (!headers.has("User-Agent")) {
-      headers.set("User-Agent", USER_AGENT);
-    }
-    return fetchImpl(input, { ...init, headers });
-  };
-}
+/** The standard fetch client for all use-agently requests. Automatically includes the User-Agent header. */
+export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("User-Agent")) {
+    headers.set("User-Agent", USER_AGENT);
+  }
+  return fetch(input, { ...init, headers });
+};
 
 export interface PaymentRequirementsInfo {
   amount: string;
@@ -55,7 +53,7 @@ function formatPaymentAmount(req: PaymentRequirementsInfo): string {
 
 export function createDryRunFetch(): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const response = await withUserAgent(fetch)(input, init);
+    const response = await clientFetch(input, init);
     if (response.status === 402) {
       let requirements: PaymentRequirementsInfo[] = [];
       const header = response.headers.get("PAYMENT-REQUIRED");
@@ -84,7 +82,7 @@ export function createDryRunFetch(): typeof fetch {
 }
 
 export function createPaymentFetch(wallet: Wallet) {
-  return wrapFetchWithPaymentFromConfig(withUserAgent(fetch), {
+  return wrapFetchWithPaymentFromConfig(clientFetch, {
     schemes: wallet.getX402Schemes(),
   });
 }
