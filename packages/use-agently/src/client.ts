@@ -10,7 +10,14 @@ export const USER_AGENT = `use-agently/${pkg.version} (use-agently.com)`;
 
 /** The standard fetch client for all use-agently requests. Automatically includes the User-Agent header. */
 export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  const headers = new Headers(init?.headers);
+  // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
+  const isRequest = input instanceof Request;
+  const headers = new Headers(isRequest ? input.headers : init?.headers);
+  if (isRequest && init?.headers) {
+    for (const [key, value] of new Headers(init.headers).entries()) {
+      headers.set(key, value);
+    }
+  }
   if (!headers.has("User-Agent")) {
     headers.set("User-Agent", USER_AGENT);
   }
