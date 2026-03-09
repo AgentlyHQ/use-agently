@@ -6,6 +6,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
 import { output } from "../output.js";
 import { loadConfig } from "../config.js";
+import { withUserAgent } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
 
 const UpdateStateSchema = z.object({
@@ -40,7 +41,7 @@ export function isDevVersion(): boolean {
 }
 
 export async function getLatestVersion(): Promise<string> {
-  const res = await fetch("https://registry.npmjs.org/use-agently/latest");
+  const res = await withUserAgent(fetch)("https://registry.npmjs.org/use-agently/latest");
   if (!res.ok) throw new Error(`Failed to check npm registry: ${res.status}`);
   const data = (await res.json()) as { version: string };
   return data.version;

@@ -4,6 +4,20 @@ import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a
 import boxen from "boxen";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
+import pkg from "../package.json" with { type: "json" };
+
+export const USER_AGENT = `use-agently/${pkg.version} (use-agently.com)`;
+
+/** Wrap a fetch implementation to always send the use-agently User-Agent header. */
+export function withUserAgent(fetchImpl: typeof fetch): typeof fetch {
+  return (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const headers = new Headers(init?.headers);
+    if (!headers.has("User-Agent")) {
+      headers.set("User-Agent", USER_AGENT);
+    }
+    return fetchImpl(input, { ...init, headers });
+  };
+}
 
 export interface PaymentRequirementsInfo {
   amount: string;
@@ -41,7 +55,7 @@ function formatPaymentAmount(req: PaymentRequirementsInfo): string {
 
 export function createDryRunFetch(): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const response = await fetch(input, init);
+    const response = await withUserAgent(fetch)(input, init);
     if (response.status === 402) {
       let requirements: PaymentRequirementsInfo[] = [];
       const header = response.headers.get("PAYMENT-REQUIRED");
@@ -70,7 +84,7 @@ export function createDryRunFetch(): typeof fetch {
 }
 
 export function createPaymentFetch(wallet: Wallet) {
-  return wrapFetchWithPaymentFromConfig(fetch, {
+  return wrapFetchWithPaymentFromConfig(withUserAgent(fetch), {
     schemes: wallet.getX402Schemes(),
   });
 }

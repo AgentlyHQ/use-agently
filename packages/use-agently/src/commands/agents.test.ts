@@ -62,4 +62,12 @@ describe("agents command", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy.mock.calls[0][0]).toBe("https://use-agently.com/marketplace.json");
   });
+
+  test("sends User-Agent header containing use-agently.com", async () => {
+    await cli.parseAsync(["test", "use-agently", "agents"]);
+
+    const init = fetchSpy.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(init?.headers);
+    expect(headers.get("User-Agent")).toContain("use-agently.com");
+  });
 });
