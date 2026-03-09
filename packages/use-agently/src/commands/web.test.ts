@@ -187,7 +187,10 @@ describe("web command cli", () => {
         "-H",
         "Accept: text/plain",
       ]);
-      expect(capturedHeaders).toStrictEqual({ "X-Custom": "myvalue", Accept: "text/plain" });
+      // clientFetch normalizes headers to a Headers instance before passing to fetch
+      expect(capturedHeaders).toBeInstanceOf(Headers);
+      expect((capturedHeaders as Headers).get("X-Custom")).toBe("myvalue");
+      expect((capturedHeaders as Headers).get("Accept")).toBe("text/plain");
     });
 
     test("-i includes status and headers in output", async () => {

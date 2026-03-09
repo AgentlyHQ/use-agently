@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { output } from "../output.js";
+import { clientFetch } from "../client.js";
 
 const AGENTS_URL = `https://use-agently.com/marketplace.json`;
 
@@ -12,7 +13,7 @@ export const searchCommand = new Command("search")
     '\nExamples:\n  use-agently search\n  use-agently search "echo"\n  use-agently search --protocol a2a\n  use-agently search "assistant" --protocol "a2a,mcp"',
   )
   .action(async (query: string | undefined, options: { protocol?: string }, command: Command) => {
-    const response = await fetch(AGENTS_URL);
+    const response = await clientFetch(AGENTS_URL);
     if (!response.ok) {
       throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
     }

@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { output } from "../output.js";
+import { clientFetch } from "../client.js";
 
 const MARKETPLACE_URL = `https://use-agently.com/marketplace.json`;
 
@@ -21,7 +22,7 @@ export const erc8004Command = new Command("erc-8004")
   )
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options);
-    const response = await fetch(MARKETPLACE_URL);
+    const response = await clientFetch(MARKETPLACE_URL);
     if (!response.ok) {
       throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
     }

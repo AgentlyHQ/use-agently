@@ -4,6 +4,25 @@ import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a
 import boxen from "boxen";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
+import pkg from "../package.json" with { type: "json" };
+
+export const USER_AGENT = `use-agently/${pkg.version} (use-agently.com)`;
+
+/** The standard fetch client for all use-agently requests. Automatically includes the User-Agent header. */
+export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
+  const isRequest = input instanceof Request;
+  const headers = new Headers(isRequest ? input.headers : init?.headers);
+  if (isRequest && init?.headers) {
+    for (const [key, value] of new Headers(init.headers).entries()) {
+      headers.set(key, value);
+    }
+  }
+  if (!headers.has("User-Agent")) {
+    headers.set("User-Agent", USER_AGENT);
+  }
+  return fetch(input, { ...init, headers });
+};
 
 export interface PaymentRequirementsInfo {
   amount: string;
@@ -41,7 +60,7 @@ function formatPaymentAmount(req: PaymentRequirementsInfo): string {
 
 export function createDryRunFetch(): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const response = await fetch(input, init);
+    const response = await clientFetch(input, init);
     if (response.status === 402) {
       let requirements: PaymentRequirementsInfo[] = [];
       const header = response.headers.get("PAYMENT-REQUIRED");
@@ -70,7 +89,7 @@ export function createDryRunFetch(): typeof fetch {
 }
 
 export function createPaymentFetch(wallet: Wallet) {
-  return wrapFetchWithPaymentFromConfig(fetch, {
+  return wrapFetchWithPaymentFromConfig(clientFetch, {
     schemes: wallet.getX402Schemes(),
   });
 }
