@@ -118,15 +118,18 @@ export function captureOutput() {
 }
 
 /**
- * Mock `config.ts` with a static wallet config.
+ * Mock the config functions exported from `@use-agently/sdk` with a static wallet config.
  * Accepts an optional getter so tests can swap the config dynamically.
  */
 export function mockConfigModule(getConfig?: () => unknown) {
   const resolve = getConfig ?? (() => testConfig());
-  mock.module("./config", () => ({
+  // Lazily capture real SDK exports so we only override config functions
+  const sdk = require("@use-agently/sdk");
+  mock.module("@use-agently/sdk", () => ({
+    ...sdk,
     getConfigOrThrow: async () => {
       const cfg = resolve();
-      if (!cfg || !(cfg as any).wallet) throw new Error("No wallet configured. Run `use-agently init` first.");
+      if (!cfg || !(cfg as any).wallet) throw new Error("No wallet configured. Initialize a wallet first.");
       return cfg;
     },
     loadConfig: async () => resolve(),

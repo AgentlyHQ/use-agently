@@ -25,6 +25,7 @@ cli
   .argument("[args...]")
   .action((args: string[]) => {
     if (args.length > 0) {
+      // @ts-expect-error — unknownCommand() is an undocumented Commander.js method
       cli.unknownCommand();
       return;
     }

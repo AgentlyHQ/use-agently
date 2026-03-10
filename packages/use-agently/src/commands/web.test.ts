@@ -14,7 +14,7 @@ import {
   type X402FacilitatorLocal,
 } from "../testing";
 import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "../client";
-import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+import { EvmPrivateKeyWallet } from "@use-agently/sdk";
 
 mockConfigModule();
 

@@ -1,106 +1,55 @@
-import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
-import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
-import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
 import boxen from "boxen";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { Wallet } from "./wallets/wallet.js";
-import pkg from "../package.json" with { type: "json" };
+import {
+  DryRunPaymentRequired as SdkDryRunPaymentRequired,
+  formatUsdcAmount,
+  createDryRunFetch as sdkCreateDryRunFetch,
+  createPaymentFetch,
+} from "@use-agently/sdk";
+import type { PaymentRequirementsInfo } from "@use-agently/sdk";
+import { getConfigOrThrow, loadWallet } from "@use-agently/sdk";
 
-export const USER_AGENT = `use-agently/${pkg.version} (use-agently.com)`;
+// Re-export SDK items used by CLI commands
+export {
+  clientFetch,
+  createPaymentFetch,
+  createA2AClient,
+  createMcpPaymentClient,
+  type PaymentRequirementsInfo,
+  formatUsdcAmount,
+} from "@use-agently/sdk";
 
-/** The standard fetch client for all use-agently requests. Automatically includes the User-Agent header. */
-// @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
-export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
-  const isRequest = input instanceof Request;
-  const headers = new Headers(isRequest ? input.headers : init?.headers);
-  if (isRequest && init?.headers) {
-    for (const [key, value] of new Headers(init.headers).entries()) {
-      headers.set(key, value);
-    }
-  }
-  if (!headers.has("User-Agent")) {
-    headers.set("User-Agent", USER_AGENT);
-  }
-  return fetch(input, { ...init, headers });
-};
-
-export interface PaymentRequirementsInfo {
-  amount: string;
-  network: string;
-  description: string;
-  payTo: string;
-  asset: string;
-}
-
-export class DryRunPaymentRequired extends Error {
-  readonly requirements: PaymentRequirementsInfo[];
+/** CLI-specific DryRunPaymentRequired with --pay hint in the message. */
+export class DryRunPaymentRequired extends SdkDryRunPaymentRequired {
   constructor(requirements: PaymentRequirementsInfo[]) {
+    super(requirements);
+    // Override message with CLI-friendly text
     const req = requirements[0];
     const amount = req ? formatUsdcAmount(req) : null;
-    const payLine = amount
+    this.message = amount
       ? `This request requires payment of ${amount}.\nRun the same command with --pay to authorize the transaction and proceed.`
       : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.`;
-    super(payLine);
-    this.name = "DryRunPaymentRequired";
-    this.requirements = requirements;
   }
 }
 
-function formatUsdcAmount(req: PaymentRequirementsInfo): string {
-  try {
-    const raw = BigInt(req.amount);
-    const usd = Number(raw) / 1_000_000;
-    const formatted = usd % 1 === 0 ? `$${usd}` : `$${usd.toFixed(6).replace(/\.?0+$/, "")}`;
-    const network = req.network ? ` on ${req.network}` : "";
-    return `${formatted} USDC${network}`;
-  } catch {
-    return `${req.amount} (raw units)`;
-  }
-}
-
+/** CLI wrapper around SDK's createDryRunFetch that throws CLI-specific DryRunPaymentRequired. */
 export function createDryRunFetch(): typeof fetch {
+  const sdkFetch = sdkCreateDryRunFetch();
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const response = await clientFetch(input, init);
-    if (response.status === 402) {
-      let requirements: PaymentRequirementsInfo[] = [];
-      const header = response.headers.get("PAYMENT-REQUIRED");
-      if (header) {
-        try {
-          const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
-          requirements = (decoded.accepts as PaymentRequirementsInfo[]) ?? [];
-        } catch (e) {
-          if (!(e instanceof SyntaxError)) throw e;
-        }
-      } else {
-        // Attempt to parse x402v1 body format
-        try {
-          const body = await response.clone().json();
-          if (body?.accepts) {
-            requirements = body.accepts as PaymentRequirementsInfo[];
-          }
-        } catch (e) {
-          if (!(e instanceof SyntaxError)) throw e;
-        }
+    try {
+      return await sdkFetch(input, init);
+    } catch (err) {
+      if (err instanceof SdkDryRunPaymentRequired) {
+        throw new DryRunPaymentRequired(err.requirements);
       }
-      throw new DryRunPaymentRequired(requirements);
+      throw err;
     }
-    return response;
   };
-}
-
-export function createPaymentFetch(wallet: Wallet) {
-  return wrapFetchWithPaymentFromConfig(clientFetch, {
-    schemes: wallet.getX402Schemes(),
-  });
 }
 
 /** Resolve the fetch implementation based on the --pay flag. */
 export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
   if (pay) {
-    const { getConfigOrThrow } = await import("./config.js");
-    const { loadWallet } = await import("./wallets/wallet.js");
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
     return createPaymentFetch(wallet) as typeof fetch;
@@ -119,17 +68,4 @@ export function handleDryRunError(err: DryRunPaymentRequired): never {
     }),
   );
   process.exit(1);
-}
-
-export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {
-  return wrapMCPClientWithPaymentFromConfig(mcpClient, {
-    schemes: wallet.getX402Schemes(),
-  });
-}
-
-export async function createA2AClient(agentUrl: string, fetchImpl: typeof fetch) {
-  const factory = new ClientFactory({
-    transports: [new JsonRpcTransportFactory({ fetchImpl }), new RestTransportFactory({ fetchImpl })],
-  });
-  return factory.createFromUrl(agentUrl);
 }

@@ -1,9 +1,8 @@
 import { Command } from "commander";
 import { createPublicClient, erc20Abi, formatUnits, http } from "viem";
 import { base } from "viem/chains";
-import { getConfigOrThrow } from "../config.js";
 import { output } from "../output.js";
-import { loadWallet } from "../wallets/wallet.js";
+import { getConfigOrThrow, loadWallet } from "@use-agently/sdk";
 
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 

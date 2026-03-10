@@ -13,7 +13,7 @@ import {
   type X402FacilitatorLocal,
 } from "../testing";
 import { accounts } from "x402-fl/testcontainers";
-import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+import { EvmPrivateKeyWallet } from "@use-agently/sdk";
 import pkg from "../../package.json" with { type: "json" };
 
 mockConfigModule();

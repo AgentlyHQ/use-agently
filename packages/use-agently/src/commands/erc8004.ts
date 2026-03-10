@@ -1,8 +1,6 @@
 import { Command } from "commander";
 import { output } from "../output.js";
-import { clientFetch } from "../client.js";
-
-const MARKETPLACE_URL = `https://use-agently.com/marketplace.json`;
+import { resolveErc8004Agent } from "@use-agently/sdk";
 
 function resolveUriOption(options: { uri?: string }): string {
   if (!options.uri) {
@@ -22,15 +20,13 @@ export const erc8004Command = new Command("erc-8004")
   )
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options);
-    const response = await clientFetch(MARKETPLACE_URL);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
+    try {
+      const agent = await resolveErc8004Agent(uri);
+      output(command, agent);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("No agent found for URI")) {
+        throw new Error(`No agent found for URI: ${uri}\nRun 'use-agently agents' to see available agent URIs.`);
+      }
+      throw err;
     }
-    const data: any = await response.json();
-    const agents: any[] = data.agents ?? [];
-    const agent = agents.find((a) => a.uri === uri);
-    if (!agent) {
-      throw new Error(`No agent found for URI: ${uri}\nRun 'use-agently agents' to see available agent URIs.`);
-    }
-    output(command, agent);
   });

@@ -13,7 +13,7 @@ import {
 } from "../testing";
 import { accounts } from "x402-fl/testcontainers";
 import { extractAgentText } from "./a2a";
-import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+import { EvmPrivateKeyWallet } from "@use-agently/sdk";
 
 mockConfigModule();
 

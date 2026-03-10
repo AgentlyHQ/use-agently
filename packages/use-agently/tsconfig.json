@@ -2,8 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "esnext",
     "moduleResolution": "bundler",
+    "types": ["node", "bun"],
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true
