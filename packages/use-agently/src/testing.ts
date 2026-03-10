@@ -73,7 +73,7 @@ export function captureOutput() {
 }
 
 /**
- * Mock the config functions exported from `../config.js` with a static wallet config.
+ * Mock the config functions exported from `./config.js` with a static wallet config.
  * Accepts an optional getter so tests can swap the config dynamically.
  */
 export function mockConfigModule(getConfig?: () => unknown) {

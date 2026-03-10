@@ -62,7 +62,7 @@ export async function callMcpTool(
   // Dry-run mode
   const client = await createMcpClient(mcpUrl);
   try {
-    const result = await client.callTool({ name: tool, arguments: args });
+    const result = await client.callTool({ name: tool, arguments: args ?? {} });
     if (result.isError) {
       const content = result.content as Array<{ type: string; text?: string }>;
       if (content?.length > 0 && content[0].type === "text" && content[0].text) {

@@ -6,11 +6,17 @@
   "author": "AgentlyHQ",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./testing": "./src/testing.ts"
+    ".": {
+      "bun": "./src/index.ts",
+      "default": "./build/index.js"
+    },
+    "./testing": {
+      "bun": "./src/testing.ts",
+      "default": "./build/testing.js"
+    }
   },
   "scripts": {
-    "build": "bun build src/index.ts --target node --outfile build/index.js",
+    "build": "bun build src/index.ts src/testing.ts --target node --outdir build",
     "clean": "rm -rf build",
     "test": "bun test"
   },

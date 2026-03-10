@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { output } from "../output.js";
-import { resolveErc8004Agent } from "@use-agently/sdk";
+import { resolveErc8004Agent, AgentNotFoundError } from "@use-agently/sdk";
 
 function resolveUriOption(options: { uri?: string }): string {
   if (!options.uri) {
@@ -24,7 +24,7 @@ export const erc8004Command = new Command("erc-8004")
       const agent = await resolveErc8004Agent(uri);
       output(command, agent);
     } catch (err) {
-      if (err instanceof Error && err.message.includes("No agent found for URI")) {
+      if (err instanceof AgentNotFoundError) {
         throw new Error(`No agent found for URI: ${uri}\nRun 'use-agently agents' to see available agent URIs.`);
       }
       throw err;
