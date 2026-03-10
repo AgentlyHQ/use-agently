@@ -7,16 +7,18 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./build/index.d.ts",
       "bun": "./src/index.ts",
       "default": "./build/index.js"
     },
     "./testing": {
+      "types": "./build/testing.d.ts",
       "bun": "./src/testing.ts",
       "default": "./build/testing.js"
     }
   },
   "scripts": {
-    "build": "bun build src/index.ts src/testing.ts --target node --outdir build",
+    "build": "tsdown",
     "clean": "rm -rf build",
     "test": "bun test"
   },
@@ -33,6 +35,7 @@
     "@types/bun": "^1.3.9",
     "localhost-aixyz": "^0",
     "testcontainers": "^11",
+    "tsdown": "^0.21.1",
     "x402-fl": "^0"
   }
 }

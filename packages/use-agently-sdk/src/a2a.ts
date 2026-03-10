@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { AgentCard } from "@a2a-js/sdk";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
 import { createA2AClient, createDryRunFetch, createPaymentFetch } from "./client.js";
@@ -113,7 +114,7 @@ export async function sendA2AMessageStream(
 }
 
 /** Resolve a URI and fetch the A2A agent card. */
-export async function getA2ACard(uri: string) {
+export async function getA2ACard(uri: string): Promise<AgentCard> {
   const agentUrl = resolveAgentUrl(uri);
   const resolver = new DefaultAgentCardResolver();
   return resolver.resolve(agentUrl);
