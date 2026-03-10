@@ -1,12 +1,12 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
 import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
-import boxen from "boxen";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
+import { formatUsdcAmount, type PaymentRequirementsInfo } from "./utils/format.js";
 import pkg from "../package.json" with { type: "json" };
 
-export const USER_AGENT = `use-agently/${pkg.version} (use-agently.com)`;
+export const USER_AGENT = `@use-agently/sdk/${pkg.version} (use-agently.com)`;
 
 /** The standard fetch client for all use-agently requests. Automatically includes the User-Agent header. */
 // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
@@ -25,13 +25,7 @@ export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: Reque
   return fetch(input, { ...init, headers });
 };
 
-export interface PaymentRequirementsInfo {
-  amount: string;
-  network: string;
-  description: string;
-  payTo: string;
-  asset: string;
-}
+export { type PaymentRequirementsInfo, formatUsdcAmount } from "./utils/format.js";
 
 export class DryRunPaymentRequired extends Error {
   readonly requirements: PaymentRequirementsInfo[];
@@ -39,23 +33,11 @@ export class DryRunPaymentRequired extends Error {
     const req = requirements[0];
     const amount = req ? formatUsdcAmount(req) : null;
     const payLine = amount
-      ? `This request requires payment of ${amount}.\nRun the same command with --pay to authorize the transaction and proceed.`
-      : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.`;
+      ? `This request requires payment of ${amount}.\nUse createPaymentFetch() instead of createDryRunFetch() to authorize the transaction.`
+      : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually or use createPaymentFetch() to authorize payment.`;
     super(payLine);
     this.name = "DryRunPaymentRequired";
     this.requirements = requirements;
-  }
-}
-
-function formatUsdcAmount(req: PaymentRequirementsInfo): string {
-  try {
-    const raw = BigInt(req.amount);
-    const usd = Number(raw) / 1_000_000;
-    const formatted = usd % 1 === 0 ? `$${usd}` : `$${usd.toFixed(6).replace(/\.?0+$/, "")}`;
-    const network = req.network ? ` on ${req.network}` : "";
-    return `${formatted} USDC${network}`;
-  } catch {
-    return `${req.amount} (raw units)`;
   }
 }
 
@@ -94,31 +76,6 @@ export function createPaymentFetch(wallet: Wallet) {
   return wrapFetchWithPaymentFromConfig(clientFetch, {
     schemes: wallet.getX402Schemes(),
   });
-}
-
-/** Resolve the fetch implementation based on the --pay flag. */
-export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
-  if (pay) {
-    const { getConfigOrThrow } = await import("./config.js");
-    const { loadWallet } = await import("./wallets/wallet.js");
-    const config = await getConfigOrThrow();
-    const wallet = loadWallet(config.wallet);
-    return createPaymentFetch(wallet) as typeof fetch;
-  }
-  return createDryRunFetch();
-}
-
-/** Display a DryRunPaymentRequired error in a boxed format and exit. */
-export function handleDryRunError(err: DryRunPaymentRequired): never {
-  console.error(
-    boxen(err.message, {
-      title: "Payment Required",
-      titleAlignment: "center",
-      borderColor: "yellow",
-      padding: 1,
-    }),
-  );
-  process.exit(1);
 }
 
 export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {
