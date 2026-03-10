@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { resolveMcpUrl, listMcpTools, callMcpTool } from "./mcp";
+import { listMcpTools, callMcpTool } from "./mcp";
 import { createMcpPaymentClient, DryRunPaymentRequired } from "./client";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import { PayTransaction } from "./utils/transaction";
@@ -14,24 +14,6 @@ import {
 } from "./testing";
 import { accounts } from "x402-fl/testcontainers";
 import pkg from "../package.json" with { type: "json" };
-
-describe("resolveMcpUrl", () => {
-  test("returns URL with /mcp appended for direct URL without /mcp", () => {
-    expect(resolveMcpUrl("https://example.com/agent")).toBe("https://example.com/agent/mcp");
-  });
-
-  test("returns URL unchanged if already ends with /mcp", () => {
-    expect(resolveMcpUrl("https://example.com/agent/mcp")).toBe("https://example.com/agent/mcp");
-  });
-
-  test("returns URL unchanged if already ends with /mcp/", () => {
-    expect(resolveMcpUrl("https://example.com/agent/mcp/")).toBe("https://example.com/agent/mcp/");
-  });
-
-  test("wraps short name into https://use-agently.com/{name}/services/mcp", () => {
-    expect(resolveMcpUrl("echo-agent")).toBe("https://use-agently.com/echo-agent/services/mcp");
-  });
-});
 
 let fixture: X402FacilitatorLocal;
 

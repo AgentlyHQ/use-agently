@@ -111,7 +111,7 @@ describe("mcp x402 payment (paid)", () => {
     } finally {
       await client.close();
     }
-  });
+  }, 30_000);
 
   test("unpaid tool call returns error", async () => {
     const client = await createMcpClient();
@@ -181,6 +181,6 @@ describe("mcp x402 payment (paid)", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
   });
 });

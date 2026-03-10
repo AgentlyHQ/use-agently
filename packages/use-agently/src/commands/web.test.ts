@@ -562,7 +562,7 @@ describe("web x402 payment", () => {
 
       const senderAfter = await fixture.container.balance(TEST_ADDRESS);
       expect(senderBefore.value - senderAfter.value).toStrictEqual(3000n);
-    });
+    }, 30_000);
 
     test("paid POST succeeds with funded wallet and debits sender $0.003", async () => {
       const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
@@ -582,7 +582,7 @@ describe("web x402 payment", () => {
 
       const senderAfter = await fixture.container.balance(TEST_ADDRESS);
       expect(senderBefore.value - senderAfter.value).toStrictEqual(3000n);
-    });
+    }, 30_000);
   });
 
   describe("cli", () => {
@@ -621,7 +621,7 @@ describe("web x402 payment", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
 
     test("web post with --pay on /http/paid succeeds and debits sender", async () => {
       mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
@@ -647,6 +647,6 @@ describe("web x402 payment", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
   });
 });

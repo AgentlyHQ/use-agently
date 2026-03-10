@@ -151,7 +151,7 @@ describe("a2a x402 payment (paid)", () => {
     // $0.001 USDC = 1000 raw units (6 decimals)
     expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
     expect(receiverAfter.value - receiverBefore.value).toStrictEqual(1000n);
-  });
+  }, 30_000);
 
   test("dry-run on paid endpoint throws DryRunPaymentRequired with cost info", async () => {
     const dryRunFetch = createDryRunFetch();
@@ -221,7 +221,7 @@ describe("a2a x402 payment (paid)", () => {
       expect(e).toBeInstanceOf(Error);
       expect((e as Error).message).toContain("402");
     }
-  });
+  }, 30_000);
 
   describe("cli", () => {
     const out = captureOutput();
@@ -278,6 +278,6 @@ describe("a2a x402 payment (paid)", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
   });
 });

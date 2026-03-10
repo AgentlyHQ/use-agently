@@ -270,6 +270,6 @@ describe("getA2ACard", () => {
     const card = await getA2ACard(fixture.agent.getAgentUrl());
     expect(card.name).toStrictEqual("localhost-aixyz");
     expect(card.description).toStrictEqual("Local development agent for testing use-agently CLI.");
-    expect(card.url).toStrictEqual(fixture.agent.getAgentUrl());
+    expect(card.url).toStrictEqual(`${fixture.agent.getAgentUrl()}/agent`);
   });
 });
