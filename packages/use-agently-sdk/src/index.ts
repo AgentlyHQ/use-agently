@@ -42,7 +42,7 @@ export {
 } from "./a2a.js";
 
 // MCP helpers
-export { resolveMcpUrl, createMcpClient } from "./mcp.js";
+export { type McpCallOptions, listMcpTools, callMcpTool } from "./mcp.js";
 
 // Balance
 export { type BalanceResult, getBalance } from "./balance.js";

@@ -1,8 +1,16 @@
 import { Command } from "commander";
-import { resolveMcpUrl, createMcpClient, loadWallet } from "@use-agently/sdk";
-import { loadConfig } from "../config.js";
+import {
+  type TransactionMode,
+  DryRunTransaction,
+  PayTransaction,
+  DryRunPaymentRequired,
+  loadWallet,
+  listMcpTools,
+  callMcpTool,
+} from "@use-agently/sdk";
+import { getConfigOrThrow } from "../config.js";
+import { handleDryRunError } from "../client.js";
 import { output } from "../output.js";
-import { createMcpPaymentClient, handleDryRunError, DryRunPaymentRequired } from "../client.js";
 
 function resolveUriOption(options: { uri?: string }, commandName: string): string {
   if (!options.uri) {
@@ -11,6 +19,15 @@ function resolveUriOption(options: { uri?: string }, commandName: string): strin
     );
   }
   return options.uri;
+}
+
+async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
+  if (pay) {
+    const config = await getConfigOrThrow();
+    const wallet = loadWallet(config.wallet);
+    return PayTransaction(wallet);
+  }
+  return DryRunTransaction;
 }
 
 export const mcpCommand = new Command("mcp")
@@ -27,14 +44,9 @@ const mcpToolsCommand = new Command("tools")
     "\nExamples:\n  use-agently mcp tools --uri http://localhost:3000\n  use-agently mcp tools --uri my-agent",
   )
   .action(async (options: { uri?: string }, command: Command) => {
-    const mcpUrl = resolveMcpUrl(resolveUriOption(options, "mcp tools"));
-    const client = await createMcpClient(mcpUrl);
-    try {
-      const { tools } = await client.listTools();
-      output(command, tools);
-    } finally {
-      await client.close();
-    }
+    const uri = resolveUriOption(options, "mcp tools");
+    const tools = await listMcpTools(uri);
+    output(command, tools);
   });
 
 const mcpCallCommand = new Command("call")
@@ -49,7 +61,7 @@ const mcpCallCommand = new Command("call")
   )
   .action(
     async (tool: string, argsStr: string | undefined, options: { uri?: string; pay?: boolean }, command: Command) => {
-      const mcpUrl = resolveMcpUrl(resolveUriOption(options, "mcp call"));
+      const uri = resolveUriOption(options, "mcp call");
       let args: Record<string, unknown> = {};
       if (argsStr !== undefined) {
         try {
@@ -58,41 +70,14 @@ const mcpCallCommand = new Command("call")
           throw new Error(`Invalid JSON in <args>: ${argsStr}\nExpected a JSON object, e.g. '{"message":"hello"}'`);
         }
       }
-      const client = await createMcpClient(mcpUrl);
+      const transaction = await resolveTransactionMode(options.pay);
+
       try {
-        if (options.pay) {
-          const config = await loadConfig();
-          if (!config?.wallet) {
-            throw new Error("No wallet configured. Run `use-agently init` first.");
-          }
-          const wallet = loadWallet(config.wallet);
-          const x402Client = createMcpPaymentClient(client, wallet);
-          const result = await x402Client.callTool(tool, args);
-          output(command, result);
-        } else {
-          const result = await client.callTool({ name: tool, arguments: args });
-          if (result.isError) {
-            const content = result.content as Array<{ type: string; text?: string }>;
-            if (content?.length > 0 && content[0].type === "text" && content[0].text) {
-              try {
-                const parsed = JSON.parse(content[0].text);
-                // x402 MCP payment-required errors encode PaymentRequired as JSON in the first content item
-                if (parsed?.accepts) {
-                  throw new DryRunPaymentRequired(parsed.accepts);
-                }
-              } catch (e) {
-                // Re-throw DryRunPaymentRequired; ignore other parse failures (not a payment error)
-                if (e instanceof DryRunPaymentRequired) throw e;
-              }
-            }
-          }
-          output(command, result);
-        }
+        const result = await callMcpTool(uri, tool, args, { transaction });
+        output(command, result);
       } catch (err) {
         if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
         throw err;
-      } finally {
-        await client.close();
       }
     },
   );
