@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
+import { EvmPrivateKeyWallet } from "@use-agently/sdk";
+import { accounts } from "x402-fl/testcontainers";
+
 import { createA2AClient, createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "../client";
 import {
   captureOutput,
@@ -11,9 +14,7 @@ import {
   testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
-import { accounts } from "x402-fl/testcontainers";
 import { extractAgentText } from "./a2a";
-import { EvmPrivateKeyWallet } from "@use-agently/sdk";
 
 mockConfigModule();
 

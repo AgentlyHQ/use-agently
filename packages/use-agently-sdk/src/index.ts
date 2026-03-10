@@ -21,6 +21,7 @@ export {
 
 // Utils
 export { type PaymentRequirementsInfo, formatUsdcAmount } from "./utils/format.js";
+export { type ChainConfig, getChainConfig } from "./utils/chain.js";
 
 // Client
 export {
@@ -36,8 +37,22 @@ export {
 // Marketplace
 export { fetchAgents, searchAgents, resolveErc8004Agent } from "./marketplace.js";
 
+// Transaction
+export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils/transaction.js";
+
 // A2A helpers
-export { resolveAgentUrl, extractAgentText, extractStreamEventText } from "./a2a.js";
+export {
+  type A2AMessageOptions,
+  type A2AMessageResult,
+  extractAgentText,
+  extractStreamEventText,
+  sendA2AMessage,
+  sendA2AMessageStream,
+  getA2ACard,
+} from "./a2a.js";
 
 // MCP helpers
 export { resolveMcpUrl, createMcpClient } from "./mcp.js";
+
+// Balance
+export { type BalanceResult, getBalance } from "./balance.js";

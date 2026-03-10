@@ -1,3 +1,17 @@
+import { randomUUID } from "node:crypto";
+import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
+import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
+import { createA2AClient, createDryRunFetch, createPaymentFetch } from "./client.js";
+
+export interface A2AMessageOptions {
+  transaction?: TransactionMode;
+}
+
+export interface A2AMessageResult {
+  text: string;
+  raw: unknown;
+}
+
 function extractTextFromParts(parts: any[]): string {
   return parts
     .filter((p) => p.kind === "text")
@@ -5,7 +19,13 @@ function extractTextFromParts(parts: any[]): string {
     .join("");
 }
 
-export function resolveAgentUrl(agentInput: string): string {
+/** Defaults to dry-run when no transaction mode is provided */
+function resolveFetchForTransaction(transaction: TransactionMode = DryRunTransaction): typeof fetch {
+  if (transaction.mode === "dry-run") return createDryRunFetch();
+  return createPaymentFetch(transaction.wallet) as typeof fetch;
+}
+
+function resolveAgentUrl(agentInput: string): string {
   const isDirectUrl = agentInput.startsWith("http://") || agentInput.startsWith("https://");
   return isDirectUrl ? agentInput : `https://use-agently.com/${agentInput}/`;
 }
@@ -48,4 +68,53 @@ export function extractStreamEventText(event: any): string {
     return extractTextFromParts(event.parts || []);
   }
   return "";
+}
+
+/** Send a message to an A2A agent and return the complete result. */
+export async function sendA2AMessage(
+  uri: string,
+  message: string,
+  options?: A2AMessageOptions,
+): Promise<A2AMessageResult> {
+  const agentUrl = resolveAgentUrl(uri);
+  const fetchImpl = resolveFetchForTransaction(options?.transaction);
+  const client = await createA2AClient(agentUrl, fetchImpl);
+
+  const result = await client.sendMessage({
+    message: {
+      kind: "message",
+      messageId: randomUUID(),
+      role: "user",
+      parts: [{ kind: "text", text: message }],
+    },
+  });
+
+  return { text: extractAgentText(result), raw: result };
+}
+
+/** Send a message to an A2A agent and return the stream for real-time iteration. */
+export async function sendA2AMessageStream(
+  uri: string,
+  message: string,
+  options?: A2AMessageOptions,
+): Promise<AsyncIterable<unknown>> {
+  const agentUrl = resolveAgentUrl(uri);
+  const fetchImpl = resolveFetchForTransaction(options?.transaction);
+  const client = await createA2AClient(agentUrl, fetchImpl);
+
+  return client.sendMessageStream({
+    message: {
+      kind: "message",
+      messageId: randomUUID(),
+      role: "user",
+      parts: [{ kind: "text", text: message }],
+    },
+  });
+}
+
+/** Resolve a URI and fetch the A2A agent card. */
+export async function getA2ACard(uri: string) {
+  const agentUrl = resolveAgentUrl(uri);
+  const resolver = new DefaultAgentCardResolver();
+  return resolver.resolve(agentUrl);
 }

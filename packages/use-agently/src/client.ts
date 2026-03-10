@@ -58,9 +58,14 @@ export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
 }
 
 /** Display a DryRunPaymentRequired error in a boxed format and exit. */
-export function handleDryRunError(err: DryRunPaymentRequired): never {
+export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
+  const req = err.requirements[0];
+  const amount = req ? formatUsdcAmount(req) : null;
+  const message = amount
+    ? `This request requires payment of ${amount}.\nRun the same command with --pay to authorize the transaction and proceed.`
+    : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.`;
   console.error(
-    boxen(err.message, {
+    boxen(message, {
       title: "Payment Required",
       titleAlignment: "center",
       borderColor: "yellow",
