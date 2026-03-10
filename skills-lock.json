@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "cli-for-agent": {
+      "source": "agentlyhq/skills",
+      "sourceType": "github",
+      "computedHash": "519c8b55f3a9728a55b70095665d6bc074975130b896ec2183c235bb105cec19"
+    }
+  }
+}
