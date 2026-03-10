@@ -1,12 +1,14 @@
 import boxen from "boxen";
+import { formatUnits } from "viem";
 import {
   DryRunPaymentRequired as SdkDryRunPaymentRequired,
-  formatUsdcAmount,
   createDryRunFetch as sdkCreateDryRunFetch,
   createPaymentFetch,
+  getChainConfigByNetwork,
 } from "@use-agently/sdk";
 import type { PaymentRequirementsInfo } from "@use-agently/sdk";
-import { getConfigOrThrow, loadWallet } from "@use-agently/sdk";
+import { loadWallet } from "@use-agently/sdk";
+import { getConfigOrThrow } from "./config.js";
 
 // Re-export SDK items used by CLI commands
 export {
@@ -15,8 +17,19 @@ export {
   createA2AClient,
   createMcpPaymentClient,
   type PaymentRequirementsInfo,
-  formatUsdcAmount,
 } from "@use-agently/sdk";
+
+function formatUsdcAmount(req: PaymentRequirementsInfo): string {
+  try {
+    const { usdcDecimals } = getChainConfigByNetwork(req.network);
+    const raw = formatUnits(BigInt(req.amount), usdcDecimals);
+    const formatted = raw.includes(".") ? raw.replace(/\.?0+$/, "") : raw;
+    const network = req.network ? ` on ${req.network}` : "";
+    return `$${formatted} USDC${network}`;
+  } catch {
+    return `${req.amount} (raw units)`;
+  }
+}
 
 /** CLI-specific DryRunPaymentRequired with --pay hint in the message. */
 export class DryRunPaymentRequired extends SdkDryRunPaymentRequired {

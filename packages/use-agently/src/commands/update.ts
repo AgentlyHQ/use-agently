@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
 import { output } from "../output.js";
-import { loadConfig } from "@use-agently/sdk";
+import { loadConfig } from "../config.js";
 import { clientFetch } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
 

@@ -1,15 +1,5 @@
 // Config
-export {
-  type ConfigScope,
-  WalletConfigSchema,
-  ConfigSchema,
-  type WalletConfig,
-  type Config,
-  loadConfig,
-  saveConfig,
-  backupConfig,
-  getConfigOrThrow,
-} from "./config.js";
+export { WalletConfigSchema, ConfigSchema, type WalletConfig, type Config } from "./config.js";
 
 // Wallets
 export { type Wallet, loadWallet } from "./wallets/wallet.js";
@@ -20,11 +10,11 @@ export {
 } from "./wallets/evm-private-key.js";
 
 // Utils
-export { type PaymentRequirementsInfo, formatUsdcAmount } from "./utils/format.js";
-export { type ChainConfig, getChainConfig } from "./utils/chain.js";
+export { type ChainConfig, getChainConfig, getChainConfigByNetwork } from "./utils/chain.js";
 
 // Client
 export {
+  type PaymentRequirementsInfo,
   USER_AGENT,
   clientFetch,
   DryRunPaymentRequired,

@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { resolveMcpUrl, createMcpClient, loadConfig, loadWallet } from "@use-agently/sdk";
+import { resolveMcpUrl, createMcpClient, loadWallet } from "@use-agently/sdk";
+import { loadConfig } from "../config.js";
 import { output } from "../output.js";
 import { createMcpPaymentClient, handleDryRunError, DryRunPaymentRequired } from "../client.js";
 

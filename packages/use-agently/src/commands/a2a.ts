@@ -8,9 +8,9 @@ import {
   extractStreamEventText,
   extractAgentText,
   DryRunPaymentRequired,
-  getConfigOrThrow,
   loadWallet,
 } from "@use-agently/sdk";
+import { getConfigOrThrow } from "../config.js";
 import { handleDryRunError } from "../client.js";
 import { output } from "../output.js";
 

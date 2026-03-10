@@ -7,15 +7,18 @@ const TEST_ADDRESS = privateKeyToAccount(TEST_PRIVATE_KEY).address;
 let mockExistingConfig: unknown = undefined;
 const saveConfigSpy = mock(async (_config: unknown, _scope: unknown) => {});
 
-const sdk = await import("@use-agently/sdk");
-mock.module("@use-agently/sdk", () => ({
-  ...sdk,
+mock.module("../config.js", () => ({
   loadConfig: async () => mockExistingConfig,
   saveConfig: saveConfigSpy,
   backupConfig: async () => "/backup/config.json",
   getConfigOrThrow: async () => {
     throw new Error("No wallet configured.");
   },
+}));
+
+const sdk = await import("@use-agently/sdk");
+mock.module("@use-agently/sdk", () => ({
+  ...sdk,
   generateEvmPrivateKeyConfig: () => ({
     type: "evm-private-key",
     privateKey: TEST_PRIVATE_KEY,

@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { DryRunPaymentRequired, createDryRunFetch, clientFetch, USER_AGENT } from "./client";
-import { formatUsdcAmount, type PaymentRequirementsInfo } from "./utils/format";
+import {
+  DryRunPaymentRequired,
+  createDryRunFetch,
+  clientFetch,
+  USER_AGENT,
+  type PaymentRequirementsInfo,
+} from "./client";
 
 describe("DryRunPaymentRequired", () => {
   test("formats USDC amount with network", () => {
@@ -47,41 +52,6 @@ describe("DryRunPaymentRequired", () => {
     ];
     const err = new DryRunPaymentRequired(reqs);
     expect(err.requirements).toEqual(reqs);
-  });
-});
-
-describe("formatUsdcAmount", () => {
-  test("formats raw units to USD string with network", () => {
-    const result = formatUsdcAmount({
-      amount: "5000000",
-      network: "eip155:8453",
-      description: "",
-      payTo: "0xabc",
-      asset: "0xabc",
-    });
-    expect(result).toBe("$5 USDC on eip155:8453");
-  });
-
-  test("handles zero amount", () => {
-    const result = formatUsdcAmount({
-      amount: "0",
-      network: "eip155:8453",
-      description: "",
-      payTo: "0xabc",
-      asset: "0xabc",
-    });
-    expect(result).toBe("$0 USDC on eip155:8453");
-  });
-
-  test("returns raw fallback on invalid input", () => {
-    const result = formatUsdcAmount({
-      amount: "not-a-number",
-      network: "eip155:8453",
-      description: "",
-      payTo: "0xabc",
-      asset: "0xabc",
-    });
-    expect(result).toBe("not-a-number (raw units)");
   });
 });
 

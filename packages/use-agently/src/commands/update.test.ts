@@ -13,9 +13,7 @@ mock.module("node:fs/promises", () => ({
   rename: mock(async () => {}),
 }));
 
-const sdk = await import("@use-agently/sdk");
-mock.module("@use-agently/sdk", () => ({
-  ...sdk,
+mock.module("../config.js", () => ({
   loadConfig: mockLoadConfig,
   saveConfig: async () => {},
   backupConfig: async () => "",

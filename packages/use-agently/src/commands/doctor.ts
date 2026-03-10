@@ -2,7 +2,8 @@ import { Command } from "commander";
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { output } from "../output.js";
-import { loadConfig, loadWallet } from "@use-agently/sdk";
+import { loadWallet } from "@use-agently/sdk";
+import { loadConfig } from "../config.js";
 
 interface Check {
   name: string;

@@ -3,8 +3,17 @@ import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
 import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
-import { formatUsdcAmount, type PaymentRequirementsInfo } from "./utils/format.js";
+import { formatUnits } from "viem";
+import { getChainConfigByNetwork } from "./utils/chain.js";
 import pkg from "../package.json" with { type: "json" };
+
+export interface PaymentRequirementsInfo {
+  amount: string;
+  network: string;
+  description: string;
+  payTo: string;
+  asset: string;
+}
 
 export const USER_AGENT = `@use-agently/sdk/${pkg.version} (use-agently.com)`;
 
@@ -25,7 +34,17 @@ export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: Reque
   return fetch(input, { ...init, headers });
 };
 
-export { type PaymentRequirementsInfo, formatUsdcAmount } from "./utils/format.js";
+function formatUsdcAmount(req: PaymentRequirementsInfo): string {
+  try {
+    const { usdcDecimals } = getChainConfigByNetwork(req.network);
+    const raw = formatUnits(BigInt(req.amount), usdcDecimals);
+    const formatted = raw.includes(".") ? raw.replace(/\.?0+$/, "") : raw;
+    const network = req.network ? ` on ${req.network}` : "";
+    return `$${formatted} USDC${network}`;
+  } catch {
+    return `${req.amount} (raw units)`;
+  }
+}
 
 export class DryRunPaymentRequired extends Error {
   readonly requirements: PaymentRequirementsInfo[];
