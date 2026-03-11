@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { output } from "../output.js";
 import { searchAgents } from "@use-agently/sdk";
+import { clientFetch } from "../client.js";
 
 export const searchCommand = new Command("search")
   .description("Search the Agently marketplace for agents")
@@ -12,6 +13,6 @@ export const searchCommand = new Command("search")
   )
   .action(async (query: string | undefined, options: { protocol?: string }, command: Command) => {
     const protocols = options.protocol ? options.protocol.split(",").map((p) => p.trim().toLowerCase()) : undefined;
-    const agents = await searchAgents({ query, protocols });
+    const agents = await searchAgents({ query, protocols }, clientFetch);
     output(command, { agents });
   });

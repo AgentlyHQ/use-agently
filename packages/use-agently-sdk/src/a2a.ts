@@ -6,6 +6,7 @@ import { createA2AClient, createDryRunFetch, createPaymentFetch } from "./client
 
 export interface A2AMessageOptions {
   transaction?: TransactionMode;
+  fetchImpl?: typeof fetch;
 }
 
 export interface A2AMessageResult {
@@ -21,9 +22,12 @@ function extractTextFromParts(parts: any[]): string {
 }
 
 /** Defaults to dry-run when no transaction mode is provided */
-function resolveFetchForTransaction(transaction: TransactionMode = DryRunTransaction): typeof fetch {
-  if (transaction.mode === "dry-run") return createDryRunFetch();
-  return createPaymentFetch(transaction.wallet) as typeof fetch;
+function resolveFetchForTransaction(
+  transaction: TransactionMode = DryRunTransaction,
+  fetchImpl?: typeof fetch,
+): typeof fetch {
+  if (transaction.mode === "dry-run") return createDryRunFetch(fetchImpl);
+  return createPaymentFetch(transaction.wallet, fetchImpl) as typeof fetch;
 }
 
 function resolveAgentUrl(agentInput: string): string {
@@ -78,8 +82,8 @@ export async function sendA2AMessage(
   options?: A2AMessageOptions,
 ): Promise<A2AMessageResult> {
   const agentUrl = resolveAgentUrl(uri);
-  const fetchImpl = resolveFetchForTransaction(options?.transaction);
-  const client = await createA2AClient(agentUrl, fetchImpl);
+  const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
+  const client = await createA2AClient(agentUrl, resolvedFetch);
 
   const result = await client.sendMessage({
     message: {
@@ -100,8 +104,8 @@ export async function sendA2AMessageStream(
   options?: A2AMessageOptions,
 ): Promise<AsyncIterable<unknown>> {
   const agentUrl = resolveAgentUrl(uri);
-  const fetchImpl = resolveFetchForTransaction(options?.transaction);
-  const client = await createA2AClient(agentUrl, fetchImpl);
+  const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
+  const client = await createA2AClient(agentUrl, resolvedFetch);
 
   return client.sendMessageStream({
     message: {
@@ -114,8 +118,8 @@ export async function sendA2AMessageStream(
 }
 
 /** Resolve a URI and fetch the A2A agent card. */
-export async function getA2ACard(uri: string): Promise<AgentCard> {
+export async function getA2ACard(uri: string, options?: { fetchImpl?: typeof fetch }): Promise<AgentCard> {
   const agentUrl = resolveAgentUrl(uri);
-  const resolver = new DefaultAgentCardResolver();
+  const resolver = new DefaultAgentCardResolver(options?.fetchImpl ? { fetchImpl: options.fetchImpl } : undefined);
   return resolver.resolve(agentUrl);
 }

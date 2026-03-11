@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { output } from "../output.js";
 import { resolveErc8004Agent, AgentNotFoundError } from "@use-agently/sdk";
+import { clientFetch } from "../client.js";
 
 function resolveUriOption(options: { uri?: string }): string {
   if (!options.uri) {
@@ -21,7 +22,7 @@ export const erc8004Command = new Command("erc-8004")
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options);
     try {
-      const agent = await resolveErc8004Agent(uri);
+      const agent = await resolveErc8004Agent(uri, clientFetch);
       output(command, agent);
     } catch (err) {
       if (err instanceof AgentNotFoundError) {

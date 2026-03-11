@@ -8,9 +8,11 @@ import pkg from "../package.json" with { type: "json" };
 
 export interface McpCallOptions {
   transaction?: TransactionMode;
+  fetchImpl?: typeof fetch;
+  clientInfo?: { name: string; version: string };
 }
 
-function resolveMcpUrl(input: string): string {
+export function resolveMcpUrl(input: string): string {
   const isDirectUrl = input.startsWith("http://") || input.startsWith("https://");
   const base = isDirectUrl ? input : `https://use-agently.com/${input}/services/mcp`;
   const url = new URL(base);
@@ -20,17 +22,23 @@ function resolveMcpUrl(input: string): string {
   return url.toString();
 }
 
-async function createMcpClient(mcpUrl: string): Promise<Client> {
-  const client = new Client({ name: "@use-agently/sdk", version: pkg.version });
-  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
+async function createMcpClient(
+  mcpUrl: string,
+  options?: { clientInfo?: { name: string; version: string }; fetchImpl?: typeof fetch },
+): Promise<Client> {
+  const client = new Client(options?.clientInfo ?? { name: "@use-agently/sdk", version: pkg.version });
+  const transport = new StreamableHTTPClientTransport(
+    new URL(mcpUrl),
+    options?.fetchImpl ? { fetch: options.fetchImpl } : undefined,
+  );
   await client.connect(transport);
   return client;
 }
 
 /** List all tools available on an MCP server. */
-export async function listMcpTools(uri: string): Promise<Tool[]> {
+export async function listMcpTools(uri: string, options?: McpCallOptions): Promise<Tool[]> {
   const mcpUrl = resolveMcpUrl(uri);
-  const client = await createMcpClient(mcpUrl);
+  const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: options?.fetchImpl });
   try {
     const { tools } = await client.listTools();
     return tools;
@@ -50,7 +58,7 @@ export async function callMcpTool(
   const transaction = options?.transaction ?? DryRunTransaction;
 
   if (transaction.mode === "pay") {
-    const client = await createMcpClient(mcpUrl);
+    const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: options?.fetchImpl });
     try {
       const x402Client = createMcpPaymentClient(client, transaction.wallet);
       return (await x402Client.callTool(tool, args ?? {})) as unknown as CallToolResult;
@@ -60,7 +68,7 @@ export async function callMcpTool(
   }
 
   // Dry-run mode
-  const client = await createMcpClient(mcpUrl);
+  const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: options?.fetchImpl });
   try {
     const result = await client.callTool({ name: tool, arguments: args ?? {} });
     if (result.isError) {
