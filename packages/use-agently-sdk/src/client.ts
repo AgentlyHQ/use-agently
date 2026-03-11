@@ -15,24 +15,29 @@ export interface PaymentRequirementsInfo {
   asset: string;
 }
 
-export const USER_AGENT = `@use-agently/sdk/${pkg.version} (use-agently.com)`;
+export const USER_AGENT = `@use-agently/sdk:${pkg.version} (use-agently.com)`;
 
-/** The standard fetch client for all use-agently requests. Automatically includes the User-Agent header. */
-// @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
-export const clientFetch: typeof fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
-  const isRequest = input instanceof Request;
-  const headers = new Headers(isRequest ? input.headers : init?.headers);
-  if (isRequest && init?.headers) {
-    for (const [key, value] of new Headers(init.headers).entries()) {
-      headers.set(key, value);
+/** Create a fetch wrapper that automatically includes a User-Agent header. */
+export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch {
+  // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
+  return (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
+    const isRequest = input instanceof Request;
+    const headers = new Headers(isRequest ? input.headers : init?.headers);
+    if (isRequest && init?.headers) {
+      for (const [key, value] of new Headers(init.headers).entries()) {
+        headers.set(key, value);
+      }
     }
-  }
-  if (!headers.has("User-Agent")) {
-    headers.set("User-Agent", USER_AGENT);
-  }
-  return fetch(input, { ...init, headers });
-};
+    if (!headers.has("User-Agent")) {
+      headers.set("User-Agent", userAgent);
+    }
+    return fetch(input, { ...init, headers });
+  };
+}
+
+/** The standard fetch client for SDK requests. Automatically includes the User-Agent header. */
+export const clientFetch: typeof fetch = createClientFetch();
 
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   try {
@@ -60,10 +65,10 @@ export class DryRunPaymentRequired extends Error {
   }
 }
 
-export function createDryRunFetch(): typeof fetch {
+export function createDryRunFetch(fetchImpl: typeof fetch = clientFetch): typeof fetch {
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const response = await clientFetch(input, init);
+    const response = await fetchImpl(input, init);
     if (response.status === 402) {
       let requirements: PaymentRequirementsInfo[] = [];
       const header = response.headers.get("PAYMENT-REQUIRED");
@@ -91,8 +96,8 @@ export function createDryRunFetch(): typeof fetch {
   };
 }
 
-export function createPaymentFetch(wallet: Wallet) {
-  return wrapFetchWithPaymentFromConfig(clientFetch, {
+export function createPaymentFetch(wallet: Wallet, fetchImpl: typeof fetch = clientFetch) {
+  return wrapFetchWithPaymentFromConfig(fetchImpl, {
     schemes: wallet.getX402Schemes(),
   });
 }

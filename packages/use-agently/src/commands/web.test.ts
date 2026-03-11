@@ -13,8 +13,8 @@ import {
   testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
-import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "../client";
-import { EvmPrivateKeyWallet } from "@use-agently/sdk";
+import { createPaymentFetch, createDryRunFetch } from "../client";
+import { EvmPrivateKeyWallet, DryRunPaymentRequired } from "@use-agently/sdk";
 
 mockConfigModule();
 

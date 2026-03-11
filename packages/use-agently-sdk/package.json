@@ -10,11 +10,6 @@
       "types": "./build/index.d.ts",
       "bun": "./src/index.ts",
       "default": "./build/index.js"
-    },
-    "./testing": {
-      "types": "./build/testing.d.ts",
-      "bun": "./src/testing.ts",
-      "default": "./build/testing.js"
     }
   },
   "scripts": {

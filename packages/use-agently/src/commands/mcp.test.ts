@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createMcpPaymentClient, DryRunPaymentRequired } from "../client";
+import { createMcpPaymentClient } from "@use-agently/sdk";
 import {
   captureOutput,
   mockConfigModule,

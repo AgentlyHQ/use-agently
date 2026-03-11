@@ -3,39 +3,24 @@ import { formatUnits } from "viem";
 import {
   DryRunPaymentRequired as SdkDryRunPaymentRequired,
   createDryRunFetch as sdkCreateDryRunFetch,
-  createPaymentFetch,
+  createPaymentFetch as sdkCreatePaymentFetch,
+  createClientFetch,
   getChainConfigByNetwork,
-} from "@use-agently/sdk";
-import type { PaymentRequirementsInfo } from "@use-agently/sdk";
-import { loadWallet } from "@use-agently/sdk";
-import { getConfigOrThrow } from "./config.js";
-
-// Re-export SDK items used by CLI commands
-export {
-  clientFetch,
-  createPaymentFetch,
-  createA2AClient,
-  createMcpPaymentClient,
   type PaymentRequirementsInfo,
+  loadWallet,
 } from "@use-agently/sdk";
+import { getConfigOrThrow } from "./config.js";
+import pkg from "../package.json" with { type: "json" };
 
-function formatUsdcAmount(req: PaymentRequirementsInfo): string {
-  try {
-    const { usdcDecimals } = getChainConfigByNetwork(req.network);
-    const raw = formatUnits(BigInt(req.amount), usdcDecimals);
-    const formatted = raw.includes(".") ? raw.replace(/\.?0+$/, "") : raw;
-    const network = req.network ? ` on ${req.network}` : "";
-    return `$${formatted} USDC${network}`;
-  } catch {
-    return `${req.amount} (raw units)`;
-  }
-}
+const CLI_USER_AGENT = `use-agently:${pkg.version} (use-agently.com)`;
+
+/** CLI-specific fetch client with CLI user-agent. */
+export const clientFetch: typeof fetch = createClientFetch(CLI_USER_AGENT);
 
 /** CLI-specific DryRunPaymentRequired with --pay hint in the message. */
 export class DryRunPaymentRequired extends SdkDryRunPaymentRequired {
   constructor(requirements: PaymentRequirementsInfo[]) {
     super(requirements);
-    // Override message with CLI-friendly text
     const req = requirements[0];
     const amount = req ? formatUsdcAmount(req) : null;
     this.message = amount
@@ -46,7 +31,7 @@ export class DryRunPaymentRequired extends SdkDryRunPaymentRequired {
 
 /** CLI wrapper around SDK's createDryRunFetch that throws CLI-specific DryRunPaymentRequired. */
 export function createDryRunFetch(): typeof fetch {
-  const sdkFetch = sdkCreateDryRunFetch();
+  const sdkFetch = sdkCreateDryRunFetch(clientFetch);
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     try {
@@ -60,25 +45,37 @@ export function createDryRunFetch(): typeof fetch {
   };
 }
 
+export function createPaymentFetch(wallet: ReturnType<typeof loadWallet>) {
+  return sdkCreatePaymentFetch(wallet, clientFetch);
+}
+
 /** Resolve the fetch implementation based on the --pay flag. */
 export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
   if (pay) {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
-    return createPaymentFetch(wallet) as typeof fetch;
+    return sdkCreatePaymentFetch(wallet, clientFetch) as typeof fetch;
   }
   return createDryRunFetch();
 }
 
+function formatUsdcAmount(req: PaymentRequirementsInfo): string {
+  try {
+    const { usdcDecimals } = getChainConfigByNetwork(req.network);
+    const raw = formatUnits(BigInt(req.amount), usdcDecimals);
+    const formatted = raw.includes(".") ? raw.replace(/\.?0+$/, "") : raw;
+    const network = req.network ? ` on ${req.network}` : "";
+    return `$${formatted} USDC${network}`;
+  } catch {
+    return `${req.amount} (raw units)`;
+  }
+}
+
 /** Display a DryRunPaymentRequired error in a boxed format and exit. */
 export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
-  const req = err.requirements[0];
-  const amount = req ? formatUsdcAmount(req) : null;
-  const message = amount
-    ? `This request requires payment of ${amount}.\nRun the same command with --pay to authorize the transaction and proceed.`
-    : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.`;
+  const cliErr = err instanceof DryRunPaymentRequired ? err : new DryRunPaymentRequired(err.requirements);
   console.error(
-    boxen(message, {
+    boxen(cliErr.message, {
       title: "Payment Required",
       titleAlignment: "center",
       borderColor: "yellow",
