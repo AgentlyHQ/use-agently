@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./test": "./test.ts"
+  },
   "scripts": {
     "dev": "aixyz dev",
     "test": "bun test"

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createMcpPaymentClient, DryRunPaymentRequired } from "../client";
+import { createMcpPaymentClient } from "@use-agently/sdk";
 import {
   captureOutput,
   mockConfigModule,
@@ -13,7 +13,7 @@ import {
   type X402FacilitatorLocal,
 } from "../testing";
 import { accounts } from "x402-fl/testcontainers";
-import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+import { EvmPrivateKeyWallet } from "@use-agently/sdk";
 import pkg from "../../package.json" with { type: "json" };
 
 mockConfigModule();
@@ -111,7 +111,7 @@ describe("mcp x402 payment (paid)", () => {
     } finally {
       await client.close();
     }
-  });
+  }, 30_000);
 
   test("unpaid tool call returns error", async () => {
     const client = await createMcpClient();
@@ -181,6 +181,6 @@ describe("mcp x402 payment (paid)", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
   });
 });

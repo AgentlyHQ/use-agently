@@ -13,7 +13,7 @@ mock.module("node:fs/promises", () => ({
   rename: mock(async () => {}),
 }));
 
-mock.module("../config", () => ({
+mock.module("../config.js", () => ({
   loadConfig: mockLoadConfig,
   saveConfig: async () => {},
   backupConfig: async () => "",

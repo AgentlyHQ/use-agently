@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { loadConfig, saveConfig, backupConfig, type ConfigScope } from "../config.js";
 import { output } from "../output.js";
-import { generateEvmPrivateKeyConfig } from "../wallets/evm-private-key.js";
+import { generateEvmPrivateKeyConfig } from "@use-agently/sdk";
+import { loadConfig, saveConfig, backupConfig, type ConfigScope } from "../config.js";
 
 export const initCommand = new Command("init")
   .description("Generate a new local wallet and save it to config")

@@ -13,8 +13,8 @@ import {
   testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
-import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "../client";
-import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
+import { createPaymentFetch, createDryRunFetch } from "../client";
+import { EvmPrivateKeyWallet, DryRunPaymentRequired } from "@use-agently/sdk";
 
 mockConfigModule();
 
@@ -106,7 +106,7 @@ describe("web command cli", () => {
 
     test("use-agently web prints help with subcommands", async () => {
       await cli.parseAsync(["test", "use-agently", "web"]);
-      const helpOutput = writeSpy.mock.calls.map((c) => c[0]).join("");
+      const helpOutput = writeSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
       expect(helpOutput).toContain("get");
       expect(helpOutput).toContain("post");
       expect(helpOutput).toContain("put");
@@ -220,8 +220,8 @@ describe("web command cli", () => {
       );
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/v", "-v"]);
-      expect(out.errorSpy.mock.calls.map((c) => c[0]).join("\n")).toContain("> GET http://example.com/v");
-      expect(out.errorSpy.mock.calls.map((c) => c[0]).join("\n")).toContain("< 200 OK");
+      expect(out.errorSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n")).toContain("> GET http://example.com/v");
+      expect(out.errorSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n")).toContain("< 200 OK");
     });
 
     test("--output json returns structured JSON", async () => {
@@ -562,7 +562,7 @@ describe("web x402 payment", () => {
 
       const senderAfter = await fixture.container.balance(TEST_ADDRESS);
       expect(senderBefore.value - senderAfter.value).toStrictEqual(3000n);
-    });
+    }, 30_000);
 
     test("paid POST succeeds with funded wallet and debits sender $0.003", async () => {
       const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
@@ -582,7 +582,7 @@ describe("web x402 payment", () => {
 
       const senderAfter = await fixture.container.balance(TEST_ADDRESS);
       expect(senderBefore.value - senderAfter.value).toStrictEqual(3000n);
-    });
+    }, 30_000);
   });
 
   describe("cli", () => {
@@ -621,7 +621,7 @@ describe("web x402 payment", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
 
     test("web post with --pay on /http/paid succeeds and debits sender", async () => {
       mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
@@ -647,6 +647,6 @@ describe("web x402 payment", () => {
 
       // Restore default mock
       mockConfigModule();
-    });
+    }, 30_000);
   });
 });

@@ -1,14 +1,13 @@
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { privateKeyToAccount } from "viem/accounts";
 import { captureOutput, TEST_PRIVATE_KEY } from "../testing";
-import { EvmPrivateKeyWallet } from "../wallets/evm-private-key";
 
 const TEST_ADDRESS = privateKeyToAccount(TEST_PRIVATE_KEY).address;
 
 let mockExistingConfig: unknown = undefined;
 const saveConfigSpy = mock(async (_config: unknown, _scope: unknown) => {});
 
-mock.module("../config", () => ({
+mock.module("../config.js", () => ({
   loadConfig: async () => mockExistingConfig,
   saveConfig: saveConfigSpy,
   backupConfig: async () => "/backup/config.json",
@@ -17,13 +16,14 @@ mock.module("../config", () => ({
   },
 }));
 
-mock.module("../wallets/evm-private-key", () => ({
+const sdk = await import("@use-agently/sdk");
+mock.module("@use-agently/sdk", () => ({
+  ...sdk,
   generateEvmPrivateKeyConfig: () => ({
     type: "evm-private-key",
     privateKey: TEST_PRIVATE_KEY,
     address: TEST_ADDRESS,
   }),
-  EvmPrivateKeyWallet,
 }));
 
 const { cli } = await import("../cli");

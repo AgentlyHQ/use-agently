@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, mock, spyOn } from "bun:test";
-import { parse } from "yaml";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   X402FacilitatorLocalContainer,
@@ -7,9 +6,27 @@ import {
   accounts,
 } from "x402-fl/testcontainers";
 import { AixyzTesting } from "localhost-aixyz/test";
+import { parse } from "yaml";
+
+// --- Test wallet ---
 
 export const TEST_PRIVATE_KEY = generatePrivateKey();
 export const TEST_ADDRESS = privateKeyToAccount(TEST_PRIVATE_KEY).address;
+
+export function testWalletConfig(rpcUrl?: string) {
+  return {
+    type: "evm-private-key" as const,
+    privateKey: TEST_PRIVATE_KEY,
+    address: TEST_ADDRESS,
+    ...(rpcUrl ? { rpcUrl } : {}),
+  };
+}
+
+export function testConfig() {
+  return { wallet: testWalletConfig() };
+}
+
+// --- x402 facilitator local ---
 
 export interface X402FacilitatorLocal {
   container: StartedX402FacilitatorLocalContainer;
@@ -50,18 +67,7 @@ export async function stopX402FacilitatorLocal(fixture: X402FacilitatorLocal): P
   }
 }
 
-export function testWalletConfig(rpcUrl?: string) {
-  return {
-    type: "evm-private-key" as const,
-    privateKey: TEST_PRIVATE_KEY,
-    address: TEST_ADDRESS,
-    ...(rpcUrl ? { rpcUrl } : {}),
-  };
-}
-
-export function testConfig() {
-  return { wallet: testWalletConfig() };
-}
+// --- Test output capture ---
 
 /**
  * Capture console.log and console.error output during tests.
@@ -117,16 +123,18 @@ export function captureOutput() {
   };
 }
 
+// --- Config mock ---
+
 /**
- * Mock `config.ts` with a static wallet config.
+ * Mock the config functions exported from `./config.js` with a static wallet config.
  * Accepts an optional getter so tests can swap the config dynamically.
  */
 export function mockConfigModule(getConfig?: () => unknown) {
   const resolve = getConfig ?? (() => testConfig());
-  mock.module("./config", () => ({
+  mock.module("./config.js", () => ({
     getConfigOrThrow: async () => {
       const cfg = resolve();
-      if (!cfg || !(cfg as any).wallet) throw new Error("No wallet configured. Run `use-agently init` first.");
+      if (!cfg || !(cfg as any).wallet) throw new Error("No wallet configured. Initialize a wallet first.");
       return cfg;
     },
     loadConfig: async () => resolve(),

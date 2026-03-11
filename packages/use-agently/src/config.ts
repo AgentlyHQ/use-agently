@@ -1,19 +1,9 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { mkdir, rename, readFile, writeFile } from "node:fs/promises";
-import { z } from "zod";
+import { type Config, ConfigSchema } from "@use-agently/sdk";
 
 export type ConfigScope = "global" | "local";
-
-export const WalletConfigSchema = z.object({ type: z.string() }).loose();
-
-export const ConfigSchema = z.object({
-  wallet: WalletConfigSchema,
-  env: z.record(z.string(), z.union([z.number(), z.string()])).optional(),
-});
-
-export type WalletConfig = z.infer<typeof WalletConfigSchema>;
-export type Config = z.infer<typeof ConfigSchema>;
 
 function getConfigDir(scope: ConfigScope): string {
   return scope === "local" ? join(process.cwd(), ".use-agently") : join(homedir(), ".use-agently");
@@ -35,13 +25,13 @@ async function loadConfigFromPath(configPath: string): Promise<Config | undefine
     raw = JSON.parse(contents);
   } catch {
     throw new Error(
-      `Config file at ${configPath} contains invalid JSON. Please fix or delete it and run \`use-agently init\`.`,
+      `Config file at ${configPath} contains invalid JSON. Please fix or delete it and re-initialize your configuration.`,
     );
   }
   const result = ConfigSchema.safeParse(raw);
   if (!result.success) {
     throw new Error(
-      `Config file at ${configPath} has an invalid format. Please fix or delete it and run \`use-agently init\`.`,
+      `Config file at ${configPath} has an invalid format. Please fix or delete it and re-initialize your configuration.`,
     );
   }
   return result.data;
@@ -90,7 +80,7 @@ export async function backupConfig(scope: ConfigScope = "global"): Promise<strin
 export async function getConfigOrThrow(): Promise<Config> {
   const config = await loadConfig();
   if (!config?.wallet) {
-    throw new Error("No wallet configured. Run `use-agently init` first.");
+    throw new Error("No wallet configured. Initialize a wallet first.");
   }
   return config;
 }

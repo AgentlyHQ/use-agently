@@ -1,60 +1,21 @@
 import { Command } from "commander";
-import { randomUUID } from "node:crypto";
-import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
-import { resolveFetch, createA2AClient, handleDryRunError, DryRunPaymentRequired } from "../client.js";
+import {
+  type TransactionMode,
+  DryRunTransaction,
+  PayTransaction,
+  sendA2AMessageStream,
+  getA2ACard,
+  extractStreamEventText,
+  extractAgentText,
+  DryRunPaymentRequired,
+  loadWallet,
+} from "@use-agently/sdk";
+import { getConfigOrThrow } from "../config.js";
+import { clientFetch, handleDryRunError } from "../client.js";
 import { output } from "../output.js";
 
-function extractTextFromParts(parts: any[]): string {
-  return parts
-    .filter((p) => p.kind === "text")
-    .map((p) => p.text)
-    .join("");
-}
-
-function resolveAgentUrl(agentInput: string): string {
-  const isDirectUrl = agentInput.startsWith("http://") || agentInput.startsWith("https://");
-  return isDirectUrl ? agentInput : `https://use-agently.com/${agentInput}/`;
-}
-
-export function extractAgentText(result: any): string {
-  if (!result) {
-    return "The agent processed your request but returned no response.";
-  }
-
-  // Direct message response
-  if (result.kind === "message" && result.parts) {
-    return extractTextFromParts(result.parts);
-  }
-
-  // Task-based response — agent messages
-  const messages = result.kind === "task" ? result.messages : result.task?.messages || result.messages;
-  if (messages) {
-    const text = messages
-      .filter((m: { role: string }) => m.role === "agent")
-      .flatMap((m: { parts: unknown[] }) => extractTextFromParts(m.parts))
-      .join("\n");
-    if (text) return text;
-  }
-
-  // Task artifacts response
-  const artifacts = result.artifacts || result.task?.artifacts;
-  if (artifacts && artifacts.length > 0) {
-    const text = artifacts.flatMap((a: { parts: unknown[] }) => extractTextFromParts(a.parts)).join("\n");
-    if (text) return text;
-  }
-
-  return result.text || "The agent processed your request but returned no text response.";
-}
-
-function extractStreamEventText(event: any): string {
-  if (event.kind === "artifact-update") {
-    return extractTextFromParts(event.artifact?.parts || []);
-  }
-  if (event.kind === "message" && event.role === "agent") {
-    return extractTextFromParts(event.parts || []);
-  }
-  return "";
-}
+// Re-export from SDK so test file can import from "./a2a"
+export { extractAgentText };
 
 function resolveUriOption(options: { uri?: string }, commandName: string): string {
   if (!options.uri) {
@@ -63,6 +24,15 @@ function resolveUriOption(options: { uri?: string }, commandName: string): strin
     );
   }
   return options.uri;
+}
+
+async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
+  if (pay) {
+    const config = await getConfigOrThrow();
+    const wallet = loadWallet(config.wallet);
+    return PayTransaction(wallet);
+  }
+  return DryRunTransaction;
 }
 
 export const a2aCommand = new Command("a2a")
@@ -81,22 +51,11 @@ const a2aSendCommand = new Command("send")
     '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri echo-agent -m "Hello!"\n  use-agently a2a send --uri paid-agent -m "Hello!" --pay',
   )
   .action(async (options: { uri?: string; message: string; pay?: boolean }) => {
-    const agentInput = resolveUriOption(options, "a2a send");
-    const agentUrl = resolveAgentUrl(agentInput);
-
-    const fetchImpl = await resolveFetch(options.pay);
+    const uri = resolveUriOption(options, "a2a send");
+    const transaction = await resolveTransactionMode(options.pay);
 
     try {
-      const client = await createA2AClient(agentUrl, fetchImpl);
-
-      const stream = client.sendMessageStream({
-        message: {
-          kind: "message",
-          messageId: randomUUID(),
-          role: "user",
-          parts: [{ kind: "text", text: options.message }],
-        },
-      });
+      const stream = await sendA2AMessageStream(uri, options.message, { transaction, fetchImpl: clientFetch });
 
       let wroteText = false;
       let lastResult: any = null;
@@ -128,10 +87,8 @@ const a2aCardSubCommand = new Command("card")
     "\nExamples:\n  use-agently a2a card --uri https://example.com/agent\n  use-agently a2a card --uri echo-agent",
   )
   .action(async (options: { uri?: string }, command: Command) => {
-    const agentInput = resolveUriOption(options, "a2a card");
-    const agentUrl = resolveAgentUrl(agentInput);
-    const resolver = new DefaultAgentCardResolver();
-    const card = await resolver.resolve(agentUrl);
+    const uri = resolveUriOption(options, "a2a card");
+    const card = await getA2ACard(uri, { fetchImpl: clientFetch });
     output(command, card);
   });
 

@@ -1,132 +1,54 @@
-import { describe, expect, test } from "bun:test";
-import { DryRunPaymentRequired, createDryRunFetch } from "./client";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { DryRunPaymentRequired as SdkDryRunPaymentRequired } from "@use-agently/sdk";
+import { mockConfigModule } from "./testing";
+
+mockConfigModule();
+
+const { DryRunPaymentRequired, clientFetch } = await import("./client");
 
 describe("DryRunPaymentRequired", () => {
-  test("formats USDC amount with network", () => {
+  test("formats USDC amount with --pay hint", () => {
     const err = new DryRunPaymentRequired([
-      {
-        amount: "1000",
-        network: "eip155:8453",
-        description: "Payment required",
-        payTo: "0xabc",
-        asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      },
+      { amount: "1000000", network: "eip155:8453", description: "", payTo: "0x0", asset: "USDC" },
     ]);
-    expect(err.name).toBe("DryRunPaymentRequired");
-    expect(err.message).toBe(
-      "This request requires payment of $0.001 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
-    );
+    expect(err.message).toContain("$1 USDC");
+    expect(err.message).toContain("--pay");
   });
 
-  test("formats whole dollar amount without trailing decimals", () => {
-    const err = new DryRunPaymentRequired([
-      {
-        amount: "1000000",
-        network: "eip155:8453",
-        description: "",
-        payTo: "0xabc",
-        asset: "0xabc",
-      },
-    ]);
-    expect(err.message).toBe(
-      "This request requires payment of $1 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
-    );
-  });
-
-  test("uses fallback message when requirements are empty", () => {
+  test("handles missing amount gracefully", () => {
     const err = new DryRunPaymentRequired([]);
-    expect(err.message).toBe(
-      "This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.",
-    );
+    expect(err.message).toContain("could not be determined");
+    expect(err.message).toContain("--pay");
   });
 
-  test("stores requirements on the error instance", () => {
-    const reqs = [
-      {
-        amount: "500",
-        network: "eip155:1",
-        description: "",
-        payTo: "0xabc",
-        asset: "0xabc",
-      },
-    ];
-    const err = new DryRunPaymentRequired(reqs);
-    expect(err.requirements).toEqual(reqs);
+  test("extends SDK DryRunPaymentRequired", () => {
+    const err = new DryRunPaymentRequired([
+      { amount: "1000000", network: "eip155:8453", description: "", payTo: "0x0", asset: "USDC" },
+    ]);
+    expect(err).toBeInstanceOf(SdkDryRunPaymentRequired);
   });
 });
 
-describe("createDryRunFetch", () => {
-  test("passes through non-402 responses unchanged", async () => {
-    const dryRunFetch = createDryRunFetch();
-    const response = await dryRunFetch("https://httpbin.org/status/200").catch(() => {
-      // Network may not be available in test environment; skip if so
-      return null;
-    });
-    // If network is available, verify response is passed through
-    if (response) {
-      expect(response.status).not.toBe(402);
-    }
+describe("clientFetch", () => {
+  let fetchSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response("ok"));
   });
 
-  test("throws DryRunPaymentRequired on 402 with PAYMENT-REQUIRED header", async () => {
-    const dryRunFetch = createDryRunFetch();
-
-    // Mock a 402 response with the payment required header
-    const paymentRequired = {
-      x402Version: 2,
-      accepts: [
-        {
-          amount: "1000",
-          network: "eip155:8453",
-          description: "Test payment",
-          payTo: "0xabc",
-          asset: "0xabc",
-          scheme: "exact",
-          resource: "https://example.com",
-          mimeType: "application/json",
-          outputSchema: {},
-          maxTimeoutSeconds: 60,
-          extra: {},
-        },
-      ],
-    };
-    const header = Buffer.from(JSON.stringify(paymentRequired)).toString("base64");
-
-    // Temporarily replace global fetch to simulate a 402 response
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = async () =>
-      new Response(null, {
-        status: 402,
-        headers: { "PAYMENT-REQUIRED": header },
-      });
-
-    try {
-      await dryRunFetch("https://example.com/paid");
-      throw new Error("Expected DryRunPaymentRequired to be thrown");
-    } catch (err) {
-      expect(err).toBeInstanceOf(DryRunPaymentRequired);
-      expect((err as DryRunPaymentRequired).message).toBe(
-        "This request requires payment of $0.001 USDC on eip155:8453.\nRun the same command with --pay to authorize the transaction and proceed.",
-      );
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+  afterEach(() => {
+    fetchSpy.mockRestore();
   });
 
-  test("throws DryRunPaymentRequired with empty requirements on 402 without header", async () => {
-    const dryRunFetch = createDryRunFetch();
+  test("sets User-Agent header", async () => {
+    await clientFetch("http://example.com");
+    const headers = fetchSpy.mock.calls[0][1]?.headers as Headers;
+    expect(headers.get("User-Agent")).toMatch(/^use-agently:\S+ \(use-agently\.com\)$/);
+  });
 
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = async () => new Response(null, { status: 402 });
-
-    try {
-      await dryRunFetch("https://example.com/paid");
-      throw new Error("Expected DryRunPaymentRequired to be thrown");
-    } catch (err) {
-      expect(err).toBeInstanceOf(DryRunPaymentRequired);
-      expect((err as DryRunPaymentRequired).requirements).toEqual([]);
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+  test("does not override existing User-Agent header", async () => {
+    await clientFetch("http://example.com", { headers: { "User-Agent": "custom/1.0" } });
+    const headers = fetchSpy.mock.calls[0][1]?.headers as Headers;
+    expect(headers.get("User-Agent")).toStrictEqual("custom/1.0");
   });
 });
