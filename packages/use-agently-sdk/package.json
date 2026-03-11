@@ -2,6 +2,15 @@
   "name": "@use-agently/sdk",
   "version": "0.0.0",
   "description": "Core SDK for the Agently platform — wallet management, A2A, MCP, x402 payments",
+  "homepage": "https://github.com/AgentlyHQ/use-agently/tree/main/packages/use-agently-sdk",
+  "bugs": {
+    "url": "https://github.com/AgentlyHQ/use-agently/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AgentlyHQ/use-agently.git",
+    "directory": "packages/use-agently-sdk"
+  },
   "license": "MIT",
   "author": "AgentlyHQ",
   "type": "module",
@@ -12,6 +21,10 @@
       "default": "./build/index.js"
     }
   },
+  "files": [
+    "build",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf build",
@@ -32,5 +45,8 @@
     "testcontainers": "^11",
     "tsdown": "^0.21.1",
     "x402-fl": "^0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -26,7 +26,13 @@ export {
 } from "./client.js";
 
 // Marketplace
-export { AgentNotFoundError, fetchAgents, searchAgents, resolveErc8004Agent } from "./marketplace.js";
+export {
+  type MarketplaceAgent,
+  AgentNotFoundError,
+  fetchAgents,
+  searchAgents,
+  resolveErc8004Agent,
+} from "./marketplace.js";
 
 // Transaction
 export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils/transaction.js";
