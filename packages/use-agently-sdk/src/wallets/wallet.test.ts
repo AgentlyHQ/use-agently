@@ -28,7 +28,7 @@ describe("generateEvmPrivateKeyConfig", () => {
   test("generated address matches the private key", () => {
     const config = generateEvmPrivateKeyConfig();
     const account = privateKeyToAccount(config.privateKey);
-    expect(account.address).toBe(config.address);
+    expect(account.address).toStrictEqual(config.address as `0x${string}`);
   });
 });
 

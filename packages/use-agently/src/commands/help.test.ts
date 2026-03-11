@@ -25,7 +25,7 @@ describe("help command", () => {
       // expected: --help calls process.exit(0)
     }
 
-    const output = writeSpy.mock.calls.map((c) => c[0]).join("");
+    const output = writeSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
     expect(output).toContain("use-agently");
     expect(output).toContain("Diagnostics");
     expect(exitSpy).toHaveBeenCalledWith(0);
@@ -34,7 +34,7 @@ describe("help command", () => {
   test("use-agently (no args) prints available commands", async () => {
     await cli.parseAsync(["test", "use-agently"]);
 
-    const output = writeSpy.mock.calls.map((c) => c[0]).join("");
+    const output = writeSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
     expect(output).toContain("use-agently");
     expect(output).toContain("Diagnostics");
     expect(exitSpy).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe("help command", () => {
       // expected: unknown command calls process.exit(1)
     }
 
-    const errOutput = stderrSpy.mock.calls.map((c) => c[0]).join("");
+    const errOutput = stderrSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
     stderrSpy.mockRestore();
 
     expect(errOutput).toContain("error: unknown command 'upgrade'");
@@ -95,7 +95,7 @@ describe("global options in subcommand help", () => {
         // expected: --help calls process.exit(0)
       }
 
-      const output = writeSpy.mock.calls.map((c) => c[0]).join("");
+      const output = writeSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
       expect(output).toContain("Global Options");
     });
 
@@ -106,7 +106,7 @@ describe("global options in subcommand help", () => {
         // expected: --help calls process.exit(0)
       }
 
-      const output = writeSpy.mock.calls.map((c) => c[0]).join("");
+      const output = writeSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
       expect(output).toContain("-o, --output");
     });
   }
