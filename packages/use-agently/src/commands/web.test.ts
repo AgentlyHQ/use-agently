@@ -106,7 +106,7 @@ describe("web command cli", () => {
 
     test("use-agently web prints help with subcommands", async () => {
       await cli.parseAsync(["test", "use-agently", "web"]);
-      const helpOutput = writeSpy.mock.calls.map((c) => c[0]).join("");
+      const helpOutput = writeSpy.mock.calls.map((c: unknown[]) => c[0]).join("");
       expect(helpOutput).toContain("get");
       expect(helpOutput).toContain("post");
       expect(helpOutput).toContain("put");
@@ -220,8 +220,8 @@ describe("web command cli", () => {
       );
 
       await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/v", "-v"]);
-      expect(out.errorSpy.mock.calls.map((c) => c[0]).join("\n")).toContain("> GET http://example.com/v");
-      expect(out.errorSpy.mock.calls.map((c) => c[0]).join("\n")).toContain("< 200 OK");
+      expect(out.errorSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n")).toContain("> GET http://example.com/v");
+      expect(out.errorSpy.mock.calls.map((c: unknown[]) => c[0]).join("\n")).toContain("< 200 OK");
     });
 
     test("--output json returns structured JSON", async () => {
