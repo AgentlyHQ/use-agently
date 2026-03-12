@@ -4,7 +4,7 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { DryRunPaymentRequired, createMcpPaymentClient } from "./client.js";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
-import pkg from "../package.json" with { type: "json" };
+import pkg from "./package.json" with { type: "json" };
 
 export interface McpCallOptions {
   transaction?: TransactionMode;
