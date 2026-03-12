@@ -5,7 +5,7 @@ import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
 import { formatUnits } from "viem";
 import { getChainConfigByNetwork } from "./utils/chain.js";
-import pkg from "../package.json" with { type: "json" };
+import pkg from "./package.json" with { type: "json" };
 
 export interface PaymentRequirementsInfo {
   amount: string;

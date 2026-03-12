@@ -13,7 +13,7 @@ import {
   type X402FacilitatorLocal,
 } from "./testing";
 import { accounts } from "x402-fl/testcontainers";
-import pkg from "../package.json" with { type: "json" };
+import pkg from "./package.json" with { type: "json" };
 
 let fixture: X402FacilitatorLocal;
 

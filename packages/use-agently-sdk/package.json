@@ -14,20 +14,12 @@
   "license": "MIT",
   "author": "AgentlyHQ",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./build/index.d.ts",
-      "bun": "./src/index.ts",
-      "default": "./build/index.js"
-    }
-  },
   "files": [
-    "build",
+    "**/*.ts",
+    "!**/*.test.ts",
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown",
-    "clean": "rm -rf build",
     "test": "bun test"
   },
   "dependencies": {
@@ -43,7 +35,6 @@
     "@types/bun": "^1.3.9",
     "localhost-aixyz": "^0",
     "testcontainers": "^11",
-    "tsdown": "^0.21.1",
     "x402-fl": "^0"
   },
   "engines": {
