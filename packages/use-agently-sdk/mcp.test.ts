@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, spyOn } from "bun:test";
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test, spyOn } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { generatePrivateKey } from "viem/accounts";
@@ -15,6 +15,8 @@ import {
 } from "./testing";
 import { accounts } from "x402-fl/testcontainers";
 import pkg from "./package.json" with { type: "json" };
+
+setDefaultTimeout(30_000);
 
 let fixture: X402FacilitatorLocal;
 

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { EvmPrivateKeyWallet, DryRunPaymentRequired, createA2AClient } from "@use-agently/sdk";
 import { accounts } from "x402-fl/testcontainers";
@@ -15,6 +15,8 @@ import {
   type X402FacilitatorLocal,
 } from "../testing";
 import { extractAgentText } from "./a2a";
+
+setDefaultTimeout(30_000);
 
 mockConfigModule();
 

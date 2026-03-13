@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { generatePrivateKey } from "viem/accounts";
@@ -16,6 +16,8 @@ import {
 import { accounts } from "x402-fl/testcontainers";
 import { EvmPrivateKeyWallet } from "@use-agently/sdk";
 import pkg from "../../package.json" with { type: "json" };
+
+setDefaultTimeout(30_000);
 
 mockConfigModule();
 
