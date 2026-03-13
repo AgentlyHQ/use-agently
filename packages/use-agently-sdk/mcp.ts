@@ -3,7 +3,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { x402MCPClient, x402MCPToolCallResult } from "@x402/mcp";
-import { DryRunPaymentRequired, resolveFetchForTransaction, createMcpPaymentClient } from "./client.js";
+import { DryRunPaymentRequired, resolveFetchForTransaction, createMcpPaymentClient, clientFetch } from "./client.js";
 import { DryRunTransaction, PayTransaction, type TransactionMode } from "./utils/transaction.js";
 import type { Wallet } from "./wallets/wallet.js";
 import pkg from "./package.json" with { type: "json" };
@@ -99,7 +99,7 @@ export async function callMcpTool(
     // x402MCPClient handles payment at the MCP protocol level.
     const x402Client = await createMcpClient(mcpUrl, {
       clientInfo: options?.clientInfo,
-      fetchImpl: options?.fetchImpl,
+      fetchImpl: options?.fetchImpl ?? clientFetch,
       wallet: transaction.wallet,
     });
     try {
@@ -118,7 +118,7 @@ export async function callMcpTool(
       if (content?.length > 0 && content[0].type === "text" && content[0].text) {
         try {
           const parsed = JSON.parse(content[0].text);
-          if (parsed?.accepts) {
+          if (Array.isArray(parsed?.accepts) && parsed.accepts.length > 0) {
             throw new DryRunPaymentRequired(parsed.accepts);
           }
         } catch (e) {

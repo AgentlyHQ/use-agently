@@ -94,7 +94,7 @@ const mcpCallCommand = new Command("call")
           if (text) {
             try {
               const parsed = JSON.parse(text);
-              if (parsed?.error && parsed?.accepts) {
+              if (parsed?.error && Array.isArray(parsed?.accepts) && parsed.accepts.length > 0) {
                 let message: string;
                 if (parsed.error === "insufficient_funds") {
                   const req = parsed.accepts[0];
