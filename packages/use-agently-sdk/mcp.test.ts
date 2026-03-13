@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test, spyOn } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { listMcpTools, callMcpTool } from "./mcp";
-import { createMcpPaymentClient, DryRunPaymentRequired } from "./client";
+import { createMcpPaymentClient, DryRunPaymentRequired, USER_AGENT } from "./client";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import { PayTransaction } from "./utils/transaction";
 import {
@@ -96,6 +96,17 @@ describe("listMcpTools (high-level)", () => {
     const echoTool = tools.find((t) => t.name === "echo");
     expect(echoTool).toBeDefined();
   });
+
+  test("sends User-Agent header by default (via clientFetch)", async () => {
+    const spy = spyOn(globalThis, "fetch");
+    try {
+      await listMcpTools(mcpUrl());
+      const headers = new Headers(spy.mock.calls[0][1]?.headers);
+      expect(headers.get("User-Agent")).toBe(USER_AGENT);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });
 
 describe("callMcpTool (high-level)", () => {
@@ -127,7 +138,18 @@ describe("callMcpTool (high-level)", () => {
     expect(receiverAfter.value - receiverBefore.value).toStrictEqual(1000n);
   });
 
-  test("paid tool dry-run throws DryRunPaymentRequired", async () => {
-    expect(callMcpTool(mcpUrl(), "paid-echo-tool", { message: "should fail" })).rejects.toThrow(DryRunPaymentRequired);
+  test("paid tool dry-run throws DryRunPaymentRequired with cost info", async () => {
+    try {
+      await callMcpTool(mcpUrl(), "paid-echo-tool", { message: "should fail" });
+      throw new Error("Expected DryRunPaymentRequired to be thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(DryRunPaymentRequired);
+      const err = e as DryRunPaymentRequired;
+      expect(err.requirements.length).toBeGreaterThan(0);
+      expect(err.requirements[0].amount).toStrictEqual("1000");
+      expect(err.requirements[0].network).toStrictEqual("eip155:8453");
+      expect(err.message).toContain("$0.001");
+      expect(err.message).toContain("USDC");
+    }
   });
 });

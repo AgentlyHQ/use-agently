@@ -3,6 +3,7 @@ import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
 import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
+import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
 import { formatUnits } from "viem";
 import { getChainConfigByNetwork } from "./utils/chain.js";
 import pkg from "./package.json" with { type: "json" };
@@ -94,6 +95,15 @@ export function createDryRunFetch(fetchImpl: typeof fetch = clientFetch): typeof
     }
     return response;
   };
+}
+
+/** Resolve fetch for a transaction mode — dry-run intercepts 402s, pay wraps with x402 payment. */
+export function resolveFetchForTransaction(
+  transaction: TransactionMode = DryRunTransaction,
+  fetchImpl?: typeof fetch,
+): typeof fetch {
+  if (transaction.mode === "dry-run") return createDryRunFetch(fetchImpl);
+  return createPaymentFetch(transaction.wallet, fetchImpl) as typeof fetch;
 }
 
 export function createPaymentFetch(wallet: Wallet, fetchImpl: typeof fetch = clientFetch) {

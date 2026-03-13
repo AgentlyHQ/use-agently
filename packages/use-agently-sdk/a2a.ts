@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { AgentCard } from "@a2a-js/sdk";
 import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
-import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
-import { createA2AClient, createDryRunFetch, createPaymentFetch } from "./client.js";
+import { createA2AClient, resolveFetchForTransaction } from "./client.js";
+import type { TransactionMode } from "./utils/transaction.js";
 
 export interface A2AMessageOptions {
   transaction?: TransactionMode;
@@ -19,15 +19,6 @@ function extractTextFromParts(parts: any[]): string {
     .filter((p) => p.kind === "text")
     .map((p) => p.text)
     .join("");
-}
-
-/** Defaults to dry-run when no transaction mode is provided */
-function resolveFetchForTransaction(
-  transaction: TransactionMode = DryRunTransaction,
-  fetchImpl?: typeof fetch,
-): typeof fetch {
-  if (transaction.mode === "dry-run") return createDryRunFetch(fetchImpl);
-  return createPaymentFetch(transaction.wallet, fetchImpl) as typeof fetch;
 }
 
 function resolveAgentUrl(agentInput: string): string {

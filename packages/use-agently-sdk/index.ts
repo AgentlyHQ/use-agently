@@ -21,6 +21,7 @@ export {
   DryRunPaymentRequired,
   createDryRunFetch,
   createPaymentFetch,
+  resolveFetchForTransaction,
   createMcpPaymentClient,
   createA2AClient,
 } from "./client.js";
