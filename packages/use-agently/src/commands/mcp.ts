@@ -131,9 +131,13 @@ const mcpCallCommand = new Command("call")
           process.exit(1);
         }
 
-        // Success: extract text content
-        const texts = content?.filter((c) => c.type === "text" && c.text).map((c) => c.text!);
-        output(command, texts?.length === 1 ? texts[0] : texts);
+        // Success: extract text entries when all content is text, otherwise output the full result
+        if (content?.every((c) => c.type === "text" && c.text)) {
+          const texts = content.map((c) => c.text!);
+          output(command, texts.length === 1 ? texts[0] : texts);
+        } else {
+          output(command, result);
+        }
       } catch (err) {
         if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
         throw err;

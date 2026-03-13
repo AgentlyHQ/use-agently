@@ -66,23 +66,24 @@ export async function listMcpTools(uri: string, options?: McpCallOptions): Promi
 }
 
 /** Call a tool on an MCP server, with optional payment support. Defaults to dry-run mode. */
+export async function callMcpTool(uri: string, tool: string, args?: Record<string, unknown>): Promise<CallToolResult>;
 export async function callMcpTool(
   uri: string,
   tool: string,
-  args?: Record<string, unknown>,
-  options?: McpCallOptions & { transaction: PayTransaction },
+  args: Record<string, unknown> | undefined,
+  options: McpCallOptions & { transaction: PayTransaction },
 ): Promise<x402MCPToolCallResult>;
 export async function callMcpTool(
   uri: string,
   tool: string,
-  args?: Record<string, unknown>,
-  options?: McpCallOptions & { transaction: DryRunTransaction },
+  args: Record<string, unknown> | undefined,
+  options: McpCallOptions & { transaction: DryRunTransaction },
 ): Promise<CallToolResult>;
 export async function callMcpTool(
   uri: string,
   tool: string,
-  args?: Record<string, unknown>,
-  options?: McpCallOptions,
+  args: Record<string, unknown> | undefined,
+  options: McpCallOptions,
 ): Promise<CallToolResult | x402MCPToolCallResult>;
 export async function callMcpTool(
   uri: string,
