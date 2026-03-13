@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { DryRunPaymentRequired } from "@use-agently/sdk";
-import { resolveFetch, handleDryRunError } from "../client.js";
+import { DryRunPaymentRequired, PaymentFailed } from "@use-agently/sdk";
+import { resolveFetch, handleDryRunError, handlePaymentFailedError } from "../client.js";
 import { output } from "../output.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -288,6 +288,9 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
     clearTimeout(timer);
     if (err instanceof DryRunPaymentRequired) {
       handleDryRunError(err);
+    }
+    if (err instanceof PaymentFailed) {
+      handlePaymentFailedError(err);
     }
     if (err instanceof DOMException && err.name === "AbortError") {
       throw new Error(`Request timed out after ${timeoutMs}ms. Use --timeout <ms> to increase the limit.`);

@@ -3,15 +3,16 @@ import {
   type TransactionMode,
   DryRunTransaction,
   PayTransaction,
-  sendA2AMessageStream,
+  trySendA2AMessageStream,
   getA2ACard,
   extractStreamEventText,
   extractAgentText,
   DryRunPaymentRequired,
+  PaymentFailed,
   loadWallet,
 } from "@use-agently/sdk";
 import { getConfigOrThrow } from "../config.js";
-import { clientFetch, handleDryRunError } from "../client.js";
+import { clientFetch, handleDryRunError, handlePaymentFailedError } from "../client.js";
 import { output } from "../output.js";
 
 // Re-export from SDK so test file can import from "./a2a"
@@ -55,7 +56,7 @@ const a2aSendCommand = new Command("send")
     const transaction = await resolveTransactionMode(options.pay);
 
     try {
-      const stream = await sendA2AMessageStream(uri, options.message, { transaction, fetchImpl: clientFetch });
+      const stream = await trySendA2AMessageStream(uri, options.message, { transaction, fetchImpl: clientFetch });
 
       let wroteText = false;
       let lastResult: any = null;
@@ -75,6 +76,7 @@ const a2aSendCommand = new Command("send")
       }
     } catch (err) {
       if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
+      if (err instanceof PaymentFailed) handlePaymentFailedError(err);
       throw err;
     }
   });

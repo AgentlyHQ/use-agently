@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { EvmPrivateKeyWallet, DryRunPaymentRequired, createA2AClient } from "@use-agently/sdk";
+import { EvmPrivateKeyWallet, DryRunPaymentRequired, PaymentFailed, createA2AClient } from "@use-agently/sdk";
 import { accounts } from "x402-fl/testcontainers";
 
 import { createPaymentFetch, createDryRunFetch } from "../client";
@@ -202,7 +202,7 @@ describe("a2a x402 payment (paid)", () => {
     }
   });
 
-  test("unfunded wallet fails payment", async () => {
+  test("unfunded wallet throws PaymentFailed with insufficient_funds", async () => {
     const { generatePrivateKey } = await import("viem/accounts");
     const emptyKey = generatePrivateKey();
     const wallet = new EvmPrivateKeyWallet(emptyKey, fixture.container.getRpcUrl());
@@ -218,10 +218,16 @@ describe("a2a x402 payment (paid)", () => {
           parts: [{ kind: "text", text: "should fail" }],
         },
       });
-      throw new Error("Expected promise to reject, but it resolved");
+      throw new Error("Expected PaymentFailed to be thrown");
     } catch (e) {
-      expect(e).toBeInstanceOf(Error);
-      expect((e as Error).message).toContain("402");
+      expect(e).toBeInstanceOf(PaymentFailed);
+      const err = e as PaymentFailed;
+      expect(err.serverError).toContain("insufficient_funds");
+      expect(err.requirements.length).toBeGreaterThan(0);
+      expect(err.requirements[0].amount).toBe("1000");
+      expect(err.requirements[0].network).toBe("eip155:8453");
+      expect(err.message).toContain("Payment failed");
+      expect(err.message).toContain("insufficient_funds");
     }
   }, 30_000);
 
@@ -256,6 +262,51 @@ describe("a2a x402 payment (paid)", () => {
       expect(exitCode).toBe(1);
       expect(out.stderr).toContain("--pay");
     });
+
+    test("a2a send --pay with unfunded wallet shows Payment Failed box and exits 1", async () => {
+      const { generatePrivateKey } = await import("viem/accounts");
+      const { privateKeyToAccount } = await import("viem/accounts");
+      const emptyKey = generatePrivateKey();
+      const emptyAddress = privateKeyToAccount(emptyKey).address;
+      mockConfigModule(() => ({
+        wallet: {
+          type: "evm-private-key" as const,
+          privateKey: emptyKey,
+          address: emptyAddress,
+          rpcUrl: fixture.container.getRpcUrl(),
+        },
+      }));
+
+      let exitCode: number | undefined;
+      const origExit = process.exit.bind(process);
+      process.exit = ((code?: number) => {
+        exitCode = code;
+        throw new Error(`process.exit(${code})`);
+      }) as typeof process.exit;
+
+      try {
+        await cli.parseAsync([
+          "test",
+          "use-agently",
+          "a2a",
+          "send",
+          "--uri",
+          fixture.agent.getAgentUrl() + "/paid-echo/",
+          "-m",
+          "should fail",
+          "--pay",
+        ]);
+      } catch {
+        // expected: process.exit throws
+      } finally {
+        process.exit = origExit;
+        mockConfigModule();
+      }
+
+      expect(exitCode).toBe(1);
+      expect(out.stderr).toContain("Payment failed");
+      expect(out.stderr).toContain("insufficient_funds");
+    }, 30_000);
 
     test("a2a send with --pay on paid agent succeeds and debits sender", async () => {
       mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));

@@ -66,31 +66,58 @@ export class DryRunPaymentRequired extends Error {
   }
 }
 
+export class PaymentFailed extends Error {
+  readonly serverError: string;
+  readonly requirements: PaymentRequirementsInfo[];
+  constructor(serverError: string, requirements: PaymentRequirementsInfo[]) {
+    const req = requirements[0];
+    const amount = req ? formatUsdcAmount(req) : null;
+    const detail = amount ? ` (required: ${amount})` : "";
+    super(`Payment failed: ${serverError}${detail}`);
+    this.name = "PaymentFailed";
+    this.serverError = serverError;
+    this.requirements = requirements;
+  }
+}
+
+/** Parse a 402 response and extract the x402 error and payment requirements. */
+async function parse402Response(
+  response: Response,
+): Promise<{ error: string; requirements: PaymentRequirementsInfo[] }> {
+  let serverError = "";
+  let requirements: PaymentRequirementsInfo[] = [];
+  const header = response.headers.get("PAYMENT-REQUIRED");
+  if (header) {
+    try {
+      const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
+      requirements = (decoded.accepts as PaymentRequirementsInfo[]) ?? [];
+      serverError = decoded.error ?? "";
+    } catch (e) {
+      if (!(e instanceof SyntaxError)) throw e;
+    }
+  } else {
+    // Attempt to parse x402v1 body format
+    try {
+      const body = await response.clone().json();
+      if (body?.accepts) {
+        requirements = body.accepts as PaymentRequirementsInfo[];
+      }
+      if (body?.error) {
+        serverError = body.error;
+      }
+    } catch (e) {
+      if (!(e instanceof SyntaxError)) throw e;
+    }
+  }
+  return { error: serverError, requirements };
+}
+
 export function createDryRunFetch(fetchImpl: typeof fetch = clientFetch): typeof fetch {
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const response = await fetchImpl(input, init);
     if (response.status === 402) {
-      let requirements: PaymentRequirementsInfo[] = [];
-      const header = response.headers.get("PAYMENT-REQUIRED");
-      if (header) {
-        try {
-          const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
-          requirements = (decoded.accepts as PaymentRequirementsInfo[]) ?? [];
-        } catch (e) {
-          if (!(e instanceof SyntaxError)) throw e;
-        }
-      } else {
-        // Attempt to parse x402v1 body format
-        try {
-          const body = await response.clone().json();
-          if (body?.accepts) {
-            requirements = body.accepts as PaymentRequirementsInfo[];
-          }
-        } catch (e) {
-          if (!(e instanceof SyntaxError)) throw e;
-        }
-      }
+      const { requirements } = await parse402Response(response);
       throw new DryRunPaymentRequired(requirements);
     }
     return response;
@@ -107,9 +134,19 @@ export function resolveFetchForTransaction(
 }
 
 export function createPaymentFetch(wallet: Wallet, fetchImpl: typeof fetch = clientFetch) {
-  return wrapFetchWithPaymentFromConfig(fetchImpl, {
+  const x402Fetch = wrapFetchWithPaymentFromConfig(fetchImpl, {
     schemes: wallet.getX402Schemes(),
   });
+  // x402 wrapped fetch returns the raw 402 response when payment is attempted but fails
+  // (e.g. insufficient funds). Intercept this and throw a structured PaymentFailed error.
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const response = (await x402Fetch(input, init)) as Response;
+    if (response.status === 402) {
+      const { error: serverError, requirements } = await parse402Response(response);
+      throw new PaymentFailed(serverError || "Payment rejected by server", requirements);
+    }
+    return response;
+  };
 }
 
 export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {

@@ -19,6 +19,7 @@ export {
   createClientFetch,
   clientFetch,
   DryRunPaymentRequired,
+  PaymentFailed,
   createDryRunFetch,
   createPaymentFetch,
   resolveFetchForTransaction,
@@ -46,6 +47,7 @@ export {
   extractStreamEventText,
   sendA2AMessage,
   sendA2AMessageStream,
+  trySendA2AMessageStream,
   getA2ACard,
 } from "./a2a.js";
 

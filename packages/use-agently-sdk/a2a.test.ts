@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { extractAgentText, extractStreamEventText, sendA2AMessage, sendA2AMessageStream, getA2ACard } from "./a2a";
-import { createA2AClient, createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "./client";
+import {
+  extractAgentText,
+  extractStreamEventText,
+  sendA2AMessage,
+  sendA2AMessageStream,
+  trySendA2AMessageStream,
+  getA2ACard,
+} from "./a2a";
+import { createA2AClient, createPaymentFetch, createDryRunFetch, DryRunPaymentRequired, PaymentFailed } from "./client";
 import { DryRunTransaction, PayTransaction } from "./utils/transaction";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import {
@@ -189,7 +196,7 @@ describe("a2a x402 payment", () => {
     }
   });
 
-  test("unfunded wallet fails payment", async () => {
+  test("unfunded wallet throws PaymentFailed", async () => {
     const { generatePrivateKey } = await import("viem/accounts");
     const emptyKey = generatePrivateKey();
     const wallet = new EvmPrivateKeyWallet(emptyKey, fixture.container.getRpcUrl());
@@ -205,10 +212,10 @@ describe("a2a x402 payment", () => {
           parts: [{ kind: "text", text: "should fail" }],
         },
       });
-      throw new Error("Expected promise to reject, but it resolved");
+      throw new Error("Expected PaymentFailed to be thrown");
     } catch (e) {
-      expect(e).toBeInstanceOf(Error);
-      expect((e as Error).message).toContain("402");
+      expect(e).toBeInstanceOf(PaymentFailed);
+      expect((e as PaymentFailed).message).toContain("Payment failed");
     }
   });
 });
@@ -258,12 +265,93 @@ describe("sendA2AMessageStream", () => {
     }
     expect(events.length).toBeGreaterThan(0);
 
-    // At least one event should contain extractable text
     const texts = events.map((e) => extractStreamEventText(e)).filter(Boolean);
-    // The final event should be extractable via extractAgentText as fallback
     const lastEvent = events[events.length - 1];
     const finalText = texts.length > 0 ? texts.join("") : extractAgentText(lastEvent);
     expect(finalText).toContain("stream test");
+  });
+
+  test("dry-run stream on paid endpoint throws DryRunPaymentRequired", async () => {
+    try {
+      const stream = await sendA2AMessageStream(fixture.agent.getAgentUrl() + "/paid-echo/", "dry run stream", {
+        transaction: DryRunTransaction,
+      });
+      for await (const _ of stream) {
+        /* drain */
+      }
+      throw new Error("Expected DryRunPaymentRequired to be thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(DryRunPaymentRequired);
+      const err = e as DryRunPaymentRequired;
+      expect(err.requirements.length).toBeGreaterThan(0);
+      expect(err.requirements[0].amount).toStrictEqual("1000");
+    }
+  });
+});
+
+describe("trySendA2AMessageStream", () => {
+  test("streams normally when server supports SSE", async () => {
+    const stream = await trySendA2AMessageStream(fixture.agent.getAgentUrl() + "/free-echo/", "try stream");
+
+    const events: unknown[] = [];
+    for await (const event of stream) {
+      events.push(event);
+    }
+    expect(events.length).toBeGreaterThan(0);
+
+    const texts = events.map((e) => extractStreamEventText(e)).filter(Boolean);
+    const lastEvent = events[events.length - 1];
+    const finalText = texts.length > 0 ? texts.join("") : extractAgentText(lastEvent);
+    expect(finalText).toContain("try stream");
+  });
+
+  test("paid stream falls back and succeeds with funded wallet", async () => {
+    const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
+    const senderBefore = await fixture.container.balance(TEST_ADDRESS);
+
+    const stream = await trySendA2AMessageStream(fixture.agent.getAgentUrl() + "/paid-echo/", "paid try stream", {
+      transaction: PayTransaction(wallet),
+    });
+
+    const events: unknown[] = [];
+    for await (const event of stream) {
+      events.push(event);
+    }
+    expect(events.length).toBeGreaterThan(0);
+    expect(extractAgentText(events[events.length - 1])).toContain("paid try stream");
+
+    const senderAfter = await fixture.container.balance(TEST_ADDRESS);
+    expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
+  });
+
+  test("falls back to non-streaming when server returns non-SSE Content-Type", async () => {
+    // Simulate a server that returns application/json instead of text/event-stream
+    // for the streaming endpoint (e.g. x402 gateway breaking SSE — coinbase/x402#367).
+    const baseFetch = globalThis.fetch;
+    // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
+    const nonSseFetch: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await baseFetch(input, init);
+      const contentType = response.headers.get("Content-Type");
+      if (contentType?.startsWith("text/event-stream")) {
+        const body = await response.text();
+        return new Response(body, {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return response;
+    };
+
+    const stream = await trySendA2AMessageStream(fixture.agent.getAgentUrl() + "/free-echo/", "fallback test", {
+      fetchImpl: nonSseFetch,
+    });
+
+    const events: unknown[] = [];
+    for await (const event of stream) {
+      events.push(event);
+    }
+    expect(events.length).toBeGreaterThan(0);
+    expect(extractAgentText(events[events.length - 1])).toContain("fallback test");
   });
 });
 

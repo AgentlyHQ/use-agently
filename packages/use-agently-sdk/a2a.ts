@@ -108,6 +108,49 @@ export async function sendA2AMessageStream(
   });
 }
 
+/** Like `sendA2AMessageStream`, but falls back to non-streaming `sendMessage`
+ *  when the server returns a non-SSE Content-Type (e.g. agents behind x402
+ *  gateways that don't preserve `text/event-stream` on replay — coinbase/x402#367). */
+export async function trySendA2AMessageStream(
+  uri: string,
+  message: string,
+  options?: A2AMessageOptions,
+): Promise<AsyncIterable<unknown>> {
+  const agentUrl = resolveAgentUrl(uri);
+  const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
+  const client = await createA2AClient(agentUrl, resolvedFetch);
+
+  const msgParams = {
+    message: {
+      kind: "message" as const,
+      messageId: randomUUID(),
+      role: "user" as const,
+      parts: [{ kind: "text" as const, text: message }],
+    },
+  };
+
+  try {
+    // Eagerly pull the first event so SSE failures surface here, not mid-iteration.
+    const stream = client.sendMessageStream(msgParams);
+    const iterator = stream[Symbol.asyncIterator]();
+    const first = await iterator.next();
+
+    return (async function* () {
+      if (!first.done) yield first.value;
+      yield* { [Symbol.asyncIterator]: () => iterator };
+    })();
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes("Invalid response Content-Type for SSE stream")) {
+      // Server doesn't support SSE — fall back to non-streaming request.
+      const result = await client.sendMessage(msgParams);
+      return (async function* () {
+        yield result;
+      })();
+    }
+    throw err;
+  }
+}
+
 /** Resolve a URI and fetch the A2A agent card. */
 export async function getA2ACard(uri: string, options?: { fetchImpl?: typeof fetch }): Promise<AgentCard> {
   const agentUrl = resolveAgentUrl(uri);

@@ -2,6 +2,7 @@ import boxen from "boxen";
 import { formatUnits } from "viem";
 import {
   DryRunPaymentRequired as SdkDryRunPaymentRequired,
+  PaymentFailed as SdkPaymentFailed,
   createDryRunFetch as sdkCreateDryRunFetch,
   createPaymentFetch as sdkCreatePaymentFetch,
   createClientFetch,
@@ -79,6 +80,19 @@ export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
       title: "Payment Required",
       titleAlignment: "center",
       borderColor: "yellow",
+      padding: 1,
+    }),
+  );
+  process.exit(1);
+}
+
+/** Display a PaymentFailed error in a boxed format and exit. */
+export function handlePaymentFailedError(err: SdkPaymentFailed): never {
+  console.error(
+    boxen(err.message, {
+      title: "Payment Failed",
+      titleAlignment: "center",
+      borderColor: "red",
       padding: 1,
     }),
   );
