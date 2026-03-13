@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { extractAgentText, extractStreamEventText, sendA2AMessage, sendA2AMessageStream, getA2ACard } from "./a2a";
 import { createA2AClient, createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "./client";
@@ -12,6 +12,8 @@ import {
   type X402FacilitatorLocal,
 } from "./testing";
 import { accounts } from "x402-fl/testcontainers";
+
+setDefaultTimeout(30_000);
 
 describe("extractAgentText", () => {
   test("returns fallback for null/undefined result", () => {

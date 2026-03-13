@@ -1,6 +1,7 @@
-import { afterAll, beforeAll, describe, expect, test, spyOn } from "bun:test";
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test, spyOn } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { generatePrivateKey } from "viem/accounts";
 import { listMcpTools, callMcpTool } from "./mcp";
 import { createMcpPaymentClient, DryRunPaymentRequired, USER_AGENT } from "./client";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
@@ -14,6 +15,8 @@ import {
 } from "./testing";
 import { accounts } from "x402-fl/testcontainers";
 import pkg from "./package.json" with { type: "json" };
+
+setDefaultTimeout(30_000);
 
 let fixture: X402FacilitatorLocal;
 
@@ -36,7 +39,7 @@ async function createMcpClient(): Promise<Client> {
   return client;
 }
 
-describe("mcp free (sdk)", () => {
+describe("mcp free", () => {
   test("calls echo tool and returns text content", async () => {
     const client = await createMcpClient();
     try {
@@ -54,7 +57,7 @@ describe("mcp free (sdk)", () => {
   });
 });
 
-describe("mcp x402 payment (sdk)", () => {
+describe("mcp x402 payment", () => {
   test("paid tool call succeeds with funded wallet and debits sender exactly $0.001", async () => {
     const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
     const client = await createMcpClient();
@@ -89,7 +92,7 @@ describe("mcp x402 payment (sdk)", () => {
   });
 });
 
-describe("listMcpTools (high-level)", () => {
+describe("listMcpTools", () => {
   test("returns array including echo tool", async () => {
     const tools = await listMcpTools(mcpUrl());
     expect(Array.isArray(tools)).toBe(true);
@@ -109,7 +112,7 @@ describe("listMcpTools (high-level)", () => {
   });
 });
 
-describe("callMcpTool (high-level)", () => {
+describe("callMcpTool", () => {
   test("free tool call succeeds in dry-run mode", async () => {
     const result = await callMcpTool(mcpUrl(), "echo", { message: "hello high-level" });
     const content = result.content as Array<{ type: string; text: string }>;
@@ -151,5 +154,92 @@ describe("callMcpTool (high-level)", () => {
       expect(err.message).toContain("$0.001");
       expect(err.message).toContain("USDC");
     }
+  });
+
+  test("custom fetchImpl is used for paid tool call", async () => {
+    const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
+    const spy = spyOn(globalThis, "fetch");
+    try {
+      // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
+      const customFetch: typeof fetch = (input, init) => {
+        const headers = new Headers(init?.headers);
+        headers.set("X-Custom-Header", "pay-test");
+        return globalThis.fetch(input, { ...init, headers });
+      };
+
+      const result = await callMcpTool(
+        mcpUrl(),
+        "paid-echo-tool",
+        { message: "hello custom fetch pay" },
+        {
+          transaction: PayTransaction(wallet),
+          fetchImpl: customFetch,
+        },
+      );
+      const content = result.content as Array<{ type: string; text: string }>;
+      expect(content[0].text).toStrictEqual("hello custom fetch pay");
+
+      // Verify the custom header was sent on at least one underlying fetch call
+      const hasCustomHeader = spy.mock.calls.some((call) => {
+        const headers = new Headers(call[1]?.headers);
+        return headers.get("X-Custom-Header") === "pay-test";
+      });
+      expect(hasCustomHeader).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test("custom fetchImpl is used for dry-run tool call", async () => {
+    const spy = spyOn(globalThis, "fetch");
+    try {
+      // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
+      const customFetch: typeof fetch = (input, init) => {
+        const headers = new Headers(init?.headers);
+        headers.set("X-Custom-Header", "dryrun-test");
+        return globalThis.fetch(input, { ...init, headers });
+      };
+
+      const result = await callMcpTool(
+        mcpUrl(),
+        "echo",
+        { message: "hello custom fetch dryrun" },
+        { fetchImpl: customFetch },
+      );
+      const content = result.content as Array<{ type: string; text: string }>;
+      expect(content[0].text).toStrictEqual("hello custom fetch dryrun");
+
+      const hasCustomHeader = spy.mock.calls.some((call) => {
+        const headers = new Headers(call[1]?.headers);
+        return headers.get("X-Custom-Header") === "dryrun-test";
+      });
+      expect(hasCustomHeader).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test("paid tool with unfunded wallet returns isError with insufficient_funds", async () => {
+    const unfundedKey = generatePrivateKey();
+    const unfundedWallet = new EvmPrivateKeyWallet(unfundedKey, fixture.container.getRpcUrl());
+
+    const result = await callMcpTool(
+      mcpUrl(),
+      "paid-echo-tool",
+      { message: "should fail — no funds" },
+      { transaction: PayTransaction(unfundedWallet) },
+    );
+
+    expect(result.isError).toStrictEqual(true);
+
+    const content = result.content as Array<{ type: string; text?: string }>;
+    expect(content.length).toBeGreaterThan(0);
+    expect(content[0].type).toStrictEqual("text");
+
+    const parsed = JSON.parse(content[0].text!);
+    expect(parsed.x402Version).toBeDefined();
+    expect(parsed.accepts).toBeDefined();
+    expect(Array.isArray(parsed.accepts)).toBe(true);
+    expect(parsed.error).toContain("insufficient_funds");
   });
 });
