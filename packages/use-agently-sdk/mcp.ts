@@ -2,7 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { DryRunPaymentRequired, createMcpPaymentClient } from "./client.js";
+import { DryRunPaymentRequired, resolveFetchForTransaction, createMcpPaymentClient } from "./client.js";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
 import pkg from "./package.json" with { type: "json" };
 
@@ -38,7 +38,8 @@ async function createMcpClient(
 /** List all tools available on an MCP server. */
 export async function listMcpTools(uri: string, options?: McpCallOptions): Promise<Tool[]> {
   const mcpUrl = resolveMcpUrl(uri);
-  const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: options?.fetchImpl });
+  const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
+  const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: resolvedFetch });
   try {
     const { tools } = await client.listTools();
     return tools;
@@ -56,9 +57,10 @@ export async function callMcpTool(
 ): Promise<CallToolResult> {
   const mcpUrl = resolveMcpUrl(uri);
   const transaction = options?.transaction ?? DryRunTransaction;
+  const resolvedFetch = resolveFetchForTransaction(transaction, options?.fetchImpl);
 
   if (transaction.mode === "pay") {
-    const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: options?.fetchImpl });
+    const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: resolvedFetch });
     try {
       const x402Client = createMcpPaymentClient(client, transaction.wallet);
       return (await x402Client.callTool(tool, args ?? {})) as unknown as CallToolResult;
@@ -68,7 +70,7 @@ export async function callMcpTool(
   }
 
   // Dry-run mode
-  const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: options?.fetchImpl });
+  const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: resolvedFetch });
   try {
     const result = await client.callTool({ name: tool, arguments: args ?? {} });
     if (result.isError) {
