@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { generatePrivateKey } from "viem/accounts";
 import { createMcpPaymentClient } from "@use-agently/sdk";
 import {
   captureOutput,
@@ -54,7 +55,7 @@ describe("mcp command (free)", () => {
   describe("call tool", () => {
     const out = captureOutput();
 
-    test("calls echo tool and returns text content", async () => {
+    test("calls echo tool and prints text content directly", async () => {
       const balanceBefore = await fixture.container.balance(TEST_ADDRESS);
 
       await cli.parseAsync([
@@ -67,10 +68,7 @@ describe("mcp command (free)", () => {
         "--uri",
         fixture.agent.getAgentUrl(),
       ]);
-      const result = out.yaml as Record<string, unknown>;
-      expect(result).toHaveProperty("content");
-      const content = result.content as Array<{ type: string; text: string }>;
-      expect(content[0].text).toStrictEqual("hello from mcp");
+      expect(out.stdout).toStrictEqual("hello from mcp");
 
       const balanceAfter = await fixture.container.balance(TEST_ADDRESS);
       expect(balanceAfter.value).toStrictEqual(balanceBefore.value);
@@ -155,7 +153,7 @@ describe("mcp x402 payment (paid)", () => {
       expect(out.stderr).toContain("--pay");
     });
 
-    test("mcp call with --pay on paid tool succeeds and debits sender", async () => {
+    test("mcp call with --pay on paid tool prints text and debits sender", async () => {
       mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
 
       const senderBefore = await fixture.container.balance(TEST_ADDRESS);
@@ -172,14 +170,78 @@ describe("mcp x402 payment (paid)", () => {
         "--pay",
       ]);
 
-      const result = out.yaml as Record<string, unknown>;
-      const content = result.content as Array<{ type: string; text: string }>;
-      expect(content[0].text).toStrictEqual("paid cli test");
+      expect(out.stdout).toStrictEqual("paid cli test");
 
       const senderAfter = await fixture.container.balance(TEST_ADDRESS);
       expect(senderBefore.value - senderAfter.value).toStrictEqual(1000n);
 
       // Restore default mock
+      mockConfigModule();
+    }, 30_000);
+
+    test("mcp call with --pay and unfunded wallet shows insufficient funds error", async () => {
+      const unfundedKey = generatePrivateKey();
+      const unfundedConfig = {
+        wallet: {
+          type: "evm-private-key" as const,
+          privateKey: unfundedKey,
+          address: "0x0000000000000000000000000000000000000001" as const,
+          rpcUrl: fixture.container.getRpcUrl(),
+        },
+      };
+      mockConfigModule(() => unfundedConfig);
+
+      let exitCode: number | undefined;
+      const origExit = process.exit.bind(process);
+      process.exit = ((code?: number) => {
+        exitCode = code;
+        throw new Error(`process.exit(${code})`);
+      }) as typeof process.exit;
+
+      try {
+        await cli.parseAsync([
+          "test",
+          "use-agently",
+          "mcp",
+          "call",
+          "paid-echo-tool",
+          '{"message":"should fail"}',
+          "--uri",
+          fixture.agent.getAgentUrl(),
+          "--pay",
+        ]);
+      } catch {
+        // expected: process.exit throws
+      } finally {
+        process.exit = origExit;
+      }
+
+      expect(exitCode).toBe(1);
+      expect(out.stderr).toContain("Insufficient Funds");
+      expect(out.stderr).toContain("$0.001 USDC");
+
+      mockConfigModule();
+    }, 30_000);
+
+    test("mcp call with --pay and json output emits text content as JSON", async () => {
+      mockConfigModule(() => ({ wallet: testWalletConfig(fixture.container.getRpcUrl()) }));
+
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "-o",
+        "json",
+        "mcp",
+        "call",
+        "paid-echo-tool",
+        '{"message":"json output test"}',
+        "--uri",
+        fixture.agent.getAgentUrl(),
+        "--pay",
+      ]);
+
+      expect(out.json).toStrictEqual("json output test");
+
       mockConfigModule();
     }, 30_000);
   });
