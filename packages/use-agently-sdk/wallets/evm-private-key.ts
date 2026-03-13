@@ -1,6 +1,6 @@
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createPublicClient, http } from "viem";
-import { base } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 import { ExactEvmScheme } from "@x402/evm";
 import { toClientEvmSigner } from "@x402/evm";
 import type { SchemeRegistration } from "@x402/fetch";
@@ -37,13 +37,22 @@ export class EvmPrivateKeyWallet implements Wallet {
 
   getX402Schemes(): SchemeRegistration[] {
     const account = privateKeyToAccount(this.privateKey);
-    const transport = this.rpcUrl ? http(this.rpcUrl) : http();
-    const publicClient = createPublicClient({ chain: base, transport });
-    const signer = toClientEvmSigner(account, publicClient);
+
+    const customTransport = this.rpcUrl ? http(this.rpcUrl) : http();
+    const baseClient = createPublicClient({ chain: base, transport: customTransport });
+    const baseSigner = toClientEvmSigner(account, baseClient);
+
+    const baseSepoliaClient = createPublicClient({ chain: baseSepolia, transport: customTransport });
+    const baseSepoliaSigner = toClientEvmSigner(account, baseSepoliaClient);
+
     return [
       {
-        network: "eip155:*" as const,
-        client: new ExactEvmScheme(signer),
+        network: "eip155:8453" as const,
+        client: new ExactEvmScheme(baseSigner),
+      },
+      {
+        network: "eip155:84532" as const,
+        client: new ExactEvmScheme(baseSepoliaSigner),
       },
     ];
   }
