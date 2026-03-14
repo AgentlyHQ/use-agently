@@ -37,13 +37,12 @@ export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils
 
 // A2A helpers
 export {
-  type A2AMessageOptions,
-  type A2AMessageResult,
+  type MessageResult,
   extractAgentText,
   extractStreamEventText,
-  sendA2AMessage,
-  sendA2AMessageStream,
-  getA2ACard,
+  sendMessage,
+  sendMessageStream,
+  getAgentCard,
 } from "./a2a.js";
 
 // MCP helpers

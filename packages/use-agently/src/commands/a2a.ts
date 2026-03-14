@@ -3,15 +3,15 @@ import {
   type TransactionMode,
   DryRunTransaction,
   PayTransaction,
-  sendA2AMessageStream,
-  getA2ACard,
+  sendMessageStream,
+  getAgentCard,
   extractStreamEventText,
   extractAgentText,
   DryRunPaymentRequired,
   loadWallet,
 } from "@use-agently/sdk";
 import { getConfigOrThrow } from "../config.js";
-import { clientFetch, handleDryRunError } from "../client.js";
+import { defaultClient, handleDryRunError } from "../client.js";
 import { output } from "../output.js";
 
 // Re-export from SDK so test file can import from "./a2a"
@@ -55,7 +55,7 @@ const a2aSendCommand = new Command("send")
     const transaction = await resolveTransactionMode(options.pay);
 
     try {
-      const stream = await sendA2AMessageStream(uri, options.message, { transaction, fetchImpl: clientFetch });
+      const stream = await sendMessageStream(defaultClient, uri, options.message, { mode: transaction });
 
       let wroteText = false;
       let lastResult: any = null;
@@ -88,7 +88,7 @@ const a2aCardSubCommand = new Command("card")
   )
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options, "a2a card");
-    const card = await getA2ACard(uri, { fetchImpl: clientFetch });
+    const card = await getAgentCard(defaultClient, uri);
     output(command, card);
   });
 
