@@ -1,12 +1,13 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
-import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
 import { formatUnits } from "viem";
 import { getChainConfigByNetwork } from "./utils/chain.js";
 import pkg from "./package.json" with { type: "json" };
+
+type Fetch = typeof fetch;
 
 export interface PaymentRequirementsInfo {
   amount: string;
@@ -17,6 +18,45 @@ export interface PaymentRequirementsInfo {
 }
 
 export const USER_AGENT = `@use-agently/sdk:${pkg.version} (use-agently.com)`;
+
+export type Protocol = "a2a" | "mcp" | "web";
+
+/**
+ * Unstable: internal SDK client type.
+ * This will be the de facto SDK client type in the future.
+ * But do not depend on it, it may change without a major version bump.
+ *
+ * THIS client provides the low-level primitives for SDK requests.
+ * You do not bundle A2A, MCP, or Web protocols with this client.
+ * Protocols will use this client to make requests.
+ */
+export type unstable_Client = {
+  fetch: Fetch;
+  /**
+   * Get URL resolves the URL for a given URI and type.
+   *
+   * ```js
+   * getURL("https://example.com", "a2a") => "https://example.com/.well-known/agent-card.json"
+   * getURL("https://example.com/.well-known/agent-card.json", "a2a") => "https://example.com/.well-known/agent-card.json"
+   * getURL("eip155:1/erc8004:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/23036", "a2a") => "https://example.agently.to/.well-known/agent-card.json"
+   * getURL("https://example.com", "mcp") => "https://example.com"
+   * ```
+   *
+   * @param uri
+   * @param protocol
+   */
+  getURL: (uri: string, protocol: Protocol) => URL;
+};
+
+export function createClient(options: { userAgent?: string }): unstable_Client {
+  const fetch = createClientFetch(options.userAgent);
+  return {
+    fetch: fetch,
+    getURL: (uri: string, protocol: Protocol) => {
+      return getURL(fetch, uri, protocol);
+    },
+  };
+}
 
 /** Create a fetch wrapper that automatically includes a User-Agent header. */
 export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch {
@@ -40,6 +80,10 @@ export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch 
 /** The standard fetch client for SDK requests. Automatically includes the User-Agent header. */
 export const clientFetch: typeof fetch = createClientFetch();
 
+function getURL(fetch: Fetch, uri: string, protocol: Protocol): URL {
+  return new URL(uri);
+}
+
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   try {
     const { usdcDecimals } = getChainConfigByNetwork(req.network);
@@ -54,6 +98,7 @@ function formatUsdcAmount(req: PaymentRequirementsInfo): string {
 
 export class DryRunPaymentRequired extends Error {
   readonly requirements: PaymentRequirementsInfo[];
+
   constructor(requirements: PaymentRequirementsInfo[]) {
     const req = requirements[0];
     const amount = req ? formatUsdcAmount(req) : null;
@@ -116,11 +161,4 @@ export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {
   return wrapMCPClientWithPaymentFromConfig(mcpClient, {
     schemes: wallet.getX402Schemes(),
   });
-}
-
-export async function createA2AClient(agentUrl: string, fetchImpl: typeof fetch) {
-  const factory = new ClientFactory({
-    transports: [new JsonRpcTransportFactory({ fetchImpl }), new RestTransportFactory({ fetchImpl })],
-  });
-  return factory.createFromUrl(agentUrl);
 }

@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { AgentCard } from "@a2a-js/sdk";
-import { DefaultAgentCardResolver } from "@a2a-js/sdk/client";
-import { createA2AClient, resolveFetchForTransaction } from "./client.js";
+import {
+  ClientFactory,
+  DefaultAgentCardResolver,
+  JsonRpcTransportFactory,
+  RestTransportFactory,
+} from "@a2a-js/sdk/client";
+import { resolveFetchForTransaction, unstable_Client } from "./client.js";
 import type { TransactionMode } from "./utils/transaction.js";
 
 export interface A2AMessageOptions {
@@ -66,6 +71,13 @@ export function extractStreamEventText(event: any): string {
   return "";
 }
 
+export async function createA2AClient(agentUrl: string, fetchImpl: typeof fetch) {
+  const factory = new ClientFactory({
+    transports: [new JsonRpcTransportFactory({ fetchImpl }), new RestTransportFactory({ fetchImpl })],
+  });
+  return factory.createFromUrl(agentUrl);
+}
+
 /** Send a message to an A2A agent and return the complete result. */
 export async function sendA2AMessage(
   uri: string,
@@ -114,3 +126,5 @@ export async function getA2ACard(uri: string, options?: { fetchImpl?: typeof fet
   const resolver = new DefaultAgentCardResolver(options?.fetchImpl ? { fetchImpl: options.fetchImpl } : undefined);
   return resolver.resolve(agentUrl);
 }
+
+export async function getAgentCard(client: unstable_Client, uri: string) {}

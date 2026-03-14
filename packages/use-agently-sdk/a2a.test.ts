@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { extractAgentText, extractStreamEventText, sendA2AMessage, sendA2AMessageStream, getA2ACard } from "./a2a";
-import { createA2AClient, createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "./client";
+import {
+  extractAgentText,
+  extractStreamEventText,
+  sendA2AMessage,
+  sendA2AMessageStream,
+  getA2ACard,
+  createA2AClient,
+} from "./a2a";
+import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "./client";
 import { DryRunTransaction, PayTransaction } from "./utils/transaction";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import {
