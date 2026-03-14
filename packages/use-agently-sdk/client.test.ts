@@ -1,11 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import {
-  DryRunPaymentRequired,
-  createDryRunFetch,
-  clientFetch,
-  USER_AGENT,
-  type PaymentRequirementsInfo,
-} from "./client";
+import { DryRunPaymentRequired, createDryRunFetch, clientFetch, type PaymentRequirementsInfo } from "./client";
 
 describe("DryRunPaymentRequired", () => {
   test("formats USDC amount with network", () => {
@@ -127,7 +121,7 @@ describe("clientFetch", () => {
     await clientFetch("https://example.com");
     const init = fetchSpy.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init?.headers);
-    expect(headers.get("User-Agent")).toBe(USER_AGENT);
+    expect(headers.get("User-Agent")).toMatch("@use-agently/sdk:");
   });
 
   test("preserves existing User-Agent if already set", async () => {

@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { generatePrivateKey } from "viem/accounts";
 import { listMcpTools, callMcpTool } from "./mcp";
-import { createMcpPaymentClient, DryRunPaymentRequired, USER_AGENT } from "./client";
+import { createMcpPaymentClient, DryRunPaymentRequired } from "./client";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import { PayTransaction } from "./utils/transaction";
 import {
@@ -105,7 +105,7 @@ describe("listMcpTools", () => {
     try {
       await listMcpTools(mcpUrl());
       const headers = new Headers(spy.mock.calls[0][1]?.headers);
-      expect(headers.get("User-Agent")).toBe(USER_AGENT);
+      expect(headers.get("User-Agent")).toMatch("@use-agently/sdk:");
     } finally {
       spy.mockRestore();
     }

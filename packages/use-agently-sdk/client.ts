@@ -17,8 +17,6 @@ export interface PaymentRequirementsInfo {
   asset: string;
 }
 
-export const USER_AGENT = `@use-agently/sdk:${pkg.version} (use-agently.com)`;
-
 export type Protocol = "a2a" | "mcp" | "web";
 
 /**
@@ -49,7 +47,7 @@ export type unstable_Client = {
 };
 
 export function createClient(options: { userAgent?: string }): unstable_Client {
-  const fetch = createClientFetch(options.userAgent);
+  const fetch = createFetch({ userAgent: options.userAgent });
   return {
     fetch: fetch,
     getURL: (uri: string, protocol: Protocol) => {
@@ -59,7 +57,7 @@ export function createClient(options: { userAgent?: string }): unstable_Client {
 }
 
 /** Create a fetch wrapper that automatically includes a User-Agent header. */
-export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch {
+function createFetch(options?: { userAgent?: string }): typeof fetch {
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
   return (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
@@ -71,14 +69,14 @@ export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch 
       }
     }
     if (!headers.has("User-Agent")) {
-      headers.set("User-Agent", userAgent);
+      headers.set("User-Agent", options?.userAgent ?? `@use-agently/sdk:${pkg.version} (use-agently.com)`);
     }
     return fetch(input, { ...init, headers });
   };
 }
 
 /** The standard fetch client for SDK requests. Automatically includes the User-Agent header. */
-export const clientFetch: typeof fetch = createClientFetch();
+export const clientFetch: typeof fetch = createFetch();
 
 function getURL(fetch: Fetch, uri: string, protocol: Protocol): URL {
   return new URL(uri);

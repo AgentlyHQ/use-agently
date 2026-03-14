@@ -15,7 +15,6 @@ export { type ChainConfig, getChainConfig, getChainConfigByNetwork } from "./uti
 // Client
 export {
   type PaymentRequirementsInfo,
-  USER_AGENT,
   clientFetch,
   DryRunPaymentRequired,
   createDryRunFetch,
