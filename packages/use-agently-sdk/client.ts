@@ -17,8 +17,6 @@ export interface PaymentRequirementsInfo {
   asset: string;
 }
 
-export type Protocol = "a2a" | "mcp" | "web";
-
 /**
  * Unstable: internal SDK client type.
  * This will be the de facto SDK client type in the future.
@@ -30,29 +28,12 @@ export type Protocol = "a2a" | "mcp" | "web";
  */
 export type unstable_Client = {
   fetch: Fetch;
-  /**
-   * Get URL resolves the URL for a given URI and type.
-   *
-   * ```js
-   * getURL("https://example.com", "a2a") => "https://example.com/.well-known/agent-card.json"
-   * getURL("https://example.com/.well-known/agent-card.json", "a2a") => "https://example.com/.well-known/agent-card.json"
-   * getURL("eip155:1/erc8004:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/23036", "a2a") => "https://example.agently.to/.well-known/agent-card.json"
-   * getURL("https://example.com", "mcp") => "https://example.com"
-   * ```
-   *
-   * @param uri
-   * @param protocol
-   */
-  getURL: (uri: string, protocol: Protocol) => URL;
 };
 
 export function createClient(options: { userAgent?: string }): unstable_Client {
   const fetch = createFetch({ userAgent: options.userAgent });
   return {
     fetch: fetch,
-    getURL: (uri: string, protocol: Protocol) => {
-      return getURL(fetch, uri, protocol);
-    },
   };
 }
 
@@ -77,10 +58,6 @@ function createFetch(options?: { userAgent?: string }): typeof fetch {
 
 /** The standard fetch client for SDK requests. Automatically includes the User-Agent header. */
 export const clientFetch: typeof fetch = createFetch();
-
-function getURL(fetch: Fetch, uri: string, protocol: Protocol): URL {
-  return new URL(uri);
-}
 
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   try {
