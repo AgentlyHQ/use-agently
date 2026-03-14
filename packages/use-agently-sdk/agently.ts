@@ -53,9 +53,7 @@ export interface GetAgent extends ERC8004Agent {
   metadata: ERC8004Metadata;
 }
 
-type FetchClient = Pick<unstable_Client, "fetch">;
-
-export async function search(client: FetchClient, options?: SearchOptions): Promise<SearchResult> {
+export async function search(client: unstable_Client, options?: SearchOptions): Promise<SearchResult> {
   const url = new URL("/search", BASE_URL);
   if (options?.q) url.searchParams.set("q", options.q);
   if (options?.chain_id) {
@@ -73,7 +71,7 @@ export async function search(client: FetchClient, options?: SearchOptions): Prom
   return response.json();
 }
 
-export async function getAgent(client: FetchClient, id: string): Promise<GetAgent | undefined> {
+export async function getAgent(client: unstable_Client, id: string): Promise<GetAgent | undefined> {
   const url = new URL(`/agents/${id}`, BASE_URL);
   const response = await client.fetch(url);
   if (response.status === 404) {
