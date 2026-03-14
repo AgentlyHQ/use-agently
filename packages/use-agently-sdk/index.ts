@@ -16,14 +16,12 @@ export { type ChainConfig, getChainConfig, getChainConfigByNetwork } from "./uti
 export {
   type PaymentRequirementsInfo,
   USER_AGENT,
-  createClientFetch,
   clientFetch,
   DryRunPaymentRequired,
   createDryRunFetch,
   createPaymentFetch,
   resolveFetchForTransaction,
   createMcpPaymentClient,
-  createA2AClient,
 } from "./client.js";
 
 // Marketplace

@@ -4,18 +4,20 @@ import {
   DryRunPaymentRequired as SdkDryRunPaymentRequired,
   createDryRunFetch as sdkCreateDryRunFetch,
   createPaymentFetch as sdkCreatePaymentFetch,
-  createClientFetch,
   getChainConfigByNetwork,
   type PaymentRequirementsInfo,
   loadWallet,
 } from "@use-agently/sdk";
 import { getConfigOrThrow } from "./config.js";
 import pkg from "../package.json" with { type: "json" };
+import { createClient } from "@use-agently/sdk/client";
 
 const CLI_USER_AGENT = `use-agently:${pkg.version} (use-agently.com)`;
 
+const defaultClient = createClient({ userAgent: CLI_USER_AGENT });
+
 /** CLI-specific fetch client with CLI user-agent. */
-export const clientFetch: typeof fetch = createClientFetch(CLI_USER_AGENT);
+export const clientFetch: typeof fetch = defaultClient.fetch;
 
 /** CLI-specific DryRunPaymentRequired with --pay hint in the message. */
 export class DryRunPaymentRequired extends SdkDryRunPaymentRequired {
