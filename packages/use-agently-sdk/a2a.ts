@@ -62,7 +62,7 @@ export async function createA2AClient(client: unstable_Client, uri: string, fetc
   const factory = new ClientFactory({
     transports: [new JsonRpcTransportFactory({ fetchImpl }), new RestTransportFactory({ fetchImpl })],
   });
-  return factory.createFromUrl(url.toString());
+  return factory.createFromUrl(url.toString(), "");
 }
 
 /** Send a message to an A2A agent and return the complete result. */
