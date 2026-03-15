@@ -20,7 +20,7 @@ export { extractAgentText };
 function resolveUriOption(options: { uri?: string }, commandName: string): string {
   if (!options.uri) {
     throw new Error(
-      `Missing required option --uri for '${commandName}'.\nExpected a URL or agent URI, e.g. --uri https://example.com/agent or --uri echo-agent`,
+      `Missing required option --uri for '${commandName}'.\nExpected a URL or CAIP-19 ID, e.g. --uri https://example.com/agent or --uri eip155:8453/erc8004:0x1234/1`,
     );
   }
   return options.uri;
@@ -43,12 +43,12 @@ export const a2aCommand = new Command("a2a")
 
 const a2aSendCommand = new Command("send")
   .description("Send a message to an agent via A2A protocol")
-  .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
+  .option("--uri <value>", "Agent URL or CAIP-19 ID (e.g. https://example.com/agent or eip155:8453/erc8004:0x1234/1)")
   .requiredOption("-m, --message <text>", "Message to send")
   .option("--pay", "Authorize payment if the agent requires it (default: dry-run, shows cost only)")
   .addHelpText(
     "after",
-    '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri echo-agent -m "Hello!"\n  use-agently a2a send --uri paid-agent -m "Hello!" --pay',
+    '\nExamples:\n  use-agently a2a send --uri https://example.com/agent -m "Hello!"\n  use-agently a2a send --uri eip155:8453/erc8004:0x1234/1 -m "Hello!"\n  use-agently a2a send --uri https://example.com/agent -m "Hello!" --pay',
   )
   .action(async (options: { uri?: string; message: string; pay?: boolean }) => {
     const uri = resolveUriOption(options, "a2a send");
@@ -81,10 +81,10 @@ const a2aSendCommand = new Command("send")
 
 const a2aCardSubCommand = new Command("card")
   .description("Fetch and display the A2A agent card")
-  .option("--uri <value>", "Agent URI or URL (e.g. https://example.com/agent or echo-agent)")
+  .option("--uri <value>", "Agent URL or CAIP-19 ID (e.g. https://example.com/agent or eip155:8453/erc8004:0x1234/1)")
   .addHelpText(
     "after",
-    "\nExamples:\n  use-agently a2a card --uri https://example.com/agent\n  use-agently a2a card --uri echo-agent",
+    "\nExamples:\n  use-agently a2a card --uri https://example.com/agent\n  use-agently a2a card --uri eip155:8453/erc8004:0x1234/1",
   )
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options, "a2a card");
