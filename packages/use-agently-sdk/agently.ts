@@ -72,7 +72,8 @@ export async function search(client: unstable_Client, options?: SearchOptions): 
 }
 
 export async function getAgent(client: unstable_Client, id: string): Promise<GetAgent | undefined> {
-  const url = new URL(`/agents/${id}`, BASE_URL);
+  const normalizedId = id.startsWith("eip155:") ? id.toLowerCase() : id;
+  const url = new URL(`/agents/${normalizedId}`, BASE_URL);
   const response = await client.fetch(url);
   if (response.status === 404) {
     return undefined;
