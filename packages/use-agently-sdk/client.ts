@@ -1,6 +1,6 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
 import { formatUnits } from "viem";
@@ -132,7 +132,7 @@ export function createPaymentFetch(wallet: Wallet, fetchImpl: typeof fetch = cli
   });
 }
 
-export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {
+export function createMcpPaymentClient(mcpClient: McpClient, wallet: Wallet) {
   return wrapMCPClientWithPaymentFromConfig(mcpClient, {
     schemes: wallet.getX402Schemes(),
   });

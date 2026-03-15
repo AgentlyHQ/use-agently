@@ -50,15 +50,61 @@ Always use this agent when developing or testing changes to `use-agently` to mai
   - `aixyz.config.ts` — Agent metadata and skills
   - `app/agent.ts` — Free A2A endpoint (`accepts: { scheme: "free" }`) with echo tool
   - `app/tools/echo.ts` — Simple echo tool for testing
+- **`packages/use-agently-sdk`** (`@use-agently/sdk`): The SDK package (published to npm)
+  - `client.ts` — `unstable_Client` type, `createClient()`, fetch wrappers (dry-run, payment)
+  - `agently.ts` — Agently platform API (`search`, `getAgent` for ERC-8004 resolution)
+  - `a2a.ts` — A2A protocol: `sendMessage`, `sendMessageStream`, `getAgentCard`, URL resolution
+  - `mcp.ts` — MCP protocol: `listMcpTools`, `callMcpTool`, URL resolution
+  - `wallets/` — Wallet interface and implementations (EVM private key)
+  - `utils/` — Chain config, transaction mode types
 - **`packages/use-agently`**: The CLI package
   - `src/bin.ts` — Executable entry point (`#!/usr/bin/env bun`)
   - `src/cli.ts` — Commander.js program setup, registers all commands
   - `src/config.ts` — Config persistence at `~/.use-agently/config.json` (load, save, backup)
-  - `src/client.ts` — Creates x402 payment-wrapped fetch and A2A protocol clients
-  - `src/wallets/wallet.ts` — Wallet interface abstraction with factory `loadWallet()`
-  - `src/wallets/evm-private-key.ts` — EVM private key wallet implementation (viem + @x402/evm)
+  - `src/client.ts` — Creates `defaultClient` via `createClient()` with CLI user-agent; all CLI commands use this client
   - `src/commands/` — One file per CLI command (init, whoami, balance, agents, a2a)
   - Build output: `build/use-agently` (standalone binary via `bun build --compile`)
+
+### SDK Architecture (`@use-agently/sdk`)
+
+The SDK is structured in three layers: **client**, **platform**, and **protocol**. All new SDK work must follow this layering.
+
+#### Client Layer (`client.ts`)
+
+`unstable_Client` is the low-level primitive. It holds a configured `fetch` (with User-Agent, etc.) and nothing else. It does **not** bundle protocol logic. Create one via `createClient({ userAgent })`.
+
+```ts
+const client = createClient({ userAgent: "my-app:1.0" });
+```
+
+The CLI creates a single `defaultClient` in `src/client.ts` and passes it through to all SDK calls.
+
+#### Platform Layer (`agently.ts`)
+
+The Agently API layer (`api.use-agently.com`). Provides `search(client, options)` and `getAgent(client, id)` for agent discovery and ERC-8004 metadata resolution. All functions take `unstable_Client` as the first argument.
+
+#### Protocol Layer (`a2a.ts`, `mcp.ts`)
+
+Each protocol file owns its own URL resolution and communication logic. Protocol functions take `unstable_Client` as the first argument.
+
+- **A2A** (`a2a.ts`): `sendMessage(client, uri, message, options?)`, `sendMessageStream(client, uri, message, options?)`, `getAgentCard(client, uri)`, `createA2AClient(client, uri, fetchImpl)`
+- **MCP** (`mcp.ts`): `listMcpTools(uri, options?)`, `callMcpTool(uri, tool, args?, options?)`
+
+#### Key Design Rules
+
+1. **`unstable_Client` is always the first parameter** — every SDK function that makes network requests takes `client: unstable_Client` as its first argument. This provides the configured `fetch`. Never use bare `fetch` or `clientFetch` in protocol-level code.
+
+2. **Protocol-level URL resolution** — each protocol handles its own URI → URL mapping. A2A has `getAgentCardURL()` (appends `/.well-known/agent-card.json`). MCP has `resolveMcpUrl()`. The client layer does **not** resolve URLs.
+
+3. **ERC-8004 resolution via `getAgent()`** — ERC-8004 URIs (`eip155:...`) are resolved through `getAgent(client, id)` from `agently.ts`. Each protocol finds its service entry by name (e.g., `services.find(s => s.name === "a2a")`). No shortname resolution — URIs are either HTTP(S) URLs or ERC-8004 CAIP-19 IDs.
+
+4. **Transaction mode via `options.mode`** — payment behavior is controlled by `options?: { mode?: TransactionMode }`. `DryRunTransaction` (default) intercepts 402s and throws `DryRunPaymentRequired`. `PayTransaction(wallet)` wraps fetch with x402 payment. The resolved fetch is derived from `client.fetch` via `resolveFetchForTransaction(mode, client.fetch)`.
+
+5. **Don't export internal constants** — things like the User-Agent string are internal to the SDK. Tests should assert behavior (e.g., `toMatch("@use-agently/sdk:")`) not exact values.
+
+6. **SDK tests SDK, CLI tests CLI** — SDK tests exercise SDK functions directly (e.g., `sendMessage`, `createA2AClient`). CLI tests exercise the CLI surface via `cli.parseAsync`. Never test SDK-level concerns (payment flows, client creation) in CLI test files.
+
+7. **Inline option types** — prefer inline types for simple option bags: `options?: { mode?: TransactionMode }` rather than separate named interfaces, unless the type is reused across multiple functions.
 
 ### Wallet Abstraction
 
