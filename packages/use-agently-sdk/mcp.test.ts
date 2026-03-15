@@ -30,7 +30,7 @@ afterAll(async () => {
 }, 30_000);
 
 function mcpUrl(): string {
-  return fixture.agent.getAgentUrl().replace(/\/?$/, "/mcp");
+  return fixture.agent.getAgentHost().replace(/\/?$/, "/mcp");
 }
 
 async function createMcpClient(): Promise<Client> {

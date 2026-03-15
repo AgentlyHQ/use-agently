@@ -38,7 +38,7 @@ describe("mcp command (free)", () => {
     const out = captureOutput();
 
     test("lists available tools", async () => {
-      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--uri", fixture.agent.getAgentUrl()]);
+      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--uri", fixture.agent.getAgentHost() + "/mcp"]);
       const tools = out.yaml as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
@@ -47,7 +47,16 @@ describe("mcp command (free)", () => {
     });
 
     test("json output lists tools as JSON array", async () => {
-      await cli.parseAsync(["test", "use-agently", "-o", "json", "mcp", "tools", "--uri", fixture.agent.getAgentUrl()]);
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "-o",
+        "json",
+        "mcp",
+        "tools",
+        "--uri",
+        fixture.agent.getAgentHost() + "/mcp",
+      ]);
       const tools = out.json as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
@@ -68,7 +77,7 @@ describe("mcp command (free)", () => {
         "echo",
         '{"message":"hello from mcp"}',
         "--uri",
-        fixture.agent.getAgentUrl(),
+        fixture.agent.getAgentHost() + "/mcp",
       ]);
       expect(out.stdout).toStrictEqual("hello from mcp");
 
@@ -80,7 +89,7 @@ describe("mcp command (free)", () => {
 
 describe("mcp x402 payment (paid)", () => {
   function mcpUrl(): string {
-    return fixture.agent.getAgentUrl().replace(/\/?$/, "/mcp");
+    return fixture.agent.getAgentHost() + "/mcp";
   }
 
   async function createMcpClient(): Promise<Client> {
@@ -143,7 +152,7 @@ describe("mcp x402 payment (paid)", () => {
           "paid-echo-tool",
           '{"message":"dry run"}',
           "--uri",
-          fixture.agent.getAgentUrl(),
+          fixture.agent.getAgentHost() + "/mcp",
         ]);
       } catch {
         // expected: process.exit throws
@@ -168,7 +177,7 @@ describe("mcp x402 payment (paid)", () => {
         "paid-echo-tool",
         '{"message":"paid cli test"}',
         "--uri",
-        fixture.agent.getAgentUrl(),
+        fixture.agent.getAgentHost() + "/mcp",
         "--pay",
       ]);
 
@@ -209,7 +218,7 @@ describe("mcp x402 payment (paid)", () => {
           "paid-echo-tool",
           '{"message":"should fail"}',
           "--uri",
-          fixture.agent.getAgentUrl(),
+          fixture.agent.getAgentHost() + "/mcp",
           "--pay",
         ]);
       } catch {
@@ -238,7 +247,7 @@ describe("mcp x402 payment (paid)", () => {
         "paid-echo-tool",
         '{"message":"json output test"}',
         "--uri",
-        fixture.agent.getAgentUrl(),
+        fixture.agent.getAgentHost() + "/mcp",
         "--pay",
       ]);
 
