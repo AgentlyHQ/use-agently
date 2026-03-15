@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { generatePrivateKey } from "viem/accounts";
 import { listMcpTools, callMcpTool } from "./mcp";
-import { createMcpPaymentClient, DryRunPaymentRequired } from "./client";
+import { createMcpPaymentClient, DryRunPaymentRequired, createClient } from "./client";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import { PayTransaction } from "./utils/transaction";
 import {
@@ -18,6 +18,7 @@ import pkg from "./package.json" with { type: "json" };
 
 setDefaultTimeout(30_000);
 
+const sdkClient = createClient({});
 let fixture: X402FacilitatorLocal;
 
 beforeAll(async () => {
@@ -94,7 +95,7 @@ describe("mcp x402 payment", () => {
 
 describe("listMcpTools", () => {
   test("returns array including echo tool", async () => {
-    const tools = await listMcpTools(mcpUrl());
+    const tools = await listMcpTools(sdkClient, mcpUrl());
     expect(Array.isArray(tools)).toBe(true);
     const echoTool = tools.find((t) => t.name === "echo");
     expect(echoTool).toBeDefined();
@@ -103,7 +104,7 @@ describe("listMcpTools", () => {
   test("sends User-Agent header by default (via clientFetch)", async () => {
     const spy = spyOn(globalThis, "fetch");
     try {
-      await listMcpTools(mcpUrl());
+      await listMcpTools(sdkClient, mcpUrl());
       const headers = new Headers(spy.mock.calls[0][1]?.headers);
       expect(headers.get("User-Agent")).toMatch("@use-agently/sdk:");
     } finally {
@@ -114,7 +115,7 @@ describe("listMcpTools", () => {
 
 describe("callMcpTool", () => {
   test("free tool call succeeds in dry-run mode", async () => {
-    const result = await callMcpTool(mcpUrl(), "echo", { message: "hello high-level" });
+    const result = await callMcpTool(sdkClient, mcpUrl(), "echo", { message: "hello high-level" });
     const content = result.content as Array<{ type: string; text: string }>;
     expect(content[0].text).toStrictEqual("hello high-level");
   });
@@ -125,6 +126,7 @@ describe("callMcpTool", () => {
     const receiverBefore = await fixture.container.balance(accounts.facilitator.address);
 
     const result = await callMcpTool(
+      sdkClient,
       mcpUrl(),
       "paid-echo-tool",
       { message: "hello paid high-level" },
@@ -143,7 +145,7 @@ describe("callMcpTool", () => {
 
   test("paid tool dry-run throws DryRunPaymentRequired with cost info", async () => {
     try {
-      await callMcpTool(mcpUrl(), "paid-echo-tool", { message: "should fail" });
+      await callMcpTool(sdkClient, mcpUrl(), "paid-echo-tool", { message: "should fail" });
       throw new Error("Expected DryRunPaymentRequired to be thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(DryRunPaymentRequired);
@@ -168,6 +170,7 @@ describe("callMcpTool", () => {
       };
 
       const result = await callMcpTool(
+        sdkClient,
         mcpUrl(),
         "paid-echo-tool",
         { message: "hello custom fetch pay" },
@@ -201,6 +204,7 @@ describe("callMcpTool", () => {
       };
 
       const result = await callMcpTool(
+        sdkClient,
         mcpUrl(),
         "echo",
         { message: "hello custom fetch dryrun" },
@@ -224,6 +228,7 @@ describe("callMcpTool", () => {
     const unfundedWallet = new EvmPrivateKeyWallet(unfundedKey, fixture.container.getRpcUrl());
 
     const result = await callMcpTool(
+      sdkClient,
       mcpUrl(),
       "paid-echo-tool",
       { message: "should fail — no funds" },

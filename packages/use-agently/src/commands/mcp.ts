@@ -12,7 +12,7 @@ import {
   callMcpTool,
 } from "@use-agently/sdk";
 import { getConfigOrThrow } from "../config.js";
-import { clientFetch, handleDryRunError } from "../client.js";
+import { defaultClient, clientFetch, handleDryRunError } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
 import { output } from "../output.js";
 
@@ -49,7 +49,7 @@ const mcpToolsCommand = new Command("tools")
   )
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options, "mcp tools");
-    const tools = await listMcpTools(uri, {
+    const tools = await listMcpTools(defaultClient, uri, {
       clientInfo: { name: "use-agently", version: pkg.version },
       fetchImpl: clientFetch,
     });
@@ -80,7 +80,7 @@ const mcpCallCommand = new Command("call")
       const transaction = await resolveTransactionMode(options.pay);
 
       try {
-        const result = await callMcpTool(uri, tool, args, {
+        const result = await callMcpTool(defaultClient, uri, tool, args, {
           transaction,
           clientInfo: { name: "use-agently", version: pkg.version },
           fetchImpl: clientFetch,

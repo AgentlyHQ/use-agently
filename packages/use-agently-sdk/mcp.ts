@@ -3,9 +3,16 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { x402MCPClient, x402MCPToolCallResult } from "@x402/mcp";
-import { DryRunPaymentRequired, resolveFetchForTransaction, createMcpPaymentClient, clientFetch } from "./client.js";
+import {
+  DryRunPaymentRequired,
+  resolveFetchForTransaction,
+  createMcpPaymentClient,
+  clientFetch,
+  type unstable_Client,
+} from "./client.js";
 import { DryRunTransaction, PayTransaction, type TransactionMode } from "./utils/transaction.js";
 import type { Wallet } from "./wallets/wallet.js";
+import { getAgent } from "./agently.js";
 import pkg from "./package.json" with { type: "json" };
 
 export interface McpCallOptions {
@@ -14,14 +21,33 @@ export interface McpCallOptions {
   clientInfo?: { name: string; version: string };
 }
 
-export function resolveMcpUrl(input: string): string {
-  const isDirectUrl = input.startsWith("http://") || input.startsWith("https://");
-  const base = isDirectUrl ? input : `https://use-agently.com/${input}/services/mcp`;
-  const url = new URL(base);
-  if (!url.pathname.endsWith("/mcp") && !url.pathname.endsWith("/mcp/")) {
-    url.pathname = url.pathname.replace(/\/?$/, "/mcp");
+/**
+ * Resolve a URI to an MCP endpoint URL.
+ *
+ * For HTTP(S) URLs, ensures the path ends with `/mcp`.
+ * For ERC-8004 URIs (`eip155:...`), resolves via the Agently API
+ * using the first MCP service endpoint from the agent metadata.
+ *
+ * ```
+ * getMcpURL("https://example.com/") => "https://example.com/mcp"
+ * getMcpURL("https://example.com/mcp") => "https://example.com/mcp"
+ * getMcpURL("eip155:1/erc8004:0x.../123") => resolves via getAgent(), returns MCP service endpoint
+ * ```
+ */
+export async function getMcpURL(client: unstable_Client, input: string): Promise<URL> {
+  if (input.startsWith("eip155:")) {
+    const agent = await getAgent(client, input);
+    if (!agent) {
+      throw new Error(`Agent (${input}) not found.`);
+    }
+    const service = agent.metadata?.services?.find((s) => s.name === "mcp");
+    if (!service) {
+      throw new Error(`Agent (${input}) has no MCP service registered.`);
+    }
+    return new URL(service.endpoint);
   }
-  return url.toString();
+
+  return new URL(input);
 }
 
 async function createMcpClient(
@@ -53,8 +79,8 @@ async function createMcpClient(
 }
 
 /** List all tools available on an MCP server. */
-export async function listMcpTools(uri: string, options?: McpCallOptions): Promise<Tool[]> {
-  const mcpUrl = resolveMcpUrl(uri);
+export async function listMcpTools(sdkClient: unstable_Client, uri: string, options?: McpCallOptions): Promise<Tool[]> {
+  const mcpUrl = await (await getMcpURL(sdkClient, uri)).toString();
   const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
   const client = await createMcpClient(mcpUrl, { clientInfo: options?.clientInfo, fetchImpl: resolvedFetch });
   try {
@@ -66,32 +92,41 @@ export async function listMcpTools(uri: string, options?: McpCallOptions): Promi
 }
 
 /** Call a tool on an MCP server, with optional payment support. Defaults to dry-run mode. */
-export async function callMcpTool(uri: string, tool: string, args?: Record<string, unknown>): Promise<CallToolResult>;
 export async function callMcpTool(
+  sdkClient: unstable_Client,
+  uri: string,
+  tool: string,
+  args?: Record<string, unknown>,
+): Promise<CallToolResult>;
+export async function callMcpTool(
+  sdkClient: unstable_Client,
   uri: string,
   tool: string,
   args: Record<string, unknown> | undefined,
   options: McpCallOptions & { transaction: PayTransaction },
 ): Promise<x402MCPToolCallResult>;
 export async function callMcpTool(
+  sdkClient: unstable_Client,
   uri: string,
   tool: string,
   args: Record<string, unknown> | undefined,
   options: McpCallOptions & { transaction: DryRunTransaction },
 ): Promise<CallToolResult>;
 export async function callMcpTool(
+  sdkClient: unstable_Client,
   uri: string,
   tool: string,
   args: Record<string, unknown> | undefined,
   options: McpCallOptions,
 ): Promise<CallToolResult | x402MCPToolCallResult>;
 export async function callMcpTool(
+  sdkClient: unstable_Client,
   uri: string,
   tool: string,
   args?: Record<string, unknown>,
   options?: McpCallOptions,
 ): Promise<CallToolResult | x402MCPToolCallResult> {
-  const mcpUrl = resolveMcpUrl(uri);
+  const mcpUrl = await (await getMcpURL(sdkClient, uri)).toString();
   const transaction = options?.transaction ?? DryRunTransaction;
   const resolvedFetch = resolveFetchForTransaction(transaction, options?.fetchImpl);
 
