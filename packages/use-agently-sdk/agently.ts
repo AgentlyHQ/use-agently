@@ -32,12 +32,14 @@ export interface ERC8004Agent {
   owner: string | null;
   name: string;
   description: string;
+  protocols: string[];
   created_at: string;
 }
 
 export interface SearchOptions {
   q?: string;
   chain_id?: string[];
+  protocol?: string[];
   page?: number;
   per_page?: number;
 }
@@ -59,6 +61,11 @@ export async function search(client: unstable_Client, options?: SearchOptions): 
   if (options?.chain_id) {
     for (const chain of options.chain_id) {
       url.searchParams.append("chain_id", chain);
+    }
+  }
+  if (options?.protocol) {
+    for (const proto of options.protocol) {
+      url.searchParams.append("protocol", proto);
     }
   }
   if (options?.page !== undefined) url.searchParams.set("page", String(options.page));

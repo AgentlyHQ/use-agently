@@ -23,15 +23,6 @@ export {
   createMcpPaymentClient,
 } from "./client.js";
 
-// Marketplace
-export {
-  type MarketplaceAgent,
-  AgentNotFoundError,
-  fetchAgents,
-  searchAgents,
-  resolveErc8004Agent,
-} from "./marketplace.js";
-
 // Transaction
 export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils/transaction.js";
 
