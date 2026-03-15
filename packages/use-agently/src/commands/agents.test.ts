@@ -5,17 +5,26 @@ mockConfigModule();
 
 const { cli } = await import("../cli");
 
-const TEST_AGENTS = [
+const TEST_HITS = [
   {
-    uri: "eip155:8453/erc-8004:0x1234/1",
+    id: "eip155:8453/erc8004:0x1234/1",
+    chain_id: "eip155:8453",
+    address: "0x1234",
+    agent_id: "1",
+    owner: "0xabc",
     name: "Test Agent",
     description: "A test agent",
-    protocols: ["a2a", "mcp"],
+    created_at: "2025-01-01T00:00:00.000Z",
   },
   {
-    uri: "eip155:8453/erc-8004:0x1234/2",
+    id: "eip155:8453/erc8004:0x1234/2",
+    chain_id: "eip155:8453",
+    address: "0x1234",
+    agent_id: "2",
+    owner: null,
     name: "Another Agent",
-    protocols: ["a2a"],
+    description: "Another test agent",
+    created_at: "2025-01-01T00:00:00.000Z",
   },
 ];
 
@@ -24,7 +33,9 @@ describe("agents command", () => {
   let fetchSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ agents: TEST_AGENTS })));
+    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ hits: TEST_HITS, found: 2, page: 1, per_page: 20 })),
+    );
   });
 
   afterEach(() => {
@@ -36,8 +47,16 @@ describe("agents command", () => {
 
     const parsed = out.yaml as any;
     expect(parsed.agents).toHaveLength(2);
-    expect(parsed.agents[0]).toEqual(TEST_AGENTS[0]);
-    expect(parsed.agents[1]).toEqual(TEST_AGENTS[1]);
+    expect(parsed.agents[0]).toEqual({
+      id: TEST_HITS[0].id,
+      name: TEST_HITS[0].name,
+      description: TEST_HITS[0].description,
+    });
+    expect(parsed.agents[1]).toEqual({
+      id: TEST_HITS[1].id,
+      name: TEST_HITS[1].name,
+      description: TEST_HITS[1].description,
+    });
   });
 
   test("json output", async () => {
@@ -45,22 +64,23 @@ describe("agents command", () => {
 
     const parsed = out.json as any;
     expect(parsed.agents).toHaveLength(2);
-    expect(parsed.agents[0]).toEqual(TEST_AGENTS[0]);
-    expect(parsed.agents[1]).toEqual(TEST_AGENTS[1]);
+    expect(Object.keys(parsed.agents[0])).toEqual(["id", "name", "description"]);
   });
 
   test("empty agents list", async () => {
-    fetchSpy.mockResolvedValue(new Response(JSON.stringify({ agents: [] })));
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify({ hits: [], found: 0, page: 1, per_page: 20 })));
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
     expect(out.json).toEqual({ agents: [] });
   });
 
-  test("fetches from marketplace url", async () => {
+  test("fetches from agently search API", async () => {
     await cli.parseAsync(["test", "use-agently", "agents"]);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(fetchSpy.mock.calls[0][0]).toBe("https://use-agently.com/marketplace.json");
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0] as string);
+    expect(calledUrl.origin).toBe("https://api.use-agently.com");
+    expect(calledUrl.pathname).toBe("/search");
   });
 
   test("sends User-Agent header containing use-agently.com", async () => {
