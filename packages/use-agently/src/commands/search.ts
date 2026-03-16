@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { output } from "../output.js";
+import { outputCollection } from "../output.js";
 import { search } from "@use-agently/sdk/agently";
 import { defaultClient } from "../client.js";
 
@@ -14,7 +14,8 @@ export const searchCommand = new Command("search")
   .action(async (query: string | undefined, options: { protocol?: string }, command: Command) => {
     const protocol = options.protocol ? options.protocol.split(",").map((p) => p.trim().toLowerCase()) : undefined;
     const result = await search(defaultClient, { q: query, protocol });
-    output(command, {
-      agents: result.hits.map(({ id, name, description, protocols }) => ({ id, name, description, protocols })),
-    });
+    outputCollection(
+      command,
+      result.hits.map(({ id, name, description, protocols }) => ({ id, name, description, protocols })),
+    );
   });

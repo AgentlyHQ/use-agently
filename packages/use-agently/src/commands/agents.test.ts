@@ -46,13 +46,13 @@ describe("agents command", () => {
     await cli.parseAsync(["test", "use-agently", "agents"]);
 
     const parsed = out.yaml as any;
-    expect(parsed.agents).toHaveLength(2);
-    expect(parsed.agents[0]).toEqual({
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toEqual({
       id: TEST_HITS[0].id,
       name: TEST_HITS[0].name,
       description: TEST_HITS[0].description,
     });
-    expect(parsed.agents[1]).toEqual({
+    expect(parsed[1]).toEqual({
       id: TEST_HITS[1].id,
       name: TEST_HITS[1].name,
       description: TEST_HITS[1].description,
@@ -62,16 +62,16 @@ describe("agents command", () => {
   test("json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
-    const parsed = out.json as any;
-    expect(parsed.agents).toHaveLength(2);
-    expect(Object.keys(parsed.agents[0])).toEqual(["id", "name", "description"]);
+    const lines = out.jsonLines as any[];
+    expect(lines).toHaveLength(2);
+    expect(Object.keys(lines[0])).toEqual(["id", "name", "description"]);
   });
 
   test("empty agents list", async () => {
     fetchSpy.mockResolvedValue(new Response(JSON.stringify({ hits: [], found: 0, page: 1, per_page: 20 })));
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
-    expect(out.json).toEqual({ agents: [] });
+    expect(out.jsonLines).toEqual([]);
   });
 
   test("fetches from agently search API", async () => {

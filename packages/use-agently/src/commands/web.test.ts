@@ -265,9 +265,18 @@ describe("web command cli", () => {
       expect(out.stdout).toContain("HTTP 200");
     });
 
-    test("includes HTTP status in log and exits 1 on error response", async () => {
+    test("includes HTTP status in log on error response without --fail", async () => {
       fetchSpy.mockImplementation(async () => new Response("not found", { status: 404, statusText: "Not Found" }));
       const outPath = join(tmpDir, "err.txt");
+
+      await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/404", "--output-file", outPath]);
+
+      expect(out.stdout).toContain("HTTP 404");
+    });
+
+    test("exits 1 on error response with --fail", async () => {
+      fetchSpy.mockImplementation(async () => new Response("not found", { status: 404, statusText: "Not Found" }));
+      const outPath = join(tmpDir, "err-fail.txt");
 
       let exitCode: number | undefined;
       const origExit = process.exit.bind(process);
@@ -277,7 +286,16 @@ describe("web command cli", () => {
       }) as typeof process.exit;
 
       try {
-        await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/404", "--output-file", outPath]);
+        await cli.parseAsync([
+          "test",
+          "use-agently",
+          "web",
+          "get",
+          "http://example.com/404",
+          "--output-file",
+          outPath,
+          "--fail",
+        ]);
       } catch {
         // expected
       } finally {
@@ -285,7 +303,6 @@ describe("web command cli", () => {
       }
 
       expect(exitCode).toBe(1);
-      expect(out.stdout).toContain("HTTP 404");
     });
   });
 
@@ -440,7 +457,17 @@ describe("web command cli", () => {
   describe("non-2xx exit codes", () => {
     const out = captureOutput();
 
-    test("exits 1 on 500 response", async () => {
+    test("does not exit 1 on 500 response without --fail", async () => {
+      fetchSpy.mockImplementation(
+        async () => new Response("server error", { status: 500, statusText: "Internal Server Error" }),
+      );
+
+      await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/500"]);
+
+      expect(out.stdout).toContain("server error");
+    });
+
+    test("exits 1 on 500 response with --fail", async () => {
       fetchSpy.mockImplementation(
         async () => new Response("server error", { status: 500, statusText: "Internal Server Error" }),
       );
@@ -453,7 +480,7 @@ describe("web command cli", () => {
       }) as typeof process.exit;
 
       try {
-        await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/500"]);
+        await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/500", "--fail"]);
       } catch {
         // expected
       } finally {
