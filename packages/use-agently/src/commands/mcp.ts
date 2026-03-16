@@ -33,7 +33,7 @@ export const mcpCommand = new Command("mcp")
 
 const mcpToolsCommand = new Command("tools")
   .description("List available tools on an MCP server")
-  .requiredOption("--uri <value>", "MCP server URL or CAIP-19 ID")
+  .requiredOption("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
   .showHelpAfterError(true)
   .addHelpText(
     "after",
@@ -49,7 +49,7 @@ const mcpToolsCommand = new Command("tools")
 
 const mcpCallCommand = new Command("call")
   .description("Call a specific tool on an MCP server")
-  .requiredOption("--uri <value>", "MCP server URL or CAIP-19 ID")
+  .requiredOption("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
   .requiredOption("--tool <name>", "Tool name to call")
   .option("--args <json>", "JSON arguments to pass to the tool")
   .option("--pay", "Authorize payment if the tool requires it (default: dry-run, shows cost only)")

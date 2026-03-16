@@ -35,7 +35,7 @@ export const a2aCommand = new Command("a2a")
 const a2aSendCommand = new Command("send")
   .description("Send a message to an agent via A2A protocol")
   .requiredOption(
-    "--uri <value>",
+    "-u, --uri <value>",
     "Agent URL or CAIP-19 ID (e.g. https://example.com/agent or eip155:8453/erc8004:0x1234/1)",
   )
   .requiredOption("-m, --message <text>", "Message to send")
@@ -80,7 +80,7 @@ const a2aSendCommand = new Command("send")
 const a2aCardSubCommand = new Command("card")
   .description("Fetch and display the A2A agent card")
   .requiredOption(
-    "--uri <value>",
+    "-u, --uri <value>",
     "Agent URL or CAIP-19 ID (e.g. https://example.com/agent or eip155:8453/erc8004:0x1234/1)",
   )
   .showHelpAfterError(true)
