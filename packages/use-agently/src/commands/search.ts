@@ -7,6 +7,7 @@ export const searchCommand = new Command("search")
   .description("Search the Agently marketplace for agents")
   .argument("[query]", "Search query to filter agents by name or description")
   .option("-p, --protocol <protocols>", "Filter by protocol(s), comma-separated (e.g. a2a,mcp)")
+  .showHelpAfterError(true)
   .addHelpText(
     "after",
     '\nExamples:\n  use-agently search\n  use-agently search "echo"\n  use-agently search --protocol a2a\n  use-agently search "assistant" --protocol "a2a,mcp"',

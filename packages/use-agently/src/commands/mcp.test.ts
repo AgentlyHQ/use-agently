@@ -38,7 +38,16 @@ describe("mcp command (free)", () => {
     const out = captureOutput();
 
     test("lists available tools", async () => {
-      await cli.parseAsync(["test", "use-agently", "mcp", "tools", "--uri", fixture.agent.getAgentHost() + "/mcp"]);
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "-o",
+        "text",
+        "mcp",
+        "tools",
+        "--uri",
+        fixture.agent.getAgentHost() + "/mcp",
+      ]);
       const tools = out.yaml as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
@@ -72,9 +81,13 @@ describe("mcp command (free)", () => {
       await cli.parseAsync([
         "test",
         "use-agently",
+        "-o",
+        "text",
         "mcp",
         "call",
+        "--tool",
         "echo",
+        "--args",
         '{"message":"hello from mcp"}',
         "--uri",
         fixture.agent.getAgentHost() + "/mcp",
@@ -149,7 +162,9 @@ describe("mcp x402 payment (paid)", () => {
           "use-agently",
           "mcp",
           "call",
+          "--tool",
           "paid-echo-tool",
+          "--args",
           '{"message":"dry run"}',
           "--uri",
           fixture.agent.getAgentHost() + "/mcp",
@@ -172,9 +187,13 @@ describe("mcp x402 payment (paid)", () => {
       await cli.parseAsync([
         "test",
         "use-agently",
+        "-o",
+        "text",
         "mcp",
         "call",
+        "--tool",
         "paid-echo-tool",
+        "--args",
         '{"message":"paid cli test"}',
         "--uri",
         fixture.agent.getAgentHost() + "/mcp",
@@ -215,7 +234,9 @@ describe("mcp x402 payment (paid)", () => {
           "use-agently",
           "mcp",
           "call",
+          "--tool",
           "paid-echo-tool",
+          "--args",
           '{"message":"should fail"}',
           "--uri",
           fixture.agent.getAgentHost() + "/mcp",
@@ -244,7 +265,9 @@ describe("mcp x402 payment (paid)", () => {
         "json",
         "mcp",
         "call",
+        "--tool",
         "paid-echo-tool",
+        "--args",
         '{"message":"json output test"}',
         "--uri",
         fixture.agent.getAgentHost() + "/mcp",

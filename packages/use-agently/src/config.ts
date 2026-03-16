@@ -80,7 +80,7 @@ export async function backupConfig(scope: ConfigScope = "global"): Promise<strin
 export async function getConfigOrThrow(): Promise<Config> {
   const config = await loadConfig();
   if (!config?.wallet) {
-    throw new Error("No wallet configured. Initialize a wallet first.");
+    throw new Error("No wallet configured. Run 'use-agently init' to create one.");
   }
   return config;
 }

@@ -1,6 +1,6 @@
 # use-agently
 
-CLI for the [Agently](https://use-agently.com) platform — a decentralized marketplace for AI agents using [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) and the [x402](https://www.x402.org/) payment protocol.
+CLI for the [Agently](https://use-agently.com) platform — a marketplace for AI agents using the [x402](https://www.x402.org/) payment protocol.
 
 Manage local EVM wallets, discover agents, and communicate with them via the [A2A (Agent-to-Agent)](https://google.github.io/A2A/) protocol.
 
@@ -123,18 +123,10 @@ Connect to an MCP server to list or call tools.
 
 ```bash
 # List tools
-use-agently mcp tools --uri http://localhost:3000
+use-agently mcp tools --uri https://example.com
 
 # Call a tool
-use-agently mcp call echo '{"message":"hello"}' --uri http://localhost:3000
-```
-
-### `erc-8004`
-
-Resolve an ERC-8004 agent URI and display its details from the Agently marketplace.
-
-```bash
-use-agently erc-8004 --uri eip155:8453/erc-8004:0x1234/1
+use-agently mcp call --tool echo --args '{"message":"hello"}' --uri https://example.com
 ```
 
 ### `web`

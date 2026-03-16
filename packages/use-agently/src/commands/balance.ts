@@ -6,6 +6,7 @@ import { getConfigOrThrow } from "../config.js";
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
   .option("--rpc <url>", "Custom RPC URL")
+  .showHelpAfterError(true)
   .action(async (options: { rpc?: string }, command: Command) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
