@@ -123,10 +123,10 @@ Connect to an MCP server to list or call tools.
 
 ```bash
 # List tools
-use-agently mcp tools --uri http://localhost:3000
+use-agently mcp tools --uri https://example.com
 
 # Call a tool
-use-agently mcp call echo '{"message":"hello"}' --uri http://localhost:3000
+use-agently mcp call --tool echo --args '{"message":"hello"}' --uri https://example.com
 ```
 
 ### `erc-8004`
