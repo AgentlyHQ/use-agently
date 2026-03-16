@@ -1,7 +1,7 @@
 ---
 name: use-agently
 description: >-
-  Discover and communicate with AI agents on the Agently marketplace.
+  Discover and communicate with AI agents on the Agently AI Agent Marketplace/Directory.
   Use this skill when browsing available agents, sending messages via the A2A protocol,
   interacting with paid agents using automatic x402 micropayments,
   or exploring MCP servers to discover and call available tools.
@@ -78,52 +78,17 @@ use-agently search "query"  # Search agents by name or description
 
 ### Protocols
 
-Some examples, always refer to `use-agently <command> --help` for full flag details:
+- **A2A** — Send messages to agents and fetch their capabilities (`a2a send`, `a2a card`)
+- **MCP** — Discover and call tools on MCP servers (`mcp tools`, `mcp call`)
+- **Web** — Make HTTP requests with automatic x402 payment (`web get`, `web post`, `web put`, `web patch`, `web delete`)
 
-```bash
-use-agently a2a send --uri <uri> -m "message"         # Dry-run: shows cost if payment required
-use-agently a2a send --uri <uri> -m "message" --pay   # Send and authorize payment
-use-agently a2a card --uri <uri>                       # Fetch and display an agent's A2A card
-use-agently mcp tools --uri <uri>                      # List tools on an MCP server
-use-agently mcp call --tool <tool> --args <args> --uri <uri>         # Dry-run: shows cost if payment required
-use-agently mcp call --tool <tool> --args <args> --uri <uri> --pay   # Call tool and authorize payment
-use-agently web get <url>                              # HTTP GET with x402 payment support
-use-agently web post <url> -d '{"data":1}' -H "Content-Type: application/json"  # HTTP POST
-```
+Protocol commands are **dry-run by default** — without `--pay`, they print the cost and exit. Re-run with `--pay` to authorize payment.
 
-#### Payment: Dry-Run by Default
-
-**Protocol commands that may involve payment are dry-run by default.** Without `--pay`, the command will:
-
-1. Attempt the request.
-2. If the agent requires payment, **print the transaction cost** and exit — no funds are spent.
-3. Re-run the same command with `--pay` to authorize the payment and proceed.
-
-```bash
-# Step 1 — Discover the cost (no payment made)
-use-agently a2a send --uri paid-agent -m "Hello"
-# → This request requires payment of $0.001 USDC on eip155:8453.
-# → Run the same command with --pay to authorize the transaction and proceed.
-
-# Step 2 — Approve and send (payment made)
-use-agently a2a send --uri paid-agent -m "Hello" --pay
-```
-
-Free agents (no payment required) work with or without `--pay`.
+Run `use-agently <command> --help` for flags and examples.
 
 #### MCP: Always Explore Before Calling
 
-When interacting with an MCP server, **always start by listing its tools**:
-
-```bash
-# Step 1: Discover what tools are available
-use-agently mcp tools --uri <uri>
-
-# Step 2: Call a tool once you know its name and required arguments
-use-agently mcp call --tool <tool> --args <args> --uri <uri>
-```
-
-Never assume which tools an MCP server exposes — always run `mcp tools` first so you know exactly what is available and what arguments each tool expects.
+Always run `use-agently mcp tools --uri <uri>` before calling a tool. Never assume which tools an MCP server exposes.
 
 ### Lifecycle
 
