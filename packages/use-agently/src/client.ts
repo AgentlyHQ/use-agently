@@ -73,16 +73,20 @@ function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   }
 }
 
-/** Display a DryRunPaymentRequired error in a boxed format and exit. */
+/** Display a DryRunPaymentRequired error and exit. Uses boxen when stderr is a TTY, plain text otherwise. */
 export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
   const cliErr = err instanceof DryRunPaymentRequired ? err : new DryRunPaymentRequired(err.requirements);
-  console.error(
-    boxen(cliErr.message, {
-      title: "Payment Required",
-      titleAlignment: "center",
-      borderColor: "yellow",
-      padding: 1,
-    }),
-  );
+  if (process.stderr.isTTY) {
+    console.error(
+      boxen(cliErr.message, {
+        title: "Payment Required",
+        titleAlignment: "center",
+        borderColor: "yellow",
+        padding: 1,
+      }),
+    );
+  } else {
+    console.error(`Payment Required: ${cliErr.message}`);
+  }
   process.exit(1);
 }

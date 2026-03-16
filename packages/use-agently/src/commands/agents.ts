@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { output } from "../output.js";
+import { outputCollection } from "../output.js";
 import { search } from "@use-agently/sdk/agently";
 import { defaultClient } from "../client.js";
 
@@ -10,7 +10,8 @@ export const agentsCommand = new Command("agents")
   .description("List available agents on Agently")
   .action(async (_options: Record<string, never>, command: Command) => {
     const result = await search(defaultClient);
-    output(command, {
-      agents: result.hits.map(({ id, name, description, protocols }) => ({ id, name, description, protocols })),
-    });
+    outputCollection(
+      command,
+      result.hits.map(({ id, name, description, protocols }) => ({ id, name, description, protocols })),
+    );
   });

@@ -106,9 +106,13 @@ export function captureOutput() {
     get stderr(): string {
       return errorSpy.mock.calls[0]?.[0] as string;
     },
-    /** Parse stdout as JSON */
+    /** Parse stdout as JSON (first console.log call) */
     get json(): unknown {
       return JSON.parse(logSpy.mock.calls[0]?.[0] as string);
+    },
+    /** Parse all console.log calls as NDJSON lines */
+    get jsonLines(): unknown[] {
+      return logSpy.mock.calls.map((call: unknown[]) => JSON.parse(call[0] as string));
     },
     /** Parse stdout as YAML */
     get yaml(): unknown {

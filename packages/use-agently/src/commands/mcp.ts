@@ -14,16 +14,7 @@ import {
 import { getConfigOrThrow } from "../config.js";
 import { defaultClient, clientFetch, handleDryRunError } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
-import { output } from "../output.js";
-
-function resolveUriOption(options: { uri?: string }, commandName: string): string {
-  if (!options.uri) {
-    throw new Error(
-      `Missing required option --uri for '${commandName}'.\nExpected a URL or CAIP-19 ID, e.g. --uri http://localhost:3000/mcp or --uri eip155:8453/erc8004:0x1234/1`,
-    );
-  }
-  return options.uri;
-}
+import { output, outputCollection } from "../output.js";
 
 async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
   if (pay) {
@@ -42,33 +33,34 @@ export const mcpCommand = new Command("mcp")
 
 const mcpToolsCommand = new Command("tools")
   .description("List available tools on an MCP server")
-  .option("--uri <value>", "MCP server URL or CAIP-19 ID")
+  .requiredOption("--uri <value>", "MCP server URL or CAIP-19 ID")
+  .showHelpAfterError(true)
   .addHelpText(
     "after",
     "\nExamples:\n  use-agently mcp tools --uri http://localhost:3000/mcp\n  use-agently mcp tools --uri eip155:8453/erc8004:0x1234/1",
   )
-  .action(async (options: { uri?: string }, command: Command) => {
-    const uri = resolveUriOption(options, "mcp tools");
-    const tools = await listMcpTools(defaultClient, uri, {
+  .action(async (options: { uri: string }, command: Command) => {
+    const tools = await listMcpTools(defaultClient, options.uri, {
       clientInfo: { name: "use-agently", version: pkg.version },
       fetchImpl: clientFetch,
     });
-    output(command, tools);
+    outputCollection(command, tools);
   });
 
 const mcpCallCommand = new Command("call")
   .description("Call a specific tool on an MCP server")
   .argument("<tool>", "Tool name to call")
   .argument("[args]", "JSON arguments to pass to the tool")
-  .option("--uri <value>", "MCP server URL or CAIP-19 ID")
+  .requiredOption("--uri <value>", "MCP server URL or CAIP-19 ID")
   .option("--pay", "Authorize payment if the tool requires it (default: dry-run, shows cost only)")
+  .showHelpAfterError(true)
   .addHelpText(
     "after",
     '\nExamples:\n  use-agently mcp call echo \'{"message":"hello"}\' --uri http://localhost:3000/mcp\n  use-agently mcp call paid-tool \'{"message":"hello"}\' --uri http://localhost:3000/mcp --pay',
   )
   .action(
-    async (tool: string, argsStr: string | undefined, options: { uri?: string; pay?: boolean }, command: Command) => {
-      const uri = resolveUriOption(options, "mcp call");
+    async (tool: string, argsStr: string | undefined, options: { uri: string; pay?: boolean }, command: Command) => {
+      const uri = options.uri;
       let args: Record<string, unknown> = {};
       if (argsStr !== undefined) {
         try {
@@ -111,14 +103,19 @@ const mcpCallCommand = new Command("call")
                 } else {
                   message = `Payment error: ${parsed.error}`;
                 }
-                console.error(
-                  boxen(message, {
-                    title: parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error",
-                    titleAlignment: "center",
-                    borderColor: "red",
-                    padding: 1,
-                  }),
-                );
+                if (process.stderr.isTTY) {
+                  console.error(
+                    boxen(message, {
+                      title: parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error",
+                      titleAlignment: "center",
+                      borderColor: "red",
+                      padding: 1,
+                    }),
+                  );
+                } else {
+                  const title = parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error";
+                  console.error(`${title}: ${message}`);
+                }
                 process.exit(1);
               }
             } catch {

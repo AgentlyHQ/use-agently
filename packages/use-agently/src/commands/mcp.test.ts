@@ -57,7 +57,7 @@ describe("mcp command (free)", () => {
         "--uri",
         fixture.agent.getAgentHost() + "/mcp",
       ]);
-      const tools = out.json as Array<Record<string, unknown>>;
+      const tools = out.jsonLines as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
     });

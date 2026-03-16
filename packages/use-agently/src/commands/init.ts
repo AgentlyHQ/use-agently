@@ -7,6 +7,7 @@ export const initCommand = new Command("init")
   .description("Generate a new local wallet and save it to config")
   .option("--regenerate", "Backup existing config and generate a new wallet")
   .option("--local", "Save config to the current directory (.use-agently/config.json) instead of the home directory")
+  .addHelpText("after", "\nConfig: ~/.use-agently/config.json (global), .use-agently/config.json (local)")
   .action(async (options: { regenerate?: boolean; local?: boolean }, command: Command) => {
     const scope: ConfigScope = options.local ? "local" : "global";
     const existing = await loadConfig(scope);

@@ -155,6 +155,7 @@ interface WebOptions {
   verbose?: boolean;
   include?: boolean;
   pay?: boolean;
+  fail?: boolean;
   timeout?: string;
   maxFilesize?: string;
 }
@@ -244,7 +245,7 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
       }
       clearTimeout(timer);
       console.log(`Response body written to ${options.outputFile} (HTTP ${response.status})`);
-      if (!response.ok) process.exit(1);
+      if (options.fail && !response.ok) process.exit(1);
       return;
     }
 
@@ -266,7 +267,7 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
         headers: responseHeaders,
         body: responseBody,
       });
-      if (!response.ok) process.exit(1);
+      if (options.fail && !response.ok) process.exit(1);
       return;
     }
 
@@ -277,13 +278,13 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
         headerBlock += `${k}: ${v}\n`;
       });
       console.log(headerBlock + "\n" + responseBody);
-      if (!response.ok) process.exit(1);
+      if (options.fail && !response.ok) process.exit(1);
       return;
     }
 
     // Default: body only
     console.log(responseBody);
-    if (!response.ok) process.exit(1);
+    if (options.fail && !response.ok) process.exit(1);
   } catch (err) {
     clearTimeout(timer);
     if (err instanceof DryRunPaymentRequired) {
@@ -307,7 +308,8 @@ function addSharedOptions(cmd: Command, hasBody: boolean): Command {
     .option("-i, --include", "Include response status and headers in stdout output")
     .option("--timeout <ms>", "Request timeout in milliseconds (default: 30000)")
     .option("--max-filesize <bytes>", "Maximum response size in bytes (default: 104857600 / 100 MB)")
-    .option("--pay", "Authorize x402 payment (default: dry-run, shows cost only)");
+    .option("--pay", "Authorize x402 payment (default: dry-run, shows cost only)")
+    .option("--fail", "Exit with code 1 on HTTP error responses (4xx/5xx)");
 
   if (hasBody) {
     cmd

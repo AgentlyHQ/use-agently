@@ -35,7 +35,7 @@ describe("search command", () => {
   test("returns agents with no query", async () => {
     await cli.parseAsync(["test", "use-agently", "search"]);
     const parsed = out.yaml as any;
-    expect(parsed.agents).toHaveLength(1);
+    expect(parsed).toHaveLength(1);
   });
 
   test("passes query to search API", async () => {
@@ -46,8 +46,8 @@ describe("search command", () => {
 
   test("json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "search"]);
-    const parsed = out.json as any;
-    expect(parsed.agents).toHaveLength(1);
-    expect(parsed.agents[0].name).toBe("Echo Agent");
+    const lines = out.jsonLines as any[];
+    expect(lines).toHaveLength(1);
+    expect(lines[0].name).toBe("Echo Agent");
   });
 });
