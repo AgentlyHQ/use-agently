@@ -50,6 +50,9 @@ const a2aSendCommand = new Command("send")
     const transaction = await resolveTransactionMode(options.pay);
 
     try {
+      // A2A send always streams text to stdout regardless of --output format.
+      // Streaming is intentional: agents consume the response as it arrives,
+      // and buffering would defeat the purpose of the streaming A2A protocol.
       const stream = await sendMessageStream(defaultClient, uri, options.message, { mode: transaction });
 
       let wroteText = false;

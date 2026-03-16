@@ -6,6 +6,7 @@ import { defaultClient } from "../client.js";
 export const viewCommand = new Command("view")
   .description("View an agent by its ID (e.g. CAIP-19)")
   .argument("<id>", "Agent ID (e.g. eip155:8453/erc8004:0x1234/1)")
+  .showHelpAfterError(true)
   .addHelpText("after", "\nExamples:\n  use-agently view eip155:8453/erc8004:0x1234/1")
   .action(async (id: string, _options: Record<string, never>, command: Command) => {
     const agent = await getAgent(defaultClient, id);

@@ -37,7 +37,7 @@ const mcpToolsCommand = new Command("tools")
   .showHelpAfterError(true)
   .addHelpText(
     "after",
-    "\nExamples:\n  use-agently mcp tools --uri http://localhost:3000/mcp\n  use-agently mcp tools --uri eip155:8453/erc8004:0x1234/1",
+    "\nExamples:\n  use-agently mcp tools --uri https://example.com/mcp\n  use-agently mcp tools --uri eip155:8453/erc8004:0x1234/1",
   )
   .action(async (options: { uri: string }, command: Command) => {
     const tools = await listMcpTools(defaultClient, options.uri, {
@@ -56,7 +56,7 @@ const mcpCallCommand = new Command("call")
   .showHelpAfterError(true)
   .addHelpText(
     "after",
-    '\nExamples:\n  use-agently mcp call echo \'{"message":"hello"}\' --uri http://localhost:3000/mcp\n  use-agently mcp call paid-tool \'{"message":"hello"}\' --uri http://localhost:3000/mcp --pay',
+    '\nExamples:\n  use-agently mcp call echo \'{"message":"hello"}\' --uri https://example.com/mcp\n  use-agently mcp call paid-tool \'{"message":"hello"}\' --uri https://example.com/mcp --pay',
   )
   .action(
     async (tool: string, argsStr: string | undefined, options: { uri: string; pay?: boolean }, command: Command) => {

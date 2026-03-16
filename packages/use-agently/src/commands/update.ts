@@ -90,6 +90,7 @@ export async function checkAutoUpdate(): Promise<void> {
 
 export const updateCommand = new Command("update")
   .description("Update use-agently to the latest version")
+  .showHelpAfterError(true)
   .action(async (_options: Record<string, never>, command: Command) => {
     try {
       const result = await checkAndUpdate();

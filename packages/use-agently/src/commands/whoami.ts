@@ -5,6 +5,7 @@ import { getConfigOrThrow } from "../config.js";
 
 export const whoamiCommand = new Command("whoami")
   .description("Show current wallet info")
+  .showHelpAfterError(true)
   .action(async (_options: Record<string, never>, command: Command) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
