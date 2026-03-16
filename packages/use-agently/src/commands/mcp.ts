@@ -12,14 +12,14 @@ import {
   callMcpTool,
 } from "@use-agently/sdk";
 import { getConfigOrThrow } from "../config.js";
-import { clientFetch, handleDryRunError } from "../client.js";
+import { defaultClient, clientFetch, handleDryRunError } from "../client.js";
 import pkg from "../../package.json" with { type: "json" };
 import { output } from "../output.js";
 
 function resolveUriOption(options: { uri?: string }, commandName: string): string {
   if (!options.uri) {
     throw new Error(
-      `Missing required option --uri for '${commandName}'.\nExpected a URL or agent URI, e.g. --uri http://localhost:3000 or --uri my-agent`,
+      `Missing required option --uri for '${commandName}'.\nExpected a URL or CAIP-19 ID, e.g. --uri http://localhost:3000/mcp or --uri eip155:8453/erc8004:0x1234/1`,
     );
   }
   return options.uri;
@@ -42,14 +42,14 @@ export const mcpCommand = new Command("mcp")
 
 const mcpToolsCommand = new Command("tools")
   .description("List available tools on an MCP server")
-  .option("--uri <value>", "MCP server URI or URL")
+  .option("--uri <value>", "MCP server URL or CAIP-19 ID")
   .addHelpText(
     "after",
-    "\nExamples:\n  use-agently mcp tools --uri http://localhost:3000\n  use-agently mcp tools --uri my-agent",
+    "\nExamples:\n  use-agently mcp tools --uri http://localhost:3000/mcp\n  use-agently mcp tools --uri eip155:8453/erc8004:0x1234/1",
   )
   .action(async (options: { uri?: string }, command: Command) => {
     const uri = resolveUriOption(options, "mcp tools");
-    const tools = await listMcpTools(uri, {
+    const tools = await listMcpTools(defaultClient, uri, {
       clientInfo: { name: "use-agently", version: pkg.version },
       fetchImpl: clientFetch,
     });
@@ -60,11 +60,11 @@ const mcpCallCommand = new Command("call")
   .description("Call a specific tool on an MCP server")
   .argument("<tool>", "Tool name to call")
   .argument("[args]", "JSON arguments to pass to the tool")
-  .option("--uri <value>", "MCP server URI or URL")
+  .option("--uri <value>", "MCP server URL or CAIP-19 ID")
   .option("--pay", "Authorize payment if the tool requires it (default: dry-run, shows cost only)")
   .addHelpText(
     "after",
-    '\nExamples:\n  use-agently mcp call echo \'{"message":"hello"}\' --uri http://localhost:3000\n  use-agently mcp call echo --uri my-agent\n  use-agently mcp call paid-tool \'{"message":"hello"}\' --uri my-agent --pay',
+    '\nExamples:\n  use-agently mcp call echo \'{"message":"hello"}\' --uri http://localhost:3000/mcp\n  use-agently mcp call paid-tool \'{"message":"hello"}\' --uri http://localhost:3000/mcp --pay',
   )
   .action(
     async (tool: string, argsStr: string | undefined, options: { uri?: string; pay?: boolean }, command: Command) => {
@@ -80,7 +80,7 @@ const mcpCallCommand = new Command("call")
       const transaction = await resolveTransactionMode(options.pay);
 
       try {
-        const result = await callMcpTool(uri, tool, args, {
+        const result = await callMcpTool(defaultClient, uri, tool, args, {
           transaction,
           clientInfo: { name: "use-agently", version: pkg.version },
           fetchImpl: clientFetch,

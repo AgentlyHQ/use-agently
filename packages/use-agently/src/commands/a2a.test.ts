@@ -36,7 +36,7 @@ describe("a2a send command (free)", () => {
       "a2a",
       "send",
       "--uri",
-      fixture.agent.getAgentUrl() + "/free-echo/",
+      fixture.agent.getAgentHost() + "/free-echo/",
       "-m",
       "hello world",
     ]);
@@ -50,7 +50,7 @@ describe("a2a send command (free)", () => {
       "a2a",
       "send",
       "--uri",
-      fixture.agent.getAgentUrl() + "/free-echo-10/",
+      fixture.agent.getAgentHost() + "/free-echo-10/",
       "-m",
       "hi",
     ]);
@@ -64,7 +64,7 @@ describe("a2a card command (free)", () => {
   const out = captureOutput();
 
   test("text output returns agent card fields", async () => {
-    await cli.parseAsync(["test", "use-agently", "a2a", "card", "--uri", fixture.agent.getAgentUrl()]);
+    await cli.parseAsync(["test", "use-agently", "a2a", "card", "--uri", fixture.agent.getAgentHost()]);
     const card = out.yaml as Record<string, unknown>;
     expect(card).toHaveProperty("name");
     expect(card).toHaveProperty("description");
@@ -72,7 +72,7 @@ describe("a2a card command (free)", () => {
   });
 
   test("json output returns agent card as JSON", async () => {
-    await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a", "card", "--uri", fixture.agent.getAgentUrl()]);
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a", "card", "--uri", fixture.agent.getAgentHost()]);
     const card = out.json as Record<string, unknown>;
     expect(card).toHaveProperty("name");
     expect(card).toHaveProperty("description");
@@ -98,7 +98,7 @@ describe("a2a send command (paid)", () => {
         "a2a",
         "send",
         "--uri",
-        fixture.agent.getAgentUrl() + "/paid-echo/",
+        fixture.agent.getAgentHost() + "/paid-echo/",
         "-m",
         "hello",
       ]);
@@ -123,7 +123,7 @@ describe("a2a send command (paid)", () => {
       "a2a",
       "send",
       "--uri",
-      fixture.agent.getAgentUrl() + "/paid-echo/",
+      fixture.agent.getAgentHost() + "/paid-echo/",
       "-m",
       "paid cli test",
       "--pay",

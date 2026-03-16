@@ -478,7 +478,7 @@ describe("web x402 payment", () => {
   }, 30_000);
 
   function httpUrl(path: string): string {
-    return fixture.agent.getAgentUrl() + path;
+    return fixture.agent.getAgentHost() + path;
   }
 
   describe("free HTTP endpoints", () => {

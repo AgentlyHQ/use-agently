@@ -5,24 +5,16 @@ mockConfigModule();
 
 const { cli } = await import("../cli");
 
-const TEST_AGENTS = [
+const TEST_HITS = [
   {
-    uri: "eip155:8453/erc-8004:0x1234/1",
+    id: "eip155:8453/erc8004:0x1234/1",
+    chain_id: "eip155:8453",
+    address: "0x1234",
+    agent_id: "1",
+    owner: "0xabc",
     name: "Echo Agent",
     description: "An echo agent",
-    protocols: ["a2a", "mcp"],
-  },
-  {
-    uri: "eip155:8453/erc-8004:0x1234/2",
-    name: "Web Agent",
-    description: "A web agent",
-    protocols: ["a2a"],
-  },
-  {
-    uri: "eip155:8453/erc-8004:0x1234/3",
-    name: "MCP Agent",
-    description: "An MCP agent",
-    protocols: ["mcp"],
+    created_at: "2025-01-01T00:00:00.000Z",
   },
 ];
 
@@ -31,42 +23,31 @@ describe("search command", () => {
   let fetchSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ agents: TEST_AGENTS })));
+    fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ hits: TEST_HITS, found: 1, page: 1, per_page: 20 })),
+    );
   });
 
   afterEach(() => {
     fetchSpy.mockRestore();
   });
 
-  test("returns all agents when no query or protocol", async () => {
+  test("returns agents with no query", async () => {
     await cli.parseAsync(["test", "use-agently", "search"]);
     const parsed = out.yaml as any;
-    expect(parsed.agents).toHaveLength(3);
+    expect(parsed.agents).toHaveLength(1);
   });
 
-  test("filters agents by query", async () => {
+  test("passes query to search API", async () => {
     await cli.parseAsync(["test", "use-agently", "search", "echo"]);
-    const parsed = out.yaml as any;
-    expect(parsed.agents).toHaveLength(1);
-    expect(parsed.agents[0].name).toBe("Echo Agent");
-  });
-
-  test("filters agents by protocol", async () => {
-    await cli.parseAsync(["test", "use-agently", "search", "--protocol", "mcp"]);
-    const parsed = out.yaml as any;
-    expect(parsed.agents).toHaveLength(2);
-  });
-
-  test("filters agents by query and protocol", async () => {
-    await cli.parseAsync(["test", "use-agently", "search", "echo", "--protocol", "mcp"]);
-    const parsed = out.yaml as any;
-    expect(parsed.agents).toHaveLength(1);
-    expect(parsed.agents[0].name).toBe("Echo Agent");
+    const calledUrl = new URL(fetchSpy.mock.calls[0][0] as string);
+    expect(calledUrl.searchParams.get("q")).toBe("echo");
   });
 
   test("json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "search"]);
     const parsed = out.json as any;
-    expect(parsed.agents).toHaveLength(3);
+    expect(parsed.agents).toHaveLength(1);
+    expect(parsed.agents[0].name).toBe("Echo Agent");
   });
 });

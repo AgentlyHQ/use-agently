@@ -31,7 +31,7 @@ export class AixyzTesting {
   private proc: ReturnType<typeof Bun.spawn> | undefined;
   private agentUrl: string | undefined;
 
-  getAgentUrl(): string {
+  getAgentHost(): string {
     if (!this.agentUrl) throw new Error("Server has not been started. Call start() first.");
     return this.agentUrl;
   }

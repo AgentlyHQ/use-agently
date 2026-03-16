@@ -1,6 +1,6 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Wallet } from "./wallets/wallet.js";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
 import { formatUnits } from "viem";
@@ -17,10 +17,6 @@ export interface PaymentRequirementsInfo {
   asset: string;
 }
 
-export const USER_AGENT = `@use-agently/sdk:${pkg.version} (use-agently.com)`;
-
-export type Protocol = "a2a" | "mcp" | "web";
-
 /**
  * Unstable: internal SDK client type.
  * This will be the de facto SDK client type in the future.
@@ -32,34 +28,17 @@ export type Protocol = "a2a" | "mcp" | "web";
  */
 export type unstable_Client = {
   fetch: Fetch;
-  /**
-   * Get URL resolves the URL for a given URI and type.
-   *
-   * ```js
-   * getURL("https://example.com", "a2a") => "https://example.com/.well-known/agent-card.json"
-   * getURL("https://example.com/.well-known/agent-card.json", "a2a") => "https://example.com/.well-known/agent-card.json"
-   * getURL("eip155:1/erc8004:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/23036", "a2a") => "https://example.agently.to/.well-known/agent-card.json"
-   * getURL("https://example.com", "mcp") => "https://example.com"
-   * ```
-   *
-   * @param uri
-   * @param protocol
-   */
-  getURL: (uri: string, protocol: Protocol) => URL;
 };
 
 export function createClient(options: { userAgent?: string }): unstable_Client {
-  const fetch = createClientFetch(options.userAgent);
+  const fetch = createFetch({ userAgent: options.userAgent });
   return {
     fetch: fetch,
-    getURL: (uri: string, protocol: Protocol) => {
-      return getURL(fetch, uri, protocol);
-    },
   };
 }
 
 /** Create a fetch wrapper that automatically includes a User-Agent header. */
-export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch {
+function createFetch(options?: { userAgent?: string }): typeof fetch {
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
   return (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     // When input is a Request, preserve its headers — passing init.headers to fetch() replaces them entirely.
@@ -71,18 +50,14 @@ export function createClientFetch(userAgent: string = USER_AGENT): typeof fetch 
       }
     }
     if (!headers.has("User-Agent")) {
-      headers.set("User-Agent", userAgent);
+      headers.set("User-Agent", options?.userAgent ?? `@use-agently/sdk:${pkg.version} (use-agently.com)`);
     }
     return fetch(input, { ...init, headers });
   };
 }
 
 /** The standard fetch client for SDK requests. Automatically includes the User-Agent header. */
-export const clientFetch: typeof fetch = createClientFetch();
-
-function getURL(fetch: Fetch, uri: string, protocol: Protocol): URL {
-  return new URL(uri);
-}
+export const clientFetch: typeof fetch = createFetch();
 
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   try {
@@ -157,7 +132,7 @@ export function createPaymentFetch(wallet: Wallet, fetchImpl: typeof fetch = cli
   });
 }
 
-export function createMcpPaymentClient(mcpClient: Client, wallet: Wallet) {
+export function createMcpPaymentClient(mcpClient: McpClient, wallet: Wallet) {
   return wrapMCPClientWithPaymentFromConfig(mcpClient, {
     schemes: wallet.getX402Schemes(),
   });

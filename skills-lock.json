@@ -4,7 +4,7 @@
     "cli-for-agent": {
       "source": "agentlyhq/skills",
       "sourceType": "github",
-      "computedHash": "519c8b55f3a9728a55b70095665d6bc074975130b896ec2183c235bb105cec19"
+      "computedHash": "05bd90e300cb4d0d734b59e70bc261314eac803dc30db95456c09e28ade764d1"
     }
   }
 }

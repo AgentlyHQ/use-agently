@@ -15,7 +15,6 @@ export { type ChainConfig, getChainConfig, getChainConfigByNetwork } from "./uti
 // Client
 export {
   type PaymentRequirementsInfo,
-  USER_AGENT,
   clientFetch,
   DryRunPaymentRequired,
   createDryRunFetch,
@@ -24,31 +23,21 @@ export {
   createMcpPaymentClient,
 } from "./client.js";
 
-// Marketplace
-export {
-  type MarketplaceAgent,
-  AgentNotFoundError,
-  fetchAgents,
-  searchAgents,
-  resolveErc8004Agent,
-} from "./marketplace.js";
-
 // Transaction
 export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils/transaction.js";
 
 // A2A helpers
 export {
-  type A2AMessageOptions,
-  type A2AMessageResult,
+  type MessageResult,
   extractAgentText,
   extractStreamEventText,
-  sendA2AMessage,
-  sendA2AMessageStream,
-  getA2ACard,
+  sendMessage,
+  sendMessageStream,
+  getAgentCard,
 } from "./a2a.js";
 
 // MCP helpers
-export { type McpCallOptions, resolveMcpUrl, listMcpTools, callMcpTool } from "./mcp.js";
+export { type McpCallOptions, getMcpURL, listMcpTools, callMcpTool } from "./mcp.js";
 
 // Balance
 export { type BalanceResult, getBalance } from "./balance.js";

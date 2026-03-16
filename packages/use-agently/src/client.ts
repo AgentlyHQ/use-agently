@@ -14,7 +14,7 @@ import { createClient } from "@use-agently/sdk/client";
 
 const CLI_USER_AGENT = `use-agently:${pkg.version} (use-agently.com)`;
 
-const defaultClient = createClient({ userAgent: CLI_USER_AGENT });
+export const defaultClient = createClient({ userAgent: CLI_USER_AGENT });
 
 /** CLI-specific fetch client with CLI user-agent. */
 export const clientFetch: typeof fetch = defaultClient.fetch;

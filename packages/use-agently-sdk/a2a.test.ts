@@ -3,12 +3,12 @@ import { randomUUID } from "node:crypto";
 import {
   extractAgentText,
   extractStreamEventText,
-  sendA2AMessage,
-  sendA2AMessageStream,
-  getA2ACard,
+  sendMessage,
+  sendMessageStream,
+  getAgentCard,
   createA2AClient,
 } from "./a2a";
-import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired } from "./client";
+import { createPaymentFetch, createDryRunFetch, DryRunPaymentRequired, createClient } from "./client";
 import { DryRunTransaction, PayTransaction } from "./utils/transaction";
 import { EvmPrivateKeyWallet } from "./wallets/evm-private-key";
 import {
@@ -94,6 +94,7 @@ describe("extractStreamEventText", () => {
   });
 });
 
+const sdkClient = createClient({});
 let fixture: X402FacilitatorLocal;
 
 beforeAll(async () => {
@@ -106,7 +107,7 @@ afterAll(async () => {
 
 describe("a2a free", () => {
   test("sendMessage returns echoed text", async () => {
-    const client = await createA2AClient(fixture.agent.getAgentUrl() + "/free-echo/", fetch);
+    const client = await createA2AClient(sdkClient, fixture.agent.getAgentHost() + "/free-echo/", fetch);
     const balanceBefore = await fixture.container.balance(TEST_ADDRESS);
 
     const result = await client.sendMessage({
@@ -128,7 +129,11 @@ describe("a2a x402 payment", () => {
   test("paid send succeeds with funded wallet and debits sender exactly $0.001", async () => {
     const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
     const paymentFetch = createPaymentFetch(wallet);
-    const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", paymentFetch as typeof fetch);
+    const client = await createA2AClient(
+      sdkClient,
+      fixture.agent.getAgentHost() + "/paid-echo/",
+      paymentFetch as typeof fetch,
+    );
 
     const senderBefore = await fixture.container.balance(TEST_ADDRESS);
     const receiverBefore = await fixture.container.balance(accounts.facilitator.address);
@@ -154,7 +159,7 @@ describe("a2a x402 payment", () => {
 
   test("dry-run on paid endpoint throws DryRunPaymentRequired with cost info", async () => {
     const dryRunFetch = createDryRunFetch();
-    const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", dryRunFetch);
+    const client = await createA2AClient(sdkClient, fixture.agent.getAgentHost() + "/paid-echo/", dryRunFetch);
 
     try {
       await client.sendMessage({
@@ -178,7 +183,7 @@ describe("a2a x402 payment", () => {
   });
 
   test("unpaid send returns 402", async () => {
-    const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", fetch);
+    const client = await createA2AClient(sdkClient, fixture.agent.getAgentHost() + "/paid-echo/", fetch);
 
     try {
       await client.sendMessage({
@@ -201,7 +206,11 @@ describe("a2a x402 payment", () => {
     const emptyKey = generatePrivateKey();
     const wallet = new EvmPrivateKeyWallet(emptyKey, fixture.container.getRpcUrl());
     const paymentFetch = createPaymentFetch(wallet);
-    const client = await createA2AClient(fixture.agent.getAgentUrl() + "/paid-echo/", paymentFetch as typeof fetch);
+    const client = await createA2AClient(
+      sdkClient,
+      fixture.agent.getAgentHost() + "/paid-echo/",
+      paymentFetch as typeof fetch,
+    );
 
     try {
       await client.sendMessage({
@@ -222,7 +231,7 @@ describe("a2a x402 payment", () => {
 
 describe("sendA2AMessage", () => {
   test("free endpoint returns echoed text with no transaction mode", async () => {
-    const result = await sendA2AMessage(fixture.agent.getAgentUrl() + "/free-echo/", "hello sdk");
+    const result = await sendMessage(sdkClient, fixture.agent.getAgentHost() + "/free-echo/", "hello sdk");
     expect(result.text).toStrictEqual("hello sdk");
     expect(result.raw).not.toStrictEqual(undefined);
   });
@@ -231,8 +240,8 @@ describe("sendA2AMessage", () => {
     const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
     const senderBefore = await fixture.container.balance(TEST_ADDRESS);
 
-    const result = await sendA2AMessage(fixture.agent.getAgentUrl() + "/paid-echo/", "paid sdk", {
-      transaction: PayTransaction(wallet),
+    const result = await sendMessage(sdkClient, fixture.agent.getAgentHost() + "/paid-echo/", "paid sdk", {
+      mode: PayTransaction(wallet),
     });
     expect(result.text).toStrictEqual("paid sdk");
 
@@ -242,8 +251,8 @@ describe("sendA2AMessage", () => {
 
   test("dry-run on paid endpoint throws DryRunPaymentRequired", async () => {
     try {
-      await sendA2AMessage(fixture.agent.getAgentUrl() + "/paid-echo/", "dry run", {
-        transaction: DryRunTransaction,
+      await sendMessage(sdkClient, fixture.agent.getAgentHost() + "/paid-echo/", "dry run", {
+        mode: DryRunTransaction,
       });
       throw new Error("Expected DryRunPaymentRequired to be thrown");
     } catch (e) {
@@ -257,7 +266,7 @@ describe("sendA2AMessage", () => {
 
 describe("sendA2AMessageStream", () => {
   test("returns iterable stream with text chunks", async () => {
-    const stream = await sendA2AMessageStream(fixture.agent.getAgentUrl() + "/free-echo/", "stream test");
+    const stream = await sendMessageStream(sdkClient, fixture.agent.getAgentHost() + "/free-echo/", "stream test");
 
     const events: unknown[] = [];
     for await (const event of stream) {
@@ -276,9 +285,9 @@ describe("sendA2AMessageStream", () => {
 
 describe("getA2ACard", () => {
   test("returns agent card object", async () => {
-    const card = await getA2ACard(fixture.agent.getAgentUrl());
+    const card = await getAgentCard(sdkClient, fixture.agent.getAgentHost());
     expect(card.name).toStrictEqual("localhost-aixyz");
     expect(card.description).toStrictEqual("Local development agent for testing use-agently CLI.");
-    expect(card.url).toStrictEqual(`${fixture.agent.getAgentUrl()}/agent`);
+    expect(card.url).toStrictEqual(`${fixture.agent.getAgentHost()}/agent`);
   });
 });

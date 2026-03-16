@@ -7,6 +7,8 @@ description: >-
   design principles.
 license: MIT
 metadata:
+  author: Agently
+  version: 1.0.0
   category: design-patterns
   tags:
     - cli

@@ -1,20 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { AgentCard } from "@a2a-js/sdk";
-import {
-  ClientFactory,
-  DefaultAgentCardResolver,
-  JsonRpcTransportFactory,
-  RestTransportFactory,
-} from "@a2a-js/sdk/client";
-import { resolveFetchForTransaction, unstable_Client } from "./client.js";
+import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
+import { resolveFetchForTransaction, type unstable_Client } from "./client.js";
 import type { TransactionMode } from "./utils/transaction.js";
+import { getAgent } from "./agently.js";
 
-export interface A2AMessageOptions {
-  transaction?: TransactionMode;
-  fetchImpl?: typeof fetch;
-}
-
-export interface A2AMessageResult {
+export interface MessageResult {
   text: string;
   raw: unknown;
 }
@@ -24,11 +15,6 @@ function extractTextFromParts(parts: any[]): string {
     .filter((p) => p.kind === "text")
     .map((p) => p.text)
     .join("");
-}
-
-function resolveAgentUrl(agentInput: string): string {
-  const isDirectUrl = agentInput.startsWith("http://") || agentInput.startsWith("https://");
-  return isDirectUrl ? agentInput : `https://use-agently.com/${agentInput}/`;
 }
 
 export function extractAgentText(result: any): string {
@@ -71,24 +57,27 @@ export function extractStreamEventText(event: any): string {
   return "";
 }
 
-export async function createA2AClient(agentUrl: string, fetchImpl: typeof fetch) {
+export async function createA2AClient(client: unstable_Client, uri: string, fetchImpl: typeof fetch) {
+  const url = await getAgentCardURL(client, uri);
   const factory = new ClientFactory({
     transports: [new JsonRpcTransportFactory({ fetchImpl }), new RestTransportFactory({ fetchImpl })],
   });
-  return factory.createFromUrl(agentUrl);
+  return factory.createFromUrl(url.toString(), "");
 }
 
 /** Send a message to an A2A agent and return the complete result. */
-export async function sendA2AMessage(
+export async function sendMessage(
+  client: unstable_Client,
   uri: string,
   message: string,
-  options?: A2AMessageOptions,
-): Promise<A2AMessageResult> {
-  const agentUrl = resolveAgentUrl(uri);
-  const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
-  const client = await createA2AClient(agentUrl, resolvedFetch);
+  options?: {
+    mode?: TransactionMode;
+  },
+): Promise<MessageResult> {
+  const resolvedFetch = resolveFetchForTransaction(options?.mode, client.fetch);
+  const a2aClient = await createA2AClient(client, uri, resolvedFetch);
 
-  const result = await client.sendMessage({
+  const result = await a2aClient.sendMessage({
     message: {
       kind: "message",
       messageId: randomUUID(),
@@ -101,16 +90,18 @@ export async function sendA2AMessage(
 }
 
 /** Send a message to an A2A agent and return the stream for real-time iteration. */
-export async function sendA2AMessageStream(
+export async function sendMessageStream(
+  client: unstable_Client,
   uri: string,
   message: string,
-  options?: A2AMessageOptions,
+  options?: {
+    mode?: TransactionMode;
+  },
 ): Promise<AsyncIterable<unknown>> {
-  const agentUrl = resolveAgentUrl(uri);
-  const resolvedFetch = resolveFetchForTransaction(options?.transaction, options?.fetchImpl);
-  const client = await createA2AClient(agentUrl, resolvedFetch);
+  const resolvedFetch = resolveFetchForTransaction(options?.mode, client.fetch);
+  const a2aClient = await createA2AClient(client, uri, resolvedFetch);
 
-  return client.sendMessageStream({
+  return a2aClient.sendMessageStream({
     message: {
       kind: "message",
       messageId: randomUUID(),
@@ -121,10 +112,48 @@ export async function sendA2AMessageStream(
 }
 
 /** Resolve a URI and fetch the A2A agent card. */
-export async function getA2ACard(uri: string, options?: { fetchImpl?: typeof fetch }): Promise<AgentCard> {
-  const agentUrl = resolveAgentUrl(uri);
-  const resolver = new DefaultAgentCardResolver(options?.fetchImpl ? { fetchImpl: options.fetchImpl } : undefined);
-  return resolver.resolve(agentUrl);
+export async function getAgentCard(client: unstable_Client, uri: string): Promise<AgentCard> {
+  const url = await getAgentCardURL(client, uri);
+  const response = await client.fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch agent card from ${url}: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
 }
 
-export async function getAgentCard(client: unstable_Client, uri: string) {}
+/**
+ * Resolve a URI to an A2A agent card URL.
+ *
+ * For HTTP(S) URLs, appends `/.well-known/agent-card.json` before the last path segment
+ * if not already present. For ERC-8004 URIs (`eip155:...`), resolves via the Agently API
+ * using the first service endpoint from the agent metadata.
+ *
+ * ```
+ * getURL("https://abc.com/") => "https://abc.com/.well-known/agent-card.json"
+ * getURL("https://abc.com/.well-known/agent-card.json") => "https://abc.com/.well-known/agent-card.json"
+ * getURL("https://abc.com/path/something") => "https://abc.com/path/.well-known/agent-card.json"
+ * getURL("eip155:1/erc8004:0x.../123") => resolves via getAgent(), returns first service endpoint
+ * ```
+ */
+async function getAgentCardURL(client: unstable_Client, uri: string): Promise<URL> {
+  if (uri.startsWith("eip155:")) {
+    const agent = await getAgent(client, uri);
+    if (!agent) {
+      throw new Error(`Agent (${uri}) not found.`);
+    }
+    const service = agent.metadata?.services?.find((s) => s.name === "a2a");
+    if (!service) {
+      throw new Error(`Agent (${uri}) has no A2A service registered.`);
+    }
+    return new URL(service.endpoint);
+  }
+
+  const url = new URL(uri);
+  if (url.pathname.endsWith("/.well-known/agent-card.json")) {
+    return url;
+  }
+
+  // Insert .well-known/agent-card.json before the last segment
+  url.pathname = url.pathname.replace(/\/?$/, "/.well-known/agent-card.json");
+  return url;
+}
