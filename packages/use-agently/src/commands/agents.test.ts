@@ -67,6 +67,23 @@ describe("agents command", () => {
     expect(Object.keys(lines[0])).toEqual(["id", "name", "description"]);
   });
 
+  test("human output renders items with separator", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "human", "agents"]);
+
+    const rendered = out.stdout;
+    expect(rendered).toContain("Test Agent");
+    expect(rendered).toContain("Another Agent");
+    // items are separated by a horizontal rule
+    expect(rendered).toContain("─");
+  });
+
+  test("human output for empty list renders '(no results)'", async () => {
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify({ hits: [], found: 0, page: 1, per_page: 20 })));
+    await cli.parseAsync(["test", "use-agently", "-o", "human", "agents"]);
+
+    expect(out.stdout).toBe("(no results)");
+  });
+
   test("empty agents list", async () => {
     fetchSpy.mockResolvedValue(new Response(JSON.stringify({ hits: [], found: 0, page: 1, per_page: 20 })));
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);

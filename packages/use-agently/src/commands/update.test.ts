@@ -55,7 +55,7 @@ describe("update command", () => {
   });
 
   test("text output - update available", async () => {
-    await cli.parseAsync(["test", "use-agently", "update"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "text", "update"]);
 
     expect(out.yaml).toEqual({
       current: CURRENT_VERSION,

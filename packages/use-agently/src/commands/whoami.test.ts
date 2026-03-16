@@ -9,7 +9,7 @@ describe("whoami command", () => {
   const out = captureOutput();
 
   test("text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "whoami"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "text", "whoami"]);
 
     expect(out.yaml).toEqual({
       namespace: "eip155",
@@ -24,5 +24,26 @@ describe("whoami command", () => {
       namespace: "eip155",
       address: TEST_ADDRESS,
     });
+  });
+
+  test("yaml output", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "yaml", "whoami"]);
+
+    expect(out.yaml).toEqual({
+      namespace: "eip155",
+      address: TEST_ADDRESS,
+    });
+  });
+
+  test("human output renders a box containing the data", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "human", "whoami"]);
+
+    const rendered = out.stdout;
+    expect(rendered).toContain("namespace");
+    expect(rendered).toContain("eip155");
+    expect(rendered).toContain("address");
+    expect(rendered).toContain(TEST_ADDRESS);
+    // boxen uses rounded corners
+    expect(rendered).toMatch(/[╭╰]/);
   });
 });

@@ -38,7 +38,7 @@ describe("doctor command", () => {
   });
 
   test("all checks pass - text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "doctor", "--rpc", fixture.container.getRpcUrl()]);
+    await cli.parseAsync(["test", "use-agently", "-o", "text", "doctor", "--rpc", fixture.container.getRpcUrl()]);
 
     expect(out.yaml).toEqual({
       ok: true,

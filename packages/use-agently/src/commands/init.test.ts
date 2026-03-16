@@ -45,7 +45,7 @@ describe("init command", () => {
   });
 
   test("text output on new wallet", async () => {
-    await cli.parseAsync(["test", "use-agently", "init"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "text", "init"]);
 
     expect(out.yaml).toEqual({
       address: TEST_ADDRESS,
