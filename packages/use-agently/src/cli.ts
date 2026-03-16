@@ -21,7 +21,7 @@ cli
     "Agently is the way AI coordinate and transact. The routing and settlement layer for your agent economy.",
   )
   .version(pkg.version)
-  .option("-o, --output <format>", "Output format (text, json)", process.stdout.isTTY ? "text" : "json")
+  .option("-o, --output <format>", "Output format (tui, json)", process.stdout.isTTY ? "tui" : "json")
   .argument("[args...]")
   .action((args: string[]) => {
     if (args.length > 0) {

@@ -33,8 +33,8 @@ describe("search command", () => {
   });
 
   test("returns agents with no query", async () => {
-    await cli.parseAsync(["test", "use-agently", "-o", "text", "search"]);
-    const parsed = out.yaml as any;
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "search"]);
+    const parsed = out.jsonLines as any;
     expect(parsed).toHaveLength(1);
   });
 

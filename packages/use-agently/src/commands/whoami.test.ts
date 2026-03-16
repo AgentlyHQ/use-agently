@@ -8,15 +8,6 @@ const { cli } = await import("../cli");
 describe("whoami command", () => {
   const out = captureOutput();
 
-  test("text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "whoami"]);
-
-    expect(out.yaml).toEqual({
-      namespace: "eip155",
-      address: TEST_ADDRESS,
-    });
-  });
-
   test("json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "whoami"]);
 
@@ -24,5 +15,16 @@ describe("whoami command", () => {
       namespace: "eip155",
       address: TEST_ADDRESS,
     });
+  });
+
+  test("tui output renders a table containing the data", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "tui", "whoami"]);
+
+    const rendered = out.stdout;
+    expect(rendered).toContain("Namespace");
+    expect(rendered).toContain("eip155");
+    expect(rendered).toContain("Address");
+    expect(rendered).toContain(TEST_ADDRESS);
+    expect(rendered).toContain("─");
   });
 });

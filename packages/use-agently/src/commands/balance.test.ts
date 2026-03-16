@@ -24,14 +24,14 @@ describe("balance command", () => {
     if (fixture) await stopX402FacilitatorLocal(fixture);
   }, 30_000);
 
-  test("text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "balance", "--rpc", fixture.container.getRpcUrl()]);
+  test("json output (default in non-TTY)", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "balance", "--rpc", fixture.container.getRpcUrl()]);
 
-    const parsed = out.yaml as Record<string, unknown>;
+    const parsed = out.json as Record<string, unknown>;
     expect(parsed.address).toStrictEqual(TEST_ADDRESS);
     expect(parsed.currency).toStrictEqual("USDC");
     expect(parsed.network).toStrictEqual("Base");
-    expect(Number(parsed.balance)).toBeGreaterThan(0);
+    expect(Number(parsed.balance as string)).toBeGreaterThan(0);
   });
 
   test("json output", async () => {

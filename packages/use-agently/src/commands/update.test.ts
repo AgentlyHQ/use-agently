@@ -54,16 +54,6 @@ describe("update command", () => {
     exitSpy.mockRestore();
   });
 
-  test("text output - update available", async () => {
-    await cli.parseAsync(["test", "use-agently", "update"]);
-
-    expect(out.yaml).toEqual({
-      current: CURRENT_VERSION,
-      latest: "9.9.9",
-      updated: true,
-    });
-  });
-
   test("json output - update available", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "update"]);
 

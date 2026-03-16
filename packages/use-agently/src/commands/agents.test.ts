@@ -42,29 +42,28 @@ describe("agents command", () => {
     fetchSpy.mockRestore();
   });
 
-  test("text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "-o", "text", "agents"]);
-
-    const parsed = out.yaml as any;
-    expect(parsed).toHaveLength(2);
-    expect(parsed[0]).toEqual({
-      id: TEST_HITS[0].id,
-      name: TEST_HITS[0].name,
-      description: TEST_HITS[0].description,
-    });
-    expect(parsed[1]).toEqual({
-      id: TEST_HITS[1].id,
-      name: TEST_HITS[1].name,
-      description: TEST_HITS[1].description,
-    });
-  });
-
   test("json output", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "agents"]);
 
     const lines = out.jsonLines as any[];
     expect(lines).toHaveLength(2);
     expect(Object.keys(lines[0])).toEqual(["id", "name", "description"]);
+  });
+
+  test("tui output renders a table with items", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "tui", "agents"]);
+
+    const rendered = out.stdout;
+    expect(rendered).toContain("Test Agent");
+    expect(rendered).toContain("Another Agent");
+    expect(rendered).toContain("─");
+  });
+
+  test("tui output for empty list renders boxen to stderr", async () => {
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify({ hits: [], found: 0, page: 1, per_page: 20 })));
+    await cli.parseAsync(["test", "use-agently", "-o", "tui", "agents"]);
+
+    expect(out.stderr).toContain("No results found.");
   });
 
   test("empty agents list", async () => {

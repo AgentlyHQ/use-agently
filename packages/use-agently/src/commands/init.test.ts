@@ -44,15 +44,6 @@ describe("init command", () => {
     exitSpy.mockRestore();
   });
 
-  test("text output on new wallet", async () => {
-    await cli.parseAsync(["test", "use-agently", "init"]);
-
-    expect(out.yaml).toEqual({
-      address: TEST_ADDRESS,
-      message: "fund this address to start using agents on use-agently.com",
-    });
-  });
-
   test("json output on new wallet", async () => {
     await cli.parseAsync(["test", "use-agently", "-o", "json", "init"]);
 

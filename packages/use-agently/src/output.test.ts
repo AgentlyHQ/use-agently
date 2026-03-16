@@ -1,170 +1,92 @@
-import { describe, expect, test } from "bun:test";
-import { renderText } from "./output";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { output, outputCollection } from "./output";
 
-describe("renderText", () => {
-  describe("primitives", () => {
-    test("string", () => {
-      expect(renderText("hello")).toStrictEqual("hello");
-    });
+describe("output", () => {
+  let logSpy: ReturnType<typeof spyOn>;
 
-    test("number", () => {
-      expect(renderText(42)).toStrictEqual("42");
-    });
-
-    test("boolean", () => {
-      expect(renderText(true)).toStrictEqual("true");
-    });
-
-    test("null renders as null", () => {
-      expect(renderText(null)).toStrictEqual("null");
-    });
+  beforeEach(() => {
+    logSpy = spyOn(console, "log").mockImplementation(() => {});
   });
 
-  describe("flat objects", () => {
-    test("whoami format", () => {
-      const data = { type: "evm-private-key", address: "0x1234abcd" };
-      expect(renderText(data)).toStrictEqual(["type: evm-private-key", 'address: "0x1234abcd"'].join("\n"));
-    });
-
-    test("balance format", () => {
-      const data = { address: "0x1234abcd", balance: "100.50", currency: "USDC", network: "Base" };
-      expect(renderText(data)).toStrictEqual(
-        ['address: "0x1234abcd"', 'balance: "100.50"', "currency: USDC", "network: Base"].join("\n"),
-      );
-    });
-
-    test("init format", () => {
-      const data = { address: "0xABCDEF" };
-      expect(renderText(data)).toStrictEqual('address: "0xABCDEF"');
-    });
-
-    test("skips undefined values", () => {
-      const data = { name: "test", description: undefined, uri: "https://example.com" };
-      expect(renderText(data)).toStrictEqual(["name: test", "uri: https://example.com"].join("\n"));
-    });
+  afterEach(() => {
+    logSpy.mockRestore();
   });
 
-  describe("arrays of primitives", () => {
-    test("renders as block sequence", () => {
-      const data = { protocols: ["a2a", "mcp"] };
-      expect(renderText(data)).toStrictEqual(["protocols:", "  - a2a", "  - mcp"].join("\n"));
-    });
-
-    test("single item array", () => {
-      const data = { protocols: ["a2a"] };
-      expect(renderText(data)).toStrictEqual(["protocols:", "  - a2a"].join("\n"));
-    });
-
-    test("empty array renders as []", () => {
-      const data = { items: [] };
-      expect(renderText(data)).toStrictEqual("items: []");
-    });
+  test("json output emits JSON string", () => {
+    const cmd = { optsWithGlobals: () => ({ output: "json" }) } as any;
+    output(cmd, { name: "test" });
+    expect(logSpy.mock.calls[0][0]).toBe('{"name":"test"}');
   });
 
-  describe("nested objects", () => {
-    test("doctor format", () => {
-      const data = {
-        ok: true,
-        checks: [
-          { name: "Wallet configured", ok: true },
-          { name: "Wallet loadable", ok: true },
-          { name: "Network reachable (Base RPC)", ok: false, message: "Connection refused" },
-        ],
-      };
-      expect(renderText(data)).toStrictEqual(
-        [
-          "ok: true",
-          "checks:",
-          "  - name: Wallet configured",
-          "    ok: true",
-          "  - name: Wallet loadable",
-          "    ok: true",
-          "  - name: Network reachable (Base RPC)",
-          "    ok: false",
-          "    message: Connection refused",
-        ].join("\n"),
-      );
-    });
-
-    test("doctor format omits undefined values in array items", () => {
-      const data = {
-        ok: true,
-        checks: [{ name: "Wallet configured", ok: true, message: undefined }],
-      };
-      expect(renderText(data)).toStrictEqual(
-        ["ok: true", "checks:", "  - name: Wallet configured", "    ok: true"].join("\n"),
-      );
-    });
+  test("tui output renders key-value table for objects", () => {
+    const cmd = { optsWithGlobals: () => ({ output: "tui" }) } as any;
+    output(cmd, { namespace: "eip155", address: "0x1234" });
+    const rendered = logSpy.mock.calls[0][0] as string;
+    expect(rendered).toContain("Namespace");
+    expect(rendered).toContain("eip155");
+    expect(rendered).toContain("Address");
+    expect(rendered).toContain("0x1234");
+    // cli-table3 draws borders
+    expect(rendered).toContain("─");
+    expect(rendered).toContain("│");
   });
 
-  describe("agents format", () => {
-    test("renders agent list with protocols as block sequence", () => {
-      const data = {
-        agents: [
-          {
-            uri: "eip155:8453/erc-8004:0x1234/1",
-            name: "Price Agent",
-            description: "Gets crypto prices",
-            protocols: ["a2a", "mcp"],
-          },
-          {
-            uri: "eip155:8453/erc-8004:0x1234/2",
-            name: "Job Agent",
-            description: "Finds jobs",
-            protocols: ["a2a"],
-          },
-        ],
-      };
-      expect(renderText(data)).toStrictEqual(
-        [
-          "agents:",
-          "  - uri: eip155:8453/erc-8004:0x1234/1",
-          "    name: Price Agent",
-          "    description: Gets crypto prices",
-          "    protocols:",
-          "      - a2a",
-          "      - mcp",
-          "  - uri: eip155:8453/erc-8004:0x1234/2",
-          "    name: Job Agent",
-          "    description: Finds jobs",
-          "    protocols:",
-          "      - a2a",
-        ].join("\n"),
-      );
-    });
+  test("tui output passes strings through directly", () => {
+    const cmd = { optsWithGlobals: () => ({ output: "tui" }) } as any;
+    output(cmd, "hello world");
+    expect(logSpy.mock.calls[0][0]).toBe("hello world");
+  });
+});
 
-    test("empty agents list", () => {
-      const data = { agents: [] };
-      expect(renderText(data)).toStrictEqual("agents: []");
-    });
+describe("outputCollection", () => {
+  let logSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    logSpy = spyOn(console, "log").mockImplementation(() => {});
   });
 
-  describe("complex nested structures", () => {
-    test("object with nested object value", () => {
-      const data = {
-        name: "test",
-        metadata: {
-          version: "1.0",
-          author: "alice",
-        },
-      };
-      expect(renderText(data)).toStrictEqual(
-        ["name: test", "metadata:", '  version: "1.0"', "  author: alice"].join("\n"),
-      );
-    });
+  afterEach(() => {
+    logSpy.mockRestore();
+  });
 
-    test("array of primitives at top level", () => {
-      expect(renderText(["a2a", "mcp"])).toStrictEqual("- a2a\n- mcp");
-    });
+  test("json output emits NDJSON", () => {
+    const cmd = { optsWithGlobals: () => ({ output: "json" }) } as any;
+    outputCollection(cmd, [{ a: 1 }, { b: 2 }]);
+    expect(logSpy).toHaveBeenCalledTimes(2);
+    expect(logSpy.mock.calls[0][0]).toBe('{"a":1}');
+    expect(logSpy.mock.calls[1][0]).toBe('{"b":2}');
+  });
 
-    test("boolean false renders correctly", () => {
-      const data = { ok: false, message: "failed" };
-      expect(renderText(data)).toStrictEqual("ok: false\nmessage: failed");
-    });
+  test("tui output renders collection table", () => {
+    const cmd = { optsWithGlobals: () => ({ output: "tui" }) } as any;
+    outputCollection(cmd, [
+      { id: "eip155:1/erc8004:0x1234/1", name: "Agent A", description: "First agent" },
+      { id: "eip155:1/erc8004:0x1234/2", name: "Agent B", description: "Second agent" },
+    ]);
+    const rendered = logSpy.mock.calls[0][0] as string;
+    expect(rendered).toContain("Agent A");
+    expect(rendered).toContain("Agent B");
+    expect(rendered).toContain("First agent");
+    expect(rendered).toContain("─");
+  });
 
-    test("numeric values render correctly", () => {
-      const data = { count: 0, total: 42 };
-      expect(renderText(data)).toStrictEqual("count: 0\ntotal: 42");
-    });
+  test("tui output renders boxen to stderr for empty list", () => {
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    const cmd = { optsWithGlobals: () => ({ output: "tui" }) } as any;
+    outputCollection(cmd, []);
+    const rendered = errorSpy.mock.calls[0][0] as string;
+    expect(rendered).toContain("No results found.");
+    expect(rendered).toMatch(/[╭╰]/);
+    expect(logSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  test("json output writes to stderr for empty list", () => {
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    const cmd = { optsWithGlobals: () => ({ output: "json" }) } as any;
+    outputCollection(cmd, []);
+    expect(errorSpy.mock.calls[0][0]).toBe("No results found.");
+    expect(logSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
