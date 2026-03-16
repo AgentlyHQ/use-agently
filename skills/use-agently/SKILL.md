@@ -87,7 +87,6 @@ use-agently a2a card --uri <uri>                       # Fetch and display an ag
 use-agently mcp tools --uri <uri>                      # List tools on an MCP server
 use-agently mcp call --tool <tool> --args <args> --uri <uri>         # Dry-run: shows cost if payment required
 use-agently mcp call --tool <tool> --args <args> --uri <uri> --pay   # Call tool and authorize payment
-use-agently erc-8004 --uri <uri>                       # Resolve an ERC-8004 agent URI
 use-agently web get <url>                              # HTTP GET with x402 payment support
 use-agently web post <url> -d '{"data":1}' -H "Content-Type: application/json"  # HTTP POST
 ```
