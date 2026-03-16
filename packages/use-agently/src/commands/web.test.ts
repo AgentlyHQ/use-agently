@@ -131,7 +131,17 @@ describe("web command cli", () => {
         return new Response(`received: ${body}`, { status: 200, statusText: "OK" });
       });
 
-      await cli.parseAsync(["test", "use-agently", "web", "post", "http://example.com/data", "-d", '{"test":1}']);
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "-o",
+        "text",
+        "web",
+        "post",
+        "http://example.com/data",
+        "-d",
+        '{"test":1}',
+      ]);
       expect(out.stdout).toContain('received: {"test":1}');
     });
 
@@ -203,7 +213,7 @@ describe("web command cli", () => {
           }),
       );
 
-      await cli.parseAsync(["test", "use-agently", "web", "get", "http://example.com/i", "-i"]);
+      await cli.parseAsync(["test", "use-agently", "-o", "text", "web", "get", "http://example.com/i", "-i"]);
       expect(out.stdout).toContain("HTTP 200 OK");
       expect(out.stdout).toContain("x-test: val");
       expect(out.stdout).toContain("body content");
@@ -318,7 +328,17 @@ describe("web command cli", () => {
         return new Response(`put: ${capturedBody}`, { status: 200, statusText: "OK" });
       });
 
-      await cli.parseAsync(["test", "use-agently", "web", "put", "http://example.com/r", "-d", '{"up":1}']);
+      await cli.parseAsync([
+        "test",
+        "use-agently",
+        "-o",
+        "text",
+        "web",
+        "put",
+        "http://example.com/r",
+        "-d",
+        '{"up":1}',
+      ]);
       expect(capturedMethod).toBe("PUT");
       expect(out.stdout).toContain('put: {"up":1}');
     });

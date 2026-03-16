@@ -43,7 +43,7 @@ describe("agents command", () => {
   });
 
   test("text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "agents"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "text", "agents"]);
 
     const parsed = out.yaml as any;
     expect(parsed).toHaveLength(2);
