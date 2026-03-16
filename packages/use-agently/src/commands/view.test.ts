@@ -33,8 +33,8 @@ describe("view command", () => {
 
   test("displays agent details", async () => {
     fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(TEST_AGENT)));
-    await cli.parseAsync(["test", "use-agently", "-o", "text", "view", "eip155:8453/erc8004:0x1234/1"]);
-    const parsed = out.yaml as Record<string, unknown>;
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "view", "eip155:8453/erc8004:0x1234/1"]);
+    const parsed = out.json as Record<string, unknown>;
     expect(parsed).toHaveProperty("name", "Echo Agent");
     expect(parsed).toHaveProperty("id", "eip155:8453/erc8004:0x1234/1");
     expect(parsed).toHaveProperty("metadata");

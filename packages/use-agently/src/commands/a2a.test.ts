@@ -63,9 +63,9 @@ describe("a2a send command (free)", () => {
 describe("a2a card command (free)", () => {
   const out = captureOutput();
 
-  test("text output returns agent card fields", async () => {
-    await cli.parseAsync(["test", "use-agently", "a2a", "card", "--uri", fixture.agent.getAgentHost()]);
-    const card = out.yaml as Record<string, unknown>;
+  test("json output returns agent card fields", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "a2a", "card", "--uri", fixture.agent.getAgentHost()]);
+    const card = out.json as Record<string, unknown>;
     expect(card).toHaveProperty("name");
     expect(card).toHaveProperty("description");
     expect(card).toHaveProperty("url");

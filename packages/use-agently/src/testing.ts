@@ -6,7 +6,6 @@ import {
   accounts,
 } from "x402-fl/testcontainers";
 import { AixyzTesting } from "localhost-aixyz/test";
-import { parse } from "yaml";
 
 // --- Test wallet ---
 
@@ -113,10 +112,6 @@ export function captureOutput() {
     /** Parse all console.log calls as NDJSON lines */
     get jsonLines(): unknown[] {
       return logSpy.mock.calls.map((call: unknown[]) => JSON.parse(call[0] as string));
-    },
-    /** Parse stdout as YAML */
-    get yaml(): unknown {
-      return parse(this.stdout);
     },
     get logSpy() {
       return logSpy;

@@ -42,13 +42,13 @@ describe("mcp command (free)", () => {
         "test",
         "use-agently",
         "-o",
-        "text",
+        "json",
         "mcp",
         "tools",
         "--uri",
         fixture.agent.getAgentHost() + "/mcp",
       ]);
-      const tools = out.yaml as Array<Record<string, unknown>>;
+      const tools = out.jsonLines as Array<Record<string, unknown>>;
       expect(Array.isArray(tools)).toStrictEqual(true);
       expect(tools.length).toBeGreaterThan(0);
       expect(tools[0]).toHaveProperty("name");
@@ -82,7 +82,7 @@ describe("mcp command (free)", () => {
         "test",
         "use-agently",
         "-o",
-        "text",
+        "tui",
         "mcp",
         "call",
         "--tool",
@@ -188,7 +188,7 @@ describe("mcp x402 payment (paid)", () => {
         "test",
         "use-agently",
         "-o",
-        "text",
+        "tui",
         "mcp",
         "call",
         "--tool",

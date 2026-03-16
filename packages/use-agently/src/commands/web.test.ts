@@ -135,7 +135,7 @@ describe("web command cli", () => {
         "test",
         "use-agently",
         "-o",
-        "text",
+        "tui",
         "web",
         "post",
         "http://example.com/data",
@@ -213,7 +213,7 @@ describe("web command cli", () => {
           }),
       );
 
-      await cli.parseAsync(["test", "use-agently", "-o", "text", "web", "get", "http://example.com/i", "-i"]);
+      await cli.parseAsync(["test", "use-agently", "-o", "tui", "web", "get", "http://example.com/i", "-i"]);
       expect(out.stdout).toContain("HTTP 200 OK");
       expect(out.stdout).toContain("x-test: val");
       expect(out.stdout).toContain("body content");
@@ -332,7 +332,7 @@ describe("web command cli", () => {
         "test",
         "use-agently",
         "-o",
-        "text",
+        "tui",
         "web",
         "put",
         "http://example.com/r",

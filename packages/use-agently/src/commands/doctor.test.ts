@@ -37,10 +37,10 @@ describe("doctor command", () => {
     exitSpy.mockRestore();
   });
 
-  test("all checks pass - text output", async () => {
-    await cli.parseAsync(["test", "use-agently", "-o", "text", "doctor", "--rpc", fixture.container.getRpcUrl()]);
+  test("all checks pass - json output", async () => {
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "doctor", "--rpc", fixture.container.getRpcUrl()]);
 
-    expect(out.yaml).toEqual({
+    expect(out.json).toEqual({
       ok: true,
       checks: [
         { name: "Wallet configured", ok: true },

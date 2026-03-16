@@ -26,6 +26,7 @@
   "dependencies": {
     "@use-agently/sdk": "workspace:*",
     "boxen": "^8.0.1",
+    "cli-table3": "^0.6.5",
     "commander": "^14.0.3",
     "viem": "^2.46.3",
     "zod": "^4"
