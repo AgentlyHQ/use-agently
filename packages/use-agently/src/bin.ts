@@ -3,8 +3,14 @@
 import { cli } from "./cli";
 import { checkAutoUpdate } from "./commands/update.js";
 import { installTelemetry, flushTelemetry } from "./telemetry.js";
+import { handleCliError } from "./errors.js";
 
 installTelemetry(cli);
 
-await cli.parseAsync();
-await Promise.all([checkAutoUpdate(), flushTelemetry()]);
+try {
+  await cli.parseAsync();
+  await Promise.all([checkAutoUpdate(), flushTelemetry()]);
+} catch (err) {
+  const format = (cli.optsWithGlobals?.().output ?? (process.stdout.isTTY ? "tui" : "json")) as "tui" | "json";
+  handleCliError(err, format);
+}
