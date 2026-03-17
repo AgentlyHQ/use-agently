@@ -9,7 +9,7 @@ describe("handleCliError", () => {
   beforeEach(() => {
     originalIsTTY = process.stderr.isTTY;
     exitSpy = spyOn(process, "exit").mockImplementation((code?: number) => {
-      throw new Error("exit");
+      throw new Error("process.exit");
     });
     errorSpy = spyOn(console, "error").mockImplementation(() => {});
   });
@@ -21,7 +21,7 @@ describe("handleCliError", () => {
   });
 
   test("prints json error when format is json", () => {
-    expect(() => handleCliError(new Error("boom"), "json")).toThrow("exit");
+    expect(() => handleCliError(new Error("boom"), "json")).toThrow("process.exit");
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(errorSpy).toHaveBeenCalledWith(JSON.stringify({ error: { message: "boom" } }));
   });
@@ -29,7 +29,7 @@ describe("handleCliError", () => {
   test("prints plain text when format is tui and stderr is not a TTY", () => {
     Object.defineProperty(process.stderr, "isTTY", { value: false, configurable: true });
 
-    expect(() => handleCliError(new Error("oops"), "tui")).toThrow("exit");
+    expect(() => handleCliError(new Error("oops"), "tui")).toThrow("process.exit");
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(errorSpy).toHaveBeenCalledWith("Error: oops");
   });
@@ -37,7 +37,7 @@ describe("handleCliError", () => {
   test("prints boxed error when format is tui and stderr is a TTY", () => {
     Object.defineProperty(process.stderr, "isTTY", { value: true, configurable: true });
 
-    expect(() => handleCliError(new Error("boxed"), "tui")).toThrow("exit");
+    expect(() => handleCliError(new Error("boxed"), "tui")).toThrow("process.exit");
     expect(exitSpy).toHaveBeenCalledWith(1);
     const output = errorSpy.mock.calls.map((call) => call[0]).join("");
     expect(output).toContain("boxed");
