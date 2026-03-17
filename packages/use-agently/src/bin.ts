@@ -11,8 +11,8 @@ installTelemetry(cli);
 function resolveOutputFormat(): "tui" | "json" {
   try {
     return getOutputFormat(cli);
-  } catch {
-    // If option parsing fails, still show the underlying CLI error without double-logging here.
+  } catch (err) {
+    console.warn("Falling back to TUI output after failing to resolve --output option.", err);
     return "tui";
   }
 }

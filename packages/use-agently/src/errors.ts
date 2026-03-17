@@ -3,7 +3,7 @@ import type { OutputFormat } from "./output.js";
 
 function isProcessExitError(err: unknown): err is Error {
   // Commander calls process.exit() internally; in tests we mock it to throw an error
-  // with this message so the test runner can intercept the exit.
+  // with this message so the test runner can intercept the exit without double-formatting.
   return err instanceof Error && err.message === "process.exit";
 }
 
