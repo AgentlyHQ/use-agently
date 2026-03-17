@@ -39,7 +39,7 @@ describe("search command", () => {
   });
 
   test("passes query to search API", async () => {
-    await cli.parseAsync(["test", "use-agently", "search", "echo"]);
+    await cli.parseAsync(["test", "use-agently", "search", "-q", "echo"]);
     const calledUrl = new URL(fetchSpy.mock.calls[0][0] as string);
     expect(calledUrl.searchParams.get("q")).toBe("echo");
   });
