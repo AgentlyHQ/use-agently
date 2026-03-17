@@ -141,7 +141,7 @@ async function getAgentCardURL(client: unstable_Client, uri: string): Promise<UR
     if (!agent) {
       throw new Error(`Agent (${uri}) not found.`);
     }
-    const service = agent.metadata?.services?.find((s) => s.name === "a2a");
+    const service = agent.metadata?.services?.find((s) => s.name.toLowerCase() === "a2a");
     if (!service) {
       throw new Error(`Agent (${uri}) has no A2A service registered.`);
     }
