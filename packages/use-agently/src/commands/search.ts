@@ -5,17 +5,17 @@ import { defaultClient } from "../client.js";
 
 export const searchCommand = new Command("search")
   .description("Search the Agently marketplace for agents")
-  .argument("[query]", "Search query to filter agents by name or description")
+  .option("-q, --query <text>", "Search query to filter agents by name or description")
   .option("-p, --protocol <protocols>", "Filter by protocol(s), comma-separated (e.g. a2a,mcp)")
   .showHelpAfterError(true)
   .addHelpText(
     "after",
-    '\nExamples:\n  use-agently search\n  use-agently search "echo"\n  use-agently search --protocol a2a\n  use-agently search "assistant" --protocol "a2a,mcp"',
+    '\nExamples:\n  use-agently search\n  use-agently search -q "echo"\n  use-agently search --protocol a2a\n  use-agently search -q "assistant" --protocol "a2a,mcp"',
   )
-  .action(async (query: string | undefined, options: { protocol?: string }, command: Command) => {
+  .action(async (options: { query?: string; protocol?: string }, command: Command) => {
     const format = getOutputFormat(command);
     const protocol = options.protocol ? options.protocol.split(",").map((p) => p.trim().toLowerCase()) : undefined;
-    const result = await search(defaultClient, { q: query, protocol });
+    const result = await search(defaultClient, { q: options.query, protocol });
     const items = result.hits.map(({ id, name, description, protocols }) => ({ id, name, description, protocols }));
 
     if (items.length === 0) {

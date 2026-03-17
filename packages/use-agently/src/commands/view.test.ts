@@ -33,7 +33,7 @@ describe("view command", () => {
 
   test("displays agent details", async () => {
     fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(TEST_AGENT)));
-    await cli.parseAsync(["test", "use-agently", "-o", "json", "view", "eip155:8453/erc8004:0x1234/1"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "view", "--uri", "eip155:8453/erc8004:0x1234/1"]);
     const parsed = out.json as Record<string, unknown>;
     expect(parsed).toHaveProperty("name", "Echo Agent");
     expect(parsed).toHaveProperty("id", "eip155:8453/erc8004:0x1234/1");
@@ -42,7 +42,7 @@ describe("view command", () => {
 
   test("json output", async () => {
     fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(TEST_AGENT)));
-    await cli.parseAsync(["test", "use-agently", "-o", "json", "view", "eip155:8453/erc8004:0x1234/1"]);
+    await cli.parseAsync(["test", "use-agently", "-o", "json", "view", "--uri", "eip155:8453/erc8004:0x1234/1"]);
     const parsed = out.json as Record<string, unknown>;
     expect(parsed).toHaveProperty("name", "Echo Agent");
     expect(parsed).toHaveProperty("metadata");
@@ -52,8 +52,8 @@ describe("view command", () => {
     fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ error: "Agent not found" }), { status: 404 }),
     );
-    await expect(cli.parseAsync(["test", "use-agently", "view", "eip155:8453/erc8004:0xDEAD/99"])).rejects.toThrow(
-      "No agent found for ID",
-    );
+    await expect(
+      cli.parseAsync(["test", "use-agently", "view", "--uri", "eip155:8453/erc8004:0xDEAD/99"]),
+    ).rejects.toThrow("No agent found for URI");
   });
 });
