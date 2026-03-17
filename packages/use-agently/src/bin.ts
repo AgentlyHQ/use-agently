@@ -11,6 +11,6 @@ try {
   await cli.parseAsync();
   await Promise.all([checkAutoUpdate(), flushTelemetry()]);
 } catch (err) {
-  const format = (cli.optsWithGlobals?.().output ?? (process.stdout.isTTY ? "tui" : "json")) as "tui" | "json";
+  const format = (cli.optsWithGlobals?.().output ?? (process.stderr.isTTY ? "tui" : "json")) as "tui" | "json";
   handleCliError(err, format);
 }
