@@ -9,6 +9,7 @@ describe("handleCliError", () => {
   beforeEach(() => {
     originalIsTTY = process.stderr.isTTY;
     exitSpy = spyOn(process, "exit").mockImplementation((code?: number) => {
+      // Bubble a sentinel error so tests can assert the exit while preventing the process from terminating.
       throw new Error("process.exit");
     });
     errorSpy = spyOn(console, "error").mockImplementation(() => {});

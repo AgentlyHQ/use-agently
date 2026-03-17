@@ -12,7 +12,7 @@ function resolveOutputFormat(): "tui" | "json" {
   try {
     return getOutputFormat(cli);
   } catch {
-    // Fallback for unexpected failures before Commander parses options.
+    // If option parsing fails, still show the underlying CLI error without double-logging here.
     return "tui";
   }
 }
