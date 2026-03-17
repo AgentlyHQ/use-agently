@@ -40,7 +40,7 @@ export async function getMcpURL(client: unstable_Client, input: string): Promise
     if (!agent) {
       throw new Error(`Agent (${input}) not found.`);
     }
-    const service = agent.metadata?.services?.find((s) => s.name === "mcp");
+    const service = agent.metadata?.services?.find((s) => s.name.toLowerCase() === "mcp");
     if (!service) {
       throw new Error(`Agent (${input}) has no MCP service registered.`);
     }
