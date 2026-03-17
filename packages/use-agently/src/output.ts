@@ -21,7 +21,7 @@ export function resolveOutputFormat(command: Command): OutputFormat {
   }
 }
 
-/** Available width: use terminal columns if known, otherwise 80, but at least 120. */
+/** Available width: use terminal columns if known, otherwise default to 120 (minimum 120). */
 export function getMaxWidth(): number {
   return Math.max(process.stdout.columns || 80, 120);
 }
