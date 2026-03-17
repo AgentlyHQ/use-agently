@@ -39,7 +39,7 @@ describe("handleCliError", () => {
 
     expect(() => handleCliError(new Error("boxed"), "tui")).toThrow("exit:1");
     expect(exitSpy).toHaveBeenCalledWith(1);
-    const output = errorSpy.mock.calls.map((c) => c[0]).join("");
+    const output = errorSpy.mock.calls.map((call) => call[0]).join("");
     expect(output).toContain("boxed");
     expect(output).toContain("Error");
   });

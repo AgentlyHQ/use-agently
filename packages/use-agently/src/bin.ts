@@ -15,7 +15,6 @@ function resolveOutputFormat(): "tui" | "json" {
     // Fallback for unexpected failures before Commander parses options.
     return process.stderr.isTTY ? "tui" : "json";
   }
-  return process.stderr.isTTY ? "tui" : "json";
 }
 
 try {
