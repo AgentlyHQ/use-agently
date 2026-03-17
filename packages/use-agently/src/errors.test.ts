@@ -22,6 +22,7 @@ describe("handleCliError", () => {
 
   test("prints json error when format is json", () => {
     expect(() => handleCliError(new Error("boom"), "json")).toThrow("exit:1");
+    expect(exitSpy).toHaveBeenCalledWith(1);
     expect(errorSpy).toHaveBeenCalledWith(JSON.stringify({ error: { message: "boom" } }));
   });
 
@@ -29,6 +30,7 @@ describe("handleCliError", () => {
     Object.defineProperty(process.stderr, "isTTY", { value: false, configurable: true });
 
     expect(() => handleCliError(new Error("oops"), "tui")).toThrow("exit:1");
+    expect(exitSpy).toHaveBeenCalledWith(1);
     expect(errorSpy).toHaveBeenCalledWith("Error: oops");
   });
 
@@ -36,6 +38,7 @@ describe("handleCliError", () => {
     Object.defineProperty(process.stderr, "isTTY", { value: true, configurable: true });
 
     expect(() => handleCliError(new Error("boxed"), "tui")).toThrow("exit:1");
+    expect(exitSpy).toHaveBeenCalledWith(1);
     const output = errorSpy.mock.calls.map((c) => c[0]).join("");
     expect(output).toContain("boxed");
     expect(output).toContain("Error");
