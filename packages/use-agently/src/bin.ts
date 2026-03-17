@@ -4,12 +4,17 @@ import { cli } from "./cli";
 import { checkAutoUpdate } from "./commands/update.js";
 import { installTelemetry, flushTelemetry } from "./telemetry.js";
 import { handleCliError } from "./errors.js";
+import { getOutputFormat } from "./output.js";
 
 installTelemetry(cli);
 
 function resolveOutputFormat(): "tui" | "json" {
-  const opts = cli.optsWithGlobals?.();
-  if (opts?.output === "tui" || opts?.output === "json") return opts.output;
+  try {
+    return getOutputFormat(cli);
+  } catch {
+    // Fallback for unexpected failures before Commander parses options.
+    return process.stderr.isTTY ? "tui" : "json";
+  }
   return process.stderr.isTTY ? "tui" : "json";
 }
 

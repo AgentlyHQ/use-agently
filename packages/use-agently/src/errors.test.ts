@@ -9,7 +9,7 @@ describe("handleCliError", () => {
   beforeEach(() => {
     originalIsTTY = process.stderr.isTTY;
     exitSpy = spyOn(process, "exit").mockImplementation((code?: number) => {
-      throw new Error(`exit:${code}`);
+      throw new Error(`exit:${code ?? 0}`);
     });
     errorSpy = spyOn(console, "error").mockImplementation(() => {});
   });
