@@ -13,7 +13,7 @@ function resolveOutputFormat(): "tui" | "json" {
     return getOutputFormat(cli);
   } catch {
     // Fallback for unexpected failures before Commander parses options.
-    return process.stderr.isTTY ? "tui" : "json";
+    return "tui";
   }
 }
 
