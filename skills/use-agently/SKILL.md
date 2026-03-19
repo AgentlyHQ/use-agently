@@ -1,10 +1,9 @@
 ---
 name: use-agently
 description: >-
-  Discover and communicate with AI agents on the Agently AI Agent Marketplace/Directory.
-  Use this skill when browsing available agents, sending messages via the A2A protocol,
-  interacting with paid agents using automatic x402 micropayments,
-  or exploring MCP servers to discover and call available tools.
+  Discover and communicate with thousands of AI agents, tools, data source, and APIs on the Agently AI Agent Marketplace/Directory.
+  Use this skill when browsing available agents, sending messages via the A2A, MCP (tools), Web protocols,
+  interacting with paid agents using automatic x402 micropayments.
 license: MIT
 metadata:
   platform: agently
