@@ -9,7 +9,12 @@ import {
 } from "../testing";
 
 let mockConfig: unknown = testConfig();
-mockConfigModule(() => mockConfig);
+// Allow tests to simulate a corrupt config file by setting mockConfigThrow to an Error
+let mockConfigThrow: Error | null = null;
+mockConfigModule(() => {
+  if (mockConfigThrow) throw mockConfigThrow;
+  return mockConfig;
+});
 
 const { cli } = await import("../cli");
 
@@ -28,6 +33,7 @@ describe("doctor command", () => {
 
   beforeEach(() => {
     mockConfig = testConfig();
+    mockConfigThrow = null;
     exitSpy = spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
     });
@@ -100,5 +106,77 @@ describe("doctor command", () => {
     expect(parsed.checks[2].name).toStrictEqual("Network reachable (Base RPC)");
     expect(parsed.checks[2].ok).toStrictEqual(false);
     expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
+  test("--fix with corrupt config - auto-fixes and all checks pass", async () => {
+    mockConfigThrow = new Error("Config file at ~/.use-agently/config.json contains invalid JSON.");
+
+    await cli.parseAsync([
+      "test",
+      "use-agently",
+      "-o",
+      "json",
+      "doctor",
+      "--fix",
+      "--rpc",
+      fixture.container.getRpcUrl(),
+    ]);
+
+    const parsed = out.json as any;
+    expect(parsed.ok).toStrictEqual(true);
+    expect(parsed.checks[0]).toEqual({ name: "Wallet configured", ok: true, fixed: true });
+    expect(parsed.checks[1]).toEqual({ name: "Wallet loadable", ok: true });
+    expect(parsed.checks[2]).toEqual({ name: "Network reachable (Base RPC)", ok: true });
+    expect(exitSpy).not.toHaveBeenCalled();
+  });
+
+  test("--fix with no wallet - auto-fixes and all checks pass", async () => {
+    mockConfig = undefined;
+
+    await cli.parseAsync([
+      "test",
+      "use-agently",
+      "-o",
+      "json",
+      "doctor",
+      "--fix",
+      "--rpc",
+      fixture.container.getRpcUrl(),
+    ]);
+
+    const parsed = out.json as any;
+    expect(parsed.ok).toStrictEqual(true);
+    expect(parsed.checks[0]).toEqual({ name: "Wallet configured", ok: true, fixed: true });
+    expect(parsed.checks[1]).toEqual({ name: "Wallet loadable", ok: true });
+    expect(parsed.checks[2]).toEqual({ name: "Network reachable (Base RPC)", ok: true });
+    expect(exitSpy).not.toHaveBeenCalled();
+  });
+
+  test("--fix with invalid wallet private key - auto-fixes and all checks pass", async () => {
+    mockConfig = {
+      wallet: {
+        type: "evm-private-key",
+        privateKey: "0xinvalid",
+        address: "0x0000000000000000000000000000000000000000",
+      },
+    };
+
+    await cli.parseAsync([
+      "test",
+      "use-agently",
+      "-o",
+      "json",
+      "doctor",
+      "--fix",
+      "--rpc",
+      fixture.container.getRpcUrl(),
+    ]);
+
+    const parsed = out.json as any;
+    expect(parsed.ok).toStrictEqual(true);
+    expect(parsed.checks[0]).toEqual({ name: "Wallet configured", ok: true });
+    expect(parsed.checks[1]).toEqual({ name: "Wallet loadable", ok: true, fixed: true });
+    expect(parsed.checks[2]).toEqual({ name: "Network reachable (Base RPC)", ok: true });
+    expect(exitSpy).not.toHaveBeenCalled();
   });
 });
