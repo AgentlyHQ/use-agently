@@ -1,10 +1,10 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import { wrapMCPClientWithPaymentFromConfig } from "@x402/mcp";
-import type { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js";
-import type { Wallet } from "./wallets/wallet.js";
-import { DryRunTransaction, type TransactionMode } from "./utils/transaction.js";
+import type { Client as McpClient } from "@modelcontextprotocol/sdk/client";
+import type { Wallet } from "./wallets/wallet";
+import { DryRunTransaction, type TransactionMode } from "./utils/transaction";
 import { formatUnits } from "viem";
-import { getChainConfigByNetwork } from "./utils/chain.js";
+import { getChainConfigByNetwork } from "./utils/chain";
 import pkg from "./package.json" with { type: "json" };
 
 type Fetch = typeof fetch;
@@ -30,8 +30,8 @@ export type unstable_Client = {
   fetch: Fetch;
 };
 
-export function createClient(options: { userAgent?: string }): unstable_Client {
-  const fetch = createFetch({ userAgent: options.userAgent });
+export function createClient(options?: { userAgent?: string }): unstable_Client {
+  const fetch = createFetch({ userAgent: options?.userAgent });
   return {
     fetch: fetch,
   };

@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { AgentCard } from "@a2a-js/sdk";
 import { ClientFactory, JsonRpcTransportFactory, RestTransportFactory } from "@a2a-js/sdk/client";
-import { resolveFetchForTransaction, type unstable_Client } from "./client.js";
-import type { TransactionMode } from "./utils/transaction.js";
-import { getAgent } from "./agently.js";
+import { resolveFetchForTransaction, type unstable_Client } from "./client";
+import type { TransactionMode } from "./utils/transaction";
+import { getAgent } from "./agently";
 
 export interface MessageResult {
   text: string;

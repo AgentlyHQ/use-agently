@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { output } from "../output.js";
+import { output } from "../output";
 import { getAgent } from "@use-agently/sdk/agently";
-import { defaultClient } from "../client.js";
+import { defaultClient } from "../client";
 
 export const viewCommand = new Command("view")
   .description("View an agent by its ID (e.g. CAIP-19)")

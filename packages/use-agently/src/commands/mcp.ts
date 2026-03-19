@@ -11,10 +11,10 @@ import {
   listMcpTools,
   callMcpTool,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config.js";
-import { defaultClient, clientFetch, handleDryRunError } from "../client.js";
+import { getConfigOrThrow } from "../config";
+import { defaultClient, clientFetch, handleDryRunError } from "../client";
 import pkg from "../../package.json" with { type: "json" };
-import { output, outputCollection } from "../output.js";
+import { output, outputCollection } from "../output";
 
 async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
   if (pay) {

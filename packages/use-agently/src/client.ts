@@ -8,7 +8,7 @@ import {
   type PaymentRequirementsInfo,
   loadWallet,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "./config.js";
+import { getConfigOrThrow } from "./config";
 import pkg from "../package.json" with { type: "json" };
 import { createClient } from "@use-agently/sdk/client";
 

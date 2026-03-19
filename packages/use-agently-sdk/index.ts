@@ -1,19 +1,17 @@
 // Config
-export { WalletConfigSchema, ConfigSchema, type WalletConfig, type Config } from "./config.js";
+export { WalletConfigSchema, ConfigSchema, type WalletConfig, type Config } from "./config";
 
 // Wallets
-export { type Wallet, loadWallet } from "./wallets/wallet.js";
-export {
-  type EvmPrivateKeyConfig,
-  EvmPrivateKeyWallet,
-  generateEvmPrivateKeyConfig,
-} from "./wallets/evm-private-key.js";
+export { type Wallet, loadWallet } from "./wallets/wallet";
+export { type EvmPrivateKeyConfig, EvmPrivateKeyWallet, generateEvmPrivateKeyConfig } from "./wallets/evm-private-key";
 
 // Utils
-export { type ChainConfig, getChainConfig, getChainConfigByNetwork } from "./utils/chain.js";
+export { type ChainConfig, getChainConfig, getChainConfigByNetwork } from "./utils/chain";
 
 // Client
 export {
+  type unstable_Client,
+  createClient,
   type PaymentRequirementsInfo,
   clientFetch,
   DryRunPaymentRequired,
@@ -21,10 +19,10 @@ export {
   createPaymentFetch,
   resolveFetchForTransaction,
   createMcpPaymentClient,
-} from "./client.js";
+} from "./client";
 
 // Transaction
-export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils/transaction.js";
+export { type TransactionMode, DryRunTransaction, PayTransaction } from "./utils/transaction";
 
 // A2A helpers
 export {
@@ -34,10 +32,10 @@ export {
   sendMessage,
   sendMessageStream,
   getAgentCard,
-} from "./a2a.js";
+} from "./a2a";
 
 // MCP helpers
-export { type McpCallOptions, getMcpURL, listMcpTools, callMcpTool } from "./mcp.js";
+export { type McpCallOptions, getMcpURL, listMcpTools, callMcpTool } from "./mcp";
 
 // Balance
-export { type BalanceResult, getBalance } from "./balance.js";
+export { type BalanceResult, getBalance } from "./balance";

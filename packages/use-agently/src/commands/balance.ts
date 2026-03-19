@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { output } from "../output.js";
+import { output } from "../output";
 import { loadWallet, getBalance } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config.js";
+import { getConfigOrThrow } from "../config";
 
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")

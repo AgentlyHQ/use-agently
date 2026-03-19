@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { output } from "../output.js";
+import { output } from "../output";
 import { loadWallet } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config.js";
+import { getConfigOrThrow } from "../config";
 
 export const whoamiCommand = new Command("whoami")
   .description("Show current wallet info")

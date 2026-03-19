@@ -4,8 +4,8 @@ import { base, baseSepolia } from "viem/chains";
 import { ExactEvmScheme } from "@x402/evm";
 import { toClientEvmSigner } from "@x402/evm";
 import type { SchemeRegistration } from "@x402/fetch";
-import type { Wallet } from "./wallet.js";
-import type { WalletConfig } from "../config.js";
+import type { Wallet } from "./wallet";
+import type { WalletConfig } from "../config";
 
 export interface EvmPrivateKeyConfig extends WalletConfig {
   type: "evm-private-key";

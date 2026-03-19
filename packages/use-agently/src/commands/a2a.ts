@@ -10,9 +10,9 @@ import {
   DryRunPaymentRequired,
   loadWallet,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config.js";
-import { defaultClient, handleDryRunError } from "../client.js";
-import { output } from "../output.js";
+import { getConfigOrThrow } from "../config";
+import { defaultClient, handleDryRunError } from "../client";
+import { output } from "../output";
 
 // Re-export from SDK so test file can import from "./a2a"
 export { extractAgentText };

@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { loadConfig } from "./config.js";
+import { loadConfig } from "./config";
 import pkg from "../package.json" with { type: "json" };
 
 interface Session {
