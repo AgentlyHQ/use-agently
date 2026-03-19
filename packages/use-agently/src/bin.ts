@@ -3,8 +3,8 @@
 import { cli } from "./cli";
 import { checkAutoUpdate } from "./commands/update";
 import { installTelemetry, flushTelemetry } from "./telemetry";
-import { handleCliError } from "./errors.js";
-import { resolveOutputFormat } from "./output.js";
+import { handleCliError } from "./errors";
+import { resolveOutputFormat } from "./output";
 
 installTelemetry(cli);
 

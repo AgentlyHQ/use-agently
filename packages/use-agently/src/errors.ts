@@ -1,5 +1,5 @@
 import boxen from "boxen";
-import type { OutputFormat } from "./output.js";
+import type { OutputFormat } from "./output";
 
 function isProcessExitError(err: unknown): err is Error {
   // Commander calls process.exit() internally; in tests we mock it to throw an error
