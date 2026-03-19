@@ -8,7 +8,20 @@ export function getOutputFormat(command: Command): OutputFormat {
   return command.optsWithGlobals().output ?? "tui";
 }
 
-/** Available width: use terminal columns if known, otherwise 80, but at least 120. */
+/** Resolve output format with a safe fallback for early failures (defaults to tui). */
+export function resolveOutputFormat(command: Command): OutputFormat {
+  try {
+    return getOutputFormat(command);
+  } catch (err) {
+    console.warn(
+      "Falling back to TUI output after failing to resolve --output option:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return "tui";
+  }
+}
+
+/** Available width: use terminal columns if known, otherwise default to 120 (minimum 120). */
 export function getMaxWidth(): number {
   return Math.max(process.stdout.columns || 80, 120);
 }
