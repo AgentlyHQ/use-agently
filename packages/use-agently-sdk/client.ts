@@ -5,7 +5,9 @@ import type { Wallet } from "./wallets/wallet";
 import { DryRunTransaction, type TransactionMode } from "./utils/transaction";
 import { formatUnits } from "viem";
 import { getChainConfigByNetwork } from "./utils/chain";
-import pkg from "./package.json" with { type: "json" };
+// Injected at build time by tsup via define config; falls back to "0.0.0" when running from source (e.g. bun dev)
+const SDK_VERSION = typeof __SDK_VERSION__ !== "undefined" ? __SDK_VERSION__ : "0.0.0";
+declare const __SDK_VERSION__: string | undefined;
 
 type Fetch = typeof fetch;
 
@@ -50,7 +52,7 @@ function createFetch(options?: { userAgent?: string }): typeof fetch {
       }
     }
     if (!headers.has("User-Agent")) {
-      headers.set("User-Agent", options?.userAgent ?? `@use-agently/sdk:${pkg.version} (use-agently.com)`);
+      headers.set("User-Agent", options?.userAgent ?? `@use-agently/sdk:${SDK_VERSION} (use-agently.com)`);
     }
     return fetch(input, { ...init, headers });
   };

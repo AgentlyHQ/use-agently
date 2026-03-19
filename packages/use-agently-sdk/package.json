@@ -14,12 +14,88 @@
   "license": "MIT",
   "author": "AgentlyHQ",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "bun": "./client.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
+    },
+    "./a2a": {
+      "types": "./dist/a2a.d.ts",
+      "bun": "./a2a.ts",
+      "import": "./dist/a2a.js",
+      "require": "./dist/a2a.cjs"
+    },
+    "./mcp": {
+      "types": "./dist/mcp.d.ts",
+      "bun": "./mcp.ts",
+      "import": "./dist/mcp.js",
+      "require": "./dist/mcp.cjs"
+    },
+    "./agently": {
+      "types": "./dist/agently.d.ts",
+      "bun": "./agently.ts",
+      "import": "./dist/agently.js",
+      "require": "./dist/agently.cjs"
+    },
+    "./balance": {
+      "types": "./dist/balance.d.ts",
+      "bun": "./balance.ts",
+      "import": "./dist/balance.js",
+      "require": "./dist/balance.cjs"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "bun": "./config.ts",
+      "import": "./dist/config.js",
+      "require": "./dist/config.cjs"
+    },
+    "./wallets/wallet": {
+      "types": "./dist/wallets/wallet.d.ts",
+      "bun": "./wallets/wallet.ts",
+      "import": "./dist/wallets/wallet.js",
+      "require": "./dist/wallets/wallet.cjs"
+    },
+    "./wallets/evm-private-key": {
+      "types": "./dist/wallets/evm-private-key.d.ts",
+      "bun": "./wallets/evm-private-key.ts",
+      "import": "./dist/wallets/evm-private-key.js",
+      "require": "./dist/wallets/evm-private-key.cjs"
+    },
+    "./utils/chain": {
+      "types": "./dist/utils/chain.d.ts",
+      "bun": "./utils/chain.ts",
+      "import": "./dist/utils/chain.js",
+      "require": "./dist/utils/chain.cjs"
+    },
+    "./utils/transaction": {
+      "types": "./dist/utils/transaction.d.ts",
+      "bun": "./utils/transaction.ts",
+      "import": "./dist/utils/transaction.js",
+      "require": "./dist/utils/transaction.cjs"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "bun": "./testing.ts",
+      "import": "./dist/testing.js",
+      "require": "./dist/testing.cjs"
+    }
+  },
   "files": [
     "**/*.ts",
     "!**/*.test.ts",
+    "dist",
     "README.md"
   ],
   "scripts": {
+    "build": "tsup",
     "test": "bun test"
   },
   "dependencies": {
@@ -35,6 +111,7 @@
     "@types/bun": "^1.3.9",
     "localhost-aixyz": "^0",
     "testcontainers": "^11",
+    "tsup": "^8.5.1",
     "x402-fl": "^0"
   },
   "engines": {
