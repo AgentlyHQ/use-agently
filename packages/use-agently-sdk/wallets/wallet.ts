@@ -1,6 +1,6 @@
 import type { SchemeRegistration } from "@x402/fetch";
-import type { WalletConfig } from "../config.js";
-import { EvmPrivateKeyWallet } from "./evm-private-key.js";
+import type { WalletConfig } from "../config";
+import { EvmPrivateKeyWallet } from "./evm-private-key";
 
 export interface Wallet {
   type: string;

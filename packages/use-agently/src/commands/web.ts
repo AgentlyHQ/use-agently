@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { DryRunPaymentRequired } from "@use-agently/sdk";
-import { resolveFetch, handleDryRunError } from "../client.js";
-import { output } from "../output.js";
+import { resolveFetch, handleDryRunError } from "../client";
+import { output } from "../output";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

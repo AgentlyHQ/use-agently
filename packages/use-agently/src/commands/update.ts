@@ -4,9 +4,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
-import { output } from "../output.js";
-import { loadConfig } from "../config.js";
-import { clientFetch } from "../client.js";
+import { output } from "../output";
+import { loadConfig } from "../config";
+import { clientFetch } from "../client";
 import pkg from "../../package.json" with { type: "json" };
 
 const UpdateStateSchema = z.object({

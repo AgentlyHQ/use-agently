@@ -9,10 +9,10 @@ import {
   createMcpPaymentClient,
   clientFetch,
   type unstable_Client,
-} from "./client.js";
-import { DryRunTransaction, PayTransaction, type TransactionMode } from "./utils/transaction.js";
-import type { Wallet } from "./wallets/wallet.js";
-import { getAgent } from "./agently.js";
+} from "./client";
+import { DryRunTransaction, PayTransaction, type TransactionMode } from "./utils/transaction";
+import type { Wallet } from "./wallets/wallet";
+import { getAgent } from "./agently";
 import pkg from "./package.json" with { type: "json" };
 
 export interface McpCallOptions {

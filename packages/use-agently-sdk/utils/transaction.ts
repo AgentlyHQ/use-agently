@@ -1,4 +1,4 @@
-import type { Wallet } from "../wallets/wallet.js";
+import type { Wallet } from "../wallets/wallet";
 
 export const DryRunTransaction = { mode: "dry-run" } as const;
 export type DryRunTransaction = typeof DryRunTransaction;

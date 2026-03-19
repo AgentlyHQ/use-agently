@@ -1,5 +1,5 @@
 import { createPublicClient, erc20Abi, formatUnits, http } from "viem";
-import { getChainConfig } from "./utils/chain.js";
+import { getChainConfig } from "./utils/chain";
 
 export interface BalanceResult {
   address: string;

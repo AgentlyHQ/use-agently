@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { getOutputFormat, outputJsonCollection, outputNoResults, boldBlue, getMaxWidth, Table } from "../output.js";
+import { getOutputFormat, outputJsonCollection, outputNoResults, boldBlue, getMaxWidth, Table } from "../output";
 import { search } from "@use-agently/sdk/agently";
-import { defaultClient } from "../client.js";
+import { defaultClient } from "../client";
 
 /**
  * I think we should deprecate this command
