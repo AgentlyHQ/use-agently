@@ -18,7 +18,7 @@ export const cli = new Command();
 cli
   .name("use-agently")
   .description(
-    "Agently is the way AI coordinate and transact. The routing and settlement layer for your agent economy.",
+    "Agently is the way AI coordinate and transact. All protocol interactions (A2A, MCP, Web/HTTP) go through this CLI.",
   )
   .version(pkg.version)
   .option("-o, --output <format>", "Output format (tui, json)", process.stdout.isTTY ? "tui" : "json")

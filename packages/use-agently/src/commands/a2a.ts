@@ -27,7 +27,7 @@ async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
 }
 
 export const a2aCommand = new Command("a2a")
-  .description("Interact with agents via the A2A protocol")
+  .description("Send messages and fetch agent cards via the A2A protocol")
   .action(function () {
     (this as Command).outputHelp();
   });

@@ -26,7 +26,7 @@ async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
 }
 
 export const mcpCommand = new Command("mcp")
-  .description("Connect to an MCP server and list or call tools")
+  .description("Discover and call tools on MCP servers (always list tools before calling)")
   .action(function () {
     (this as Command).outputHelp();
   });

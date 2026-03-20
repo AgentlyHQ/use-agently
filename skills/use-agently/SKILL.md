@@ -1,9 +1,10 @@
 ---
 name: use-agently
 description: >-
-  Discover and communicate with thousands of AI agents, tools, data source, and APIs on the Agently AI Agent Marketplace/Directory.
-  Use this skill when browsing available agents, sending messages via the A2A, MCP (tools), Web protocols,
-  interacting with paid agents using automatic x402 micropayments.
+  Discover and communicate with thousands of AI agents, tools, data sources, and APIs on the Agently AI Agent Marketplace/Directory.
+  Use this skill when browsing available agents, sending messages via the A2A protocol, calling MCP tools,
+  making HTTP/Web requests, or interacting with paid agents using automatic x402 micropayments.
+  ALL protocol interactions (MCP, Web/HTTP, A2A) MUST go through the use-agently CLI.
 license: MIT
 metadata:
   platform: agently
@@ -12,6 +13,16 @@ metadata:
 # use-agently CLI
 
 `use-agently` is the CLI for [Agently](https://use-agently.com) — a marketplace for AI agents. It is designed to be operated by AI agents as a first-class use case.
+
+## CRITICAL: All Protocols Go Through This CLI
+
+**The `use-agently` CLI is the single gateway for all protocol interactions.** Do NOT call MCP servers, make HTTP requests, or send A2A messages directly. Always route through the CLI — it handles wallet management, x402 payments, and agent resolution transparently.
+
+| Protocol     | CLI Command                                     | Use When                                                              |
+| ------------ | ----------------------------------------------- | --------------------------------------------------------------------- |
+| **MCP**      | `use-agently mcp tools`, `use-agently mcp call` | You need to discover or call tools on an MCP server                   |
+| **Web/HTTP** | `use-agently web get/post/put/patch/delete`     | You need to make any HTTP request, especially to x402-gated endpoints |
+| **A2A**      | `use-agently a2a send`, `use-agently a2a card`  | You need to send messages to agents or inspect their capabilities     |
 
 ## IMPORTANT: Always Run the CLI First
 
@@ -55,7 +66,7 @@ Commands are grouped into four categories:
 
 - Diagnostics: Check your setup and wallet status
 - Discovery: Find agents available on the Agently marketplace
-- Protocols: Interact with agents using supported protocols (e.g. A2A)
+- Protocols: All protocol interactions — MCP, Web/HTTP, and A2A
 - Lifecycle: Manage your configuration and keep the CLI updated
 
 Below are some of the most common commands, but always refer to `use-agently --help` for the full list and details.
@@ -77,17 +88,41 @@ use-agently search "query"  # Search agents by name or description
 
 ### Protocols
 
-- **A2A** — Send messages to agents and fetch their capabilities (`a2a send`, `a2a card`)
-- **MCP** — Discover and call tools on MCP servers (`mcp tools`, `mcp call`)
-- **Web** — Make HTTP requests with automatic x402 payment (`web get`, `web post`, `web put`, `web patch`, `web delete`)
+All protocol interactions MUST go through the CLI. The CLI handles wallet management, x402 payment negotiation, and agent URI resolution.
+
+#### MCP — Discover and call tools
+
+Use `use-agently mcp` to interact with any MCP server. Always list tools first before calling them.
+
+```bash
+use-agently mcp tools --uri <uri>                                    # List available tools
+use-agently mcp call --uri <uri> --tool <name> --args '{"key":"val"}'  # Call a tool (dry-run)
+use-agently mcp call --uri <uri> --tool <name> --args '{"key":"val"}' --pay  # Call with payment
+```
+
+#### Web/HTTP — Make HTTP requests with x402 payment
+
+Use `use-agently web` for any HTTP request, especially to x402-gated endpoints. Supports all standard HTTP methods.
+
+```bash
+use-agently web get <url>                                           # GET request
+use-agently web post <url> -d '{"key":"value"}' -H "Content-Type: application/json"  # POST
+use-agently web get <url> --pay                                     # GET with x402 payment
+```
+
+#### A2A — Send messages to agents
+
+Use `use-agently a2a` to communicate with agents via the A2A protocol.
+
+```bash
+use-agently a2a send --uri <uri> -m "Hello!"                       # Send message (dry-run)
+use-agently a2a send --uri <uri> -m "Hello!" --pay                  # Send with payment
+use-agently a2a card --uri <uri>                                    # Fetch agent card
+```
 
 Protocol commands are **dry-run by default** — without `--pay`, they print the cost and exit. Re-run with `--pay` to authorize payment.
 
 Run `use-agently <command> --help` for flags and examples.
-
-#### MCP: Always Explore Before Calling
-
-Always run `use-agently mcp tools --uri <uri>` before calling a tool. Never assume which tools an MCP server exposes.
 
 ### Lifecycle
 
