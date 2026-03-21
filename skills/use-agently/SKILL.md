@@ -86,6 +86,25 @@ use-agently search          # List available agents on Agently
 use-agently search "query"  # Search agents by name or description
 ```
 
+Search results include a **protocols** column showing each agent's supported protocols (e.g. `a2a`, `mcp`, `web`). Use the matching protocol command to interact with the agent:
+
+| Protocol in results | Next step                                         |
+| ------------------- | ------------------------------------------------- |
+| `a2a`               | `use-agently a2a send --uri <uri> -m "message"`   |
+| `mcp`               | `use-agently mcp tools --uri <uri>` to list tools |
+
+Example workflow:
+
+```bash
+# 1. Search for agents
+use-agently search -q "echo"
+
+# 2. Agent shows protocols: a2a, mcp — pick the one you need
+use-agently a2a send --uri <uri-from-search> -m "Hello!"
+# or
+use-agently mcp tools --uri <uri-from-search>
+```
+
 ### Protocols
 
 All protocol interactions MUST go through the CLI. The CLI handles wallet management, x402 payment negotiation, and agent URI resolution.

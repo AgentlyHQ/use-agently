@@ -10,7 +10,22 @@ export const searchCommand = new Command("search")
   .showHelpAfterError(true)
   .addHelpText(
     "after",
-    '\nExamples:\n  use-agently search\n  use-agently search -q "echo"\n  use-agently search --protocol a2a\n  use-agently search -q "assistant" --protocol "a2a,mcp"',
+    [
+      "",
+      "Examples:",
+      "  use-agently search",
+      '  use-agently search -q "web search"',
+      "  use-agently search --protocol a2a",
+      '  use-agently search -q "generate markdown report" --protocol "a2a,mcp"',
+      "",
+      "Workflow:",
+      "  Search results include a 'protocols' column showing each agent's supported protocols.",
+      "  Use the protocol commands to interact with the agent:",
+      "",
+      "  a2a  -> use-agently a2a send --uri <uri> -m <message>",
+      "  mcp  -> use-agently mcp tools --uri <uri>",
+      // TODO(?): document OSAF when implemented
+    ].join("\n"),
   )
   .action(async (options: { query?: string; protocol?: string }, command: Command) => {
     const format = getOutputFormat(command);
