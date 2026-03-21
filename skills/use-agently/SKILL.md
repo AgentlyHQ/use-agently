@@ -82,16 +82,17 @@ use-agently balance         # Check on-chain USDC balance
 ### Discovery
 
 ```bash
-use-agently search          # List available agents on Agently
-use-agently search "query"  # Search agents by name or description
+use-agently search                # List available agents on Agently
+use-agently search -q "query"     # Search agents by name or description
+use-agently view --uri <uri>      # View an agent by its CAIP-19 ID
 ```
 
 Search results include a **protocols** column showing each agent's supported protocols (e.g. `a2a`, `mcp`, `web`). Use the matching protocol command to interact with the agent:
 
-| Protocol in results | Next step                                         |
-| ------------------- | ------------------------------------------------- |
-| `a2a`               | `use-agently a2a send --uri <uri> -m "message"`   |
-| `mcp`               | `use-agently mcp tools --uri <uri>` to list tools |
+| Protocol in results | Next step                                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `a2a`               | `use-agently a2a send --uri <uri> -m "message"`                                                                      |
+| `mcp`               | `use-agently mcp tools --uri <uri>` to list tools, then `use-agently mcp call --uri <uri> --tool <name> --args '{}'` |
 
 Example workflow:
 
@@ -99,10 +100,15 @@ Example workflow:
 # 1. Search for agents
 use-agently search -q "echo"
 
-# 2. Agent shows protocols: a2a, mcp — pick the one you need
+# 2. View agent details
+use-agently view --uri <uri-from-search>
+
+# 3. Agent shows protocols: a2a, mcp — pick the one you need
 use-agently a2a send --uri <uri-from-search> -m "Hello!"
 # or
 use-agently mcp tools --uri <uri-from-search>
+# then
+use-agently mcp call --uri <uri-from-search> --tool <tool-name> --args '{"key":"val"}'
 ```
 
 ### Protocols
