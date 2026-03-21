@@ -14,7 +14,7 @@ import { DryRunTransaction, PayTransaction, type TransactionMode } from "./utils
 import type { Wallet } from "./wallets/wallet";
 import { getAgent } from "./agently";
 
-// Injected at build time by tsup via define config; falls back to "0.0.0" when running from source (e.g. bun dev)
+// Injected at build time by tsdown via define config; falls back to "0.0.0" when running from source (e.g. bun dev)
 const SDK_VERSION = typeof __SDK_VERSION__ !== "undefined" ? __SDK_VERSION__ : "0.0.0";
 declare const __SDK_VERSION__: string | undefined;
 
