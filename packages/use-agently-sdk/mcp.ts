@@ -13,7 +13,10 @@ import {
 import { DryRunTransaction, PayTransaction, type TransactionMode } from "./utils/transaction";
 import type { Wallet } from "./wallets/wallet";
 import { getAgent } from "./agently";
-import pkg from "./package.json" with { type: "json" };
+
+// Injected at build time by tsdown via define config; falls back to "0.0.0" when running from source (e.g. bun dev)
+const SDK_VERSION = typeof __SDK_VERSION__ !== "undefined" ? __SDK_VERSION__ : "0.0.0";
+declare const __SDK_VERSION__: string | undefined;
 
 export interface McpCallOptions {
   transaction?: TransactionMode;
@@ -62,7 +65,7 @@ async function createMcpClient(
   mcpUrl: string,
   options?: { clientInfo?: { name: string; version: string }; fetchImpl?: typeof fetch; wallet?: Wallet },
 ): Promise<Client | x402MCPClient> {
-  const client = new Client(options?.clientInfo ?? { name: "@use-agently/sdk", version: pkg.version });
+  const client = new Client(options?.clientInfo ?? { name: "@use-agently/sdk", version: SDK_VERSION });
   const transport = new StreamableHTTPClientTransport(
     new URL(mcpUrl),
     options?.fetchImpl ? { fetch: options.fetchImpl } : undefined,
