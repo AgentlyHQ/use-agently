@@ -10,6 +10,7 @@ import { mcpCommand } from "./commands/mcp";
 import { webCommand } from "./commands/web";
 import { doctorCommand } from "./commands/doctor";
 import { updateCommand } from "./commands/update";
+import { walletCommand } from "./commands/wallet";
 
 import pkg from "../package.json" with { type: "json" };
 
@@ -49,6 +50,7 @@ cli.addCommand(webCommand.helpGroup("Protocols"));
 
 // Lifecycle
 cli.addCommand(initCommand.helpGroup("Lifecycle"));
+cli.addCommand(walletCommand.helpGroup("Lifecycle"));
 cli.addCommand(updateCommand.helpGroup("Lifecycle"));
 
 // Propagate showGlobalOptions to all subcommands added via addCommand(),

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { DryRunPaymentRequired } from "@use-agently/sdk";
-import { resolveFetch, handleDryRunError } from "../client";
+import { resolveFetch, handleDryRunError, handleSpendLimitError, SpendLimitExceeded } from "../client";
 import { output } from "../output";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -287,6 +287,9 @@ async function executeHttpRequest(method: string, url: string, options: WebOptio
     if (options.fail && !response.ok) process.exit(1);
   } catch (err) {
     clearTimeout(timer);
+    if (err instanceof SpendLimitExceeded) {
+      handleSpendLimitError(err);
+    }
     if (err instanceof DryRunPaymentRequired) {
       handleDryRunError(err);
     }

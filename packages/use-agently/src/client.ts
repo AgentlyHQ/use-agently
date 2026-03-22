@@ -6,9 +6,10 @@ import {
   createPaymentFetch as sdkCreatePaymentFetch,
   getChainConfigByNetwork,
   type PaymentRequirementsInfo,
+  type unstable_Client,
   loadWallet,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "./config";
+import { getConfigOrThrow, getMaxSpendPerCall } from "./config";
 import pkg from "../package.json" with { type: "json" };
 import { createClient } from "@use-agently/sdk/client";
 
@@ -51,14 +52,90 @@ export function createPaymentFetch(wallet: ReturnType<typeof loadWallet>) {
   return sdkCreatePaymentFetch(wallet, clientFetch);
 }
 
-/** Resolve the fetch implementation based on the --pay flag. */
+/** Error thrown when a payment amount exceeds the configured spend limit. */
+export class SpendLimitExceeded extends Error {
+  readonly requestedAmount: number;
+  readonly maxSpendPerCall: number;
+
+  constructor(requestedAmount: number, maxSpendPerCall: number) {
+    super(
+      `Payment of $${requestedAmount} USDC exceeds your spend limit of $${maxSpendPerCall} USDC per call.\n` +
+        `Adjust the limit with: use-agently wallet spend set-max <value> (max $1).`,
+    );
+    this.name = "SpendLimitExceeded";
+    this.requestedAmount = requestedAmount;
+    this.maxSpendPerCall = maxSpendPerCall;
+  }
+}
+
+/**
+ * Wrap a base fetch to enforce a spend limit on 402 Payment Required responses.
+ * This sits between the base fetch and the x402 payment wrapper: when the server
+ * returns a 402, we inspect the amount BEFORE x402 signs any payment.
+ */
+export function createSpendLimitedFetch(baseFetch: typeof fetch, maxSpendPerCall: number): typeof fetch {
+  // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const response = await baseFetch(input, init);
+    if (response.status === 402) {
+      const header = response.headers.get("PAYMENT-REQUIRED");
+      let requirements: PaymentRequirementsInfo[] = [];
+      if (header) {
+        try {
+          const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
+          requirements = (decoded.accepts as PaymentRequirementsInfo[]) ?? [];
+        } catch {
+          // Can't parse header — let x402 handle it
+        }
+      } else {
+        try {
+          const body = await response.clone().json();
+          if (body?.accepts) {
+            requirements = body.accepts as PaymentRequirementsInfo[];
+          }
+        } catch {
+          // Can't parse body — let x402 handle it
+        }
+      }
+      const req = requirements[0];
+      if (req) {
+        try {
+          const { usdcDecimals } = getChainConfigByNetwork(req.network);
+          const amountInDollars = Number(formatUnits(BigInt(req.amount), usdcDecimals));
+          if (amountInDollars > maxSpendPerCall) {
+            throw new SpendLimitExceeded(amountInDollars, maxSpendPerCall);
+          }
+        } catch (e) {
+          if (e instanceof SpendLimitExceeded) throw e;
+          // Can't determine amount — allow the payment to proceed
+        }
+      }
+    }
+    return response;
+  };
+}
+
+/** Resolve the fetch implementation based on the --pay flag, with spend limit enforcement. */
 export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
   if (pay) {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
-    return sdkCreatePaymentFetch(wallet, clientFetch) as typeof fetch;
+    const maxSpend = getMaxSpendPerCall(config);
+    const limitedFetch = createSpendLimitedFetch(clientFetch, maxSpend);
+    return sdkCreatePaymentFetch(wallet, limitedFetch) as typeof fetch;
   }
   return createDryRunFetch();
+}
+
+/**
+ * Resolve a spend-limited SDK client for use with A2A/MCP protocols.
+ * The returned client's fetch includes the spend limit check so that
+ * x402 payment wrapping inside the SDK will be blocked if the amount exceeds the limit.
+ */
+export function createSpendLimitedClient(maxSpendPerCall: number): unstable_Client {
+  return {
+    fetch: createSpendLimitedFetch(defaultClient.fetch, maxSpendPerCall),
+  };
 }
 
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
@@ -87,6 +164,23 @@ export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
     );
   } else {
     console.error(`Payment Required: ${cliErr.message}`);
+  }
+  process.exit(1);
+}
+
+/** Display a SpendLimitExceeded error and exit. */
+export function handleSpendLimitError(err: SpendLimitExceeded): never {
+  if (process.stderr.isTTY) {
+    console.error(
+      boxen(err.message, {
+        title: "Spend Limit Exceeded",
+        titleAlignment: "center",
+        borderColor: "red",
+        padding: 1,
+      }),
+    );
+  } else {
+    console.error(`Spend Limit Exceeded: ${err.message}`);
   }
   process.exit(1);
 }

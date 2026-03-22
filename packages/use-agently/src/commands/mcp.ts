@@ -3,6 +3,7 @@ import boxen from "boxen";
 import { formatUnits } from "viem";
 import {
   type TransactionMode,
+  type unstable_Client,
   DryRunTransaction,
   PayTransaction,
   DryRunPaymentRequired,
@@ -11,18 +12,26 @@ import {
   listMcpTools,
   callMcpTool,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config";
-import { defaultClient, clientFetch, handleDryRunError } from "../client";
+import { getConfigOrThrow, getMaxSpendPerCall } from "../config";
+import {
+  defaultClient,
+  clientFetch,
+  handleDryRunError,
+  handleSpendLimitError,
+  SpendLimitExceeded,
+  createSpendLimitedClient,
+} from "../client";
 import pkg from "../../package.json" with { type: "json" };
 import { output, outputCollection } from "../output";
 
-async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
+async function resolveTransactionMode(pay?: boolean): Promise<{ client: unstable_Client; mode: TransactionMode }> {
   if (pay) {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
-    return PayTransaction(wallet);
+    const maxSpend = getMaxSpendPerCall(config);
+    return { client: createSpendLimitedClient(maxSpend), mode: PayTransaction(wallet) };
   }
-  return DryRunTransaction;
+  return { client: defaultClient, mode: DryRunTransaction };
 }
 
 export const mcpCommand = new Command("mcp")
@@ -71,11 +80,11 @@ const mcpCallCommand = new Command("call")
         );
       }
     }
-    const transaction = await resolveTransactionMode(options.pay);
+    const { client, mode } = await resolveTransactionMode(options.pay);
 
     try {
-      const result = await callMcpTool(defaultClient, uri, tool, args, {
-        transaction,
+      const result = await callMcpTool(client, uri, tool, args, {
+        transaction: mode,
         clientInfo: { name: "use-agently", version: pkg.version },
         fetchImpl: clientFetch,
       });
@@ -138,6 +147,7 @@ const mcpCallCommand = new Command("call")
         output(command, result);
       }
     } catch (err) {
+      if (err instanceof SpendLimitExceeded) handleSpendLimitError(err);
       if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
       throw err;
     }
