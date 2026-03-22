@@ -103,10 +103,9 @@ describe("createSpendLimitedFetch", () => {
     expect(response.status).toStrictEqual(402);
   });
 
-  test("passes through 402 without parseable requirements", async () => {
+  test("blocks 402 without parseable requirements (fail-closed)", async () => {
     const limitedFetch = createSpendLimitedFetch(mockFetch(new Response(null, { status: 402 })), 0.1);
-    const response = await limitedFetch("http://example.com");
-    expect(response.status).toStrictEqual(402);
+    await expect(limitedFetch("http://example.com")).rejects.toBeInstanceOf(SpendLimitExceeded);
   });
 
   test("parses requirements from x402v1 body format", async () => {

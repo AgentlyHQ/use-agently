@@ -48,10 +48,6 @@ export function createDryRunFetch(): typeof fetch {
   };
 }
 
-export function createPaymentFetch(wallet: ReturnType<typeof loadWallet>) {
-  return sdkCreatePaymentFetch(wallet, clientFetch);
-}
-
 /** Error thrown when a payment amount exceeds the configured spend limit. */
 export class SpendLimitExceeded extends Error {
   readonly requestedAmount: number;
@@ -59,7 +55,7 @@ export class SpendLimitExceeded extends Error {
 
   constructor(requestedAmount: number, maxSpendPerCall: number) {
     super(
-      `Payment of $${requestedAmount} USDC exceeds your spend limit of $${maxSpendPerCall} USDC per call.\n` +
+      `Payment of ${formatDollars(requestedAmount)} USDC exceeds your spend limit of ${formatDollars(maxSpendPerCall)} USDC per call.\n` +
         `Adjust the limit with: use-agently wallet spend set-max <value> (max $1).`,
     );
     this.name = "SpendLimitExceeded";
@@ -72,6 +68,8 @@ export class SpendLimitExceeded extends Error {
  * Wrap a base fetch to enforce a spend limit on 402 Payment Required responses.
  * This sits between the base fetch and the x402 payment wrapper: when the server
  * returns a 402, we inspect the amount BEFORE x402 signs any payment.
+ *
+ * Fail-closed: if the amount cannot be determined, the payment is blocked.
  */
 export function createSpendLimitedFetch(baseFetch: typeof fetch, maxSpendPerCall: number): typeof fetch {
   // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
@@ -85,7 +83,7 @@ export function createSpendLimitedFetch(baseFetch: typeof fetch, maxSpendPerCall
           const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
           requirements = (decoded.accepts as PaymentRequirementsInfo[]) ?? [];
         } catch {
-          // Can't parse header — let x402 handle it
+          // Can't parse header — fall through to fail-closed check below
         }
       } else {
         try {
@@ -94,21 +92,23 @@ export function createSpendLimitedFetch(baseFetch: typeof fetch, maxSpendPerCall
             requirements = body.accepts as PaymentRequirementsInfo[];
           }
         } catch {
-          // Can't parse body — let x402 handle it
+          // Can't parse body — fall through to fail-closed check below
         }
       }
       const req = requirements[0];
-      if (req) {
-        try {
-          const { usdcDecimals } = getChainConfigByNetwork(req.network);
-          const amountInDollars = Number(formatUnits(BigInt(req.amount), usdcDecimals));
-          if (amountInDollars > maxSpendPerCall) {
-            throw new SpendLimitExceeded(amountInDollars, maxSpendPerCall);
-          }
-        } catch (e) {
-          if (e instanceof SpendLimitExceeded) throw e;
-          // Can't determine amount — allow the payment to proceed
-        }
+      if (!req) {
+        throw new SpendLimitExceeded(NaN, maxSpendPerCall);
+      }
+      let amountInDollars: number;
+      try {
+        const { usdcDecimals } = getChainConfigByNetwork(req.network);
+        amountInDollars = Number(formatUnits(BigInt(req.amount), usdcDecimals));
+      } catch {
+        // Malformed requirement — fail-closed: block the payment
+        throw new SpendLimitExceeded(NaN, maxSpendPerCall);
+      }
+      if (amountInDollars > maxSpendPerCall) {
+        throw new SpendLimitExceeded(amountInDollars, maxSpendPerCall);
       }
     }
     return response;
@@ -138,6 +138,11 @@ export function createSpendLimitedClient(maxSpendPerCall: number): unstable_Clie
   };
 }
 
+function formatDollars(amount: number): string {
+  if (Number.isNaN(amount)) return "$? (unknown)";
+  return `$${parseFloat(amount.toFixed(6))}`;
+}
+
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   try {
     const { usdcDecimals } = getChainConfigByNetwork(req.network);
@@ -150,37 +155,30 @@ function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   }
 }
 
-/** Display a DryRunPaymentRequired error and exit. Uses boxen when stderr is a TTY, plain text otherwise. */
-export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
-  const cliErr = err instanceof DryRunPaymentRequired ? err : new DryRunPaymentRequired(err.requirements);
+/** Display an error in a boxen frame and exit. */
+function handleErrorAndExit(title: string, message: string, borderColor: string): never {
   if (process.stderr.isTTY) {
     console.error(
-      boxen(cliErr.message, {
-        title: "Payment Required",
+      boxen(message, {
+        title,
         titleAlignment: "center",
-        borderColor: "yellow",
+        borderColor,
         padding: 1,
       }),
     );
   } else {
-    console.error(`Payment Required: ${cliErr.message}`);
+    console.error(`${title}: ${message}`);
   }
   process.exit(1);
 }
 
+/** Display a DryRunPaymentRequired error and exit. */
+export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
+  const cliErr = err instanceof DryRunPaymentRequired ? err : new DryRunPaymentRequired(err.requirements);
+  handleErrorAndExit("Payment Required", cliErr.message, "yellow");
+}
+
 /** Display a SpendLimitExceeded error and exit. */
 export function handleSpendLimitError(err: SpendLimitExceeded): never {
-  if (process.stderr.isTTY) {
-    console.error(
-      boxen(err.message, {
-        title: "Spend Limit Exceeded",
-        titleAlignment: "center",
-        borderColor: "red",
-        padding: 1,
-      }),
-    );
-  } else {
-    console.error(`Spend Limit Exceeded: ${err.message}`);
-  }
-  process.exit(1);
+  handleErrorAndExit("Spend Limit Exceeded", err.message, "red");
 }
