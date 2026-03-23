@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import {
   type TransactionMode,
+  type unstable_Client,
   DryRunTransaction,
   PayTransaction,
   sendMessageStream,
@@ -10,20 +11,27 @@ import {
   DryRunPaymentRequired,
   loadWallet,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config";
-import { defaultClient, handleDryRunError } from "../client";
+import { getConfigOrThrow, getMaxSpendPerCall } from "../config";
+import {
+  defaultClient,
+  handleDryRunError,
+  handleSpendLimitError,
+  SpendLimitExceeded,
+  createSpendLimitedClient,
+} from "../client";
 import { output } from "../output";
 
 // Re-export from SDK so test file can import from "./a2a"
 export { extractAgentText };
 
-async function resolveTransactionMode(pay?: boolean): Promise<TransactionMode> {
+async function resolveTransactionMode(pay?: boolean): Promise<{ client: unstable_Client; mode: TransactionMode }> {
   if (pay) {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
-    return PayTransaction(wallet);
+    const maxSpend = getMaxSpendPerCall(config);
+    return { client: createSpendLimitedClient(maxSpend), mode: PayTransaction(wallet) };
   }
-  return DryRunTransaction;
+  return { client: defaultClient, mode: DryRunTransaction };
 }
 
 export const a2aCommand = new Command("a2a")
@@ -47,13 +55,13 @@ const a2aSendCommand = new Command("send")
   )
   .action(async (options: { uri: string; message: string; pay?: boolean }) => {
     const uri = options.uri;
-    const transaction = await resolveTransactionMode(options.pay);
+    const { client, mode } = await resolveTransactionMode(options.pay);
 
     try {
       // A2A send always streams text to stdout regardless of --output format.
       // Streaming is intentional: agents consume the response as it arrives,
       // and buffering would defeat the purpose of the streaming A2A protocol.
-      const stream = await sendMessageStream(defaultClient, uri, options.message, { mode: transaction });
+      const stream = await sendMessageStream(client, uri, options.message, { mode });
 
       let wroteText = false;
       let lastResult: any = null;
@@ -72,6 +80,7 @@ const a2aSendCommand = new Command("send")
         console.log(extractAgentText(lastResult));
       }
     } catch (err) {
+      if (err instanceof SpendLimitExceeded) handleSpendLimitError(err);
       if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
       throw err;
     }

@@ -3,6 +3,18 @@ import { join } from "node:path";
 import { mkdir, rename, readFile, writeFile } from "node:fs/promises";
 import { type Config, ConfigSchema } from "@use-agently/sdk";
 
+/**
+ * Read the max spend per call from the wallet's spend config.
+ * Falls back to $0.1 when not configured.
+ */
+export function getMaxSpendPerCall(config: Config): number {
+  const spend = (config.wallet as Record<string, unknown>)?.spend;
+  if (spend && typeof spend === "object" && "max" in spend && typeof (spend as any).max === "number") {
+    return (spend as any).max;
+  }
+  return 0.1;
+}
+
 export type ConfigScope = "global" | "local";
 
 function getConfigDir(scope: ConfigScope): string {

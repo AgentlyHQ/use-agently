@@ -6,9 +6,10 @@ import {
   createPaymentFetch as sdkCreatePaymentFetch,
   getChainConfigByNetwork,
   type PaymentRequirementsInfo,
+  type unstable_Client,
   loadWallet,
 } from "@use-agently/sdk";
-import { getConfigOrThrow } from "./config";
+import { getConfigOrThrow, getMaxSpendPerCall } from "./config";
 import pkg from "../package.json" with { type: "json" };
 import { createClient } from "@use-agently/sdk/client";
 
@@ -47,18 +48,99 @@ export function createDryRunFetch(): typeof fetch {
   };
 }
 
-export function createPaymentFetch(wallet: ReturnType<typeof loadWallet>) {
-  return sdkCreatePaymentFetch(wallet, clientFetch);
+/** Error thrown when a payment amount exceeds the configured spend limit. */
+export class SpendLimitExceeded extends Error {
+  readonly requestedAmount: number;
+  readonly maxSpendPerCall: number;
+
+  constructor(requestedAmount: number, maxSpendPerCall: number) {
+    super(
+      `Payment of ${formatDollars(requestedAmount)} USDC exceeds your spend limit of ${formatDollars(maxSpendPerCall)} USDC per call.\n` +
+        `Run "use-agently wallet spend set-max" to adjust — AI agents must ask the wallet owner for approval before changing spend limits.`,
+    );
+    this.name = "SpendLimitExceeded";
+    this.requestedAmount = requestedAmount;
+    this.maxSpendPerCall = maxSpendPerCall;
+  }
 }
 
-/** Resolve the fetch implementation based on the --pay flag. */
+/**
+ * Wrap a base fetch to enforce a spend limit on 402 Payment Required responses.
+ * This sits between the base fetch and the x402 payment wrapper: when the server
+ * returns a 402, we inspect the amount BEFORE x402 signs any payment.
+ *
+ * Fail-closed: if the amount cannot be determined, the payment is blocked.
+ */
+export function createSpendLimitedFetch(baseFetch: typeof fetch, maxSpendPerCall: number): typeof fetch {
+  // @ts-expect-error — Bun's typeof fetch includes preconnect namespace (oven-sh/bun#23741)
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const response = await baseFetch(input, init);
+    if (response.status === 402) {
+      const header = response.headers.get("PAYMENT-REQUIRED");
+      let requirements: PaymentRequirementsInfo[] = [];
+      if (header) {
+        try {
+          const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
+          requirements = (decoded.accepts as PaymentRequirementsInfo[]) ?? [];
+        } catch {
+          // Can't parse header — fall through to fail-closed check below
+        }
+      } else {
+        try {
+          const body = await response.clone().json();
+          if (body?.accepts) {
+            requirements = body.accepts as PaymentRequirementsInfo[];
+          }
+        } catch {
+          // Can't parse body — fall through to fail-closed check below
+        }
+      }
+      const req = requirements[0];
+      if (!req) {
+        throw new SpendLimitExceeded(NaN, maxSpendPerCall);
+      }
+      let amountInDollars: number;
+      try {
+        const { usdcDecimals } = getChainConfigByNetwork(req.network);
+        amountInDollars = Number(formatUnits(BigInt(req.amount), usdcDecimals));
+      } catch {
+        // Malformed requirement — fail-closed: block the payment
+        throw new SpendLimitExceeded(NaN, maxSpendPerCall);
+      }
+      if (amountInDollars > maxSpendPerCall) {
+        throw new SpendLimitExceeded(amountInDollars, maxSpendPerCall);
+      }
+    }
+    return response;
+  };
+}
+
+/** Resolve the fetch implementation based on the --pay flag, with spend limit enforcement. */
 export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
   if (pay) {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);
-    return sdkCreatePaymentFetch(wallet, clientFetch) as typeof fetch;
+    const maxSpend = getMaxSpendPerCall(config);
+    const limitedFetch = createSpendLimitedFetch(clientFetch, maxSpend);
+    return sdkCreatePaymentFetch(wallet, limitedFetch) as typeof fetch;
   }
   return createDryRunFetch();
+}
+
+/**
+ * Resolve a spend-limited SDK client for use with A2A/MCP protocols.
+ * The returned client's fetch includes the spend limit check so that
+ * x402 payment wrapping inside the SDK will be blocked if the amount exceeds the limit.
+ */
+export function createSpendLimitedClient(maxSpendPerCall: number): unstable_Client {
+  return {
+    fetch: createSpendLimitedFetch(defaultClient.fetch, maxSpendPerCall),
+  };
+}
+
+function formatDollars(amount: number): string {
+  if (Number.isNaN(amount)) return "$? (unknown)";
+  return `$${parseFloat(amount.toFixed(6))}`;
 }
 
 function formatUsdcAmount(req: PaymentRequirementsInfo): string {
@@ -73,20 +155,30 @@ function formatUsdcAmount(req: PaymentRequirementsInfo): string {
   }
 }
 
-/** Display a DryRunPaymentRequired error and exit. Uses boxen when stderr is a TTY, plain text otherwise. */
-export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
-  const cliErr = err instanceof DryRunPaymentRequired ? err : new DryRunPaymentRequired(err.requirements);
+/** Display an error in a boxen frame and exit. */
+function handleErrorAndExit(title: string, message: string, borderColor: string): never {
   if (process.stderr.isTTY) {
     console.error(
-      boxen(cliErr.message, {
-        title: "Payment Required",
+      boxen(message, {
+        title,
         titleAlignment: "center",
-        borderColor: "yellow",
+        borderColor,
         padding: 1,
       }),
     );
   } else {
-    console.error(`Payment Required: ${cliErr.message}`);
+    console.error(`${title}: ${message}`);
   }
   process.exit(1);
+}
+
+/** Display a DryRunPaymentRequired error and exit. */
+export function handleDryRunError(err: SdkDryRunPaymentRequired): never {
+  const cliErr = err instanceof DryRunPaymentRequired ? err : new DryRunPaymentRequired(err.requirements);
+  handleErrorAndExit("Payment Required", cliErr.message, "yellow");
+}
+
+/** Display a SpendLimitExceeded error and exit. */
+export function handleSpendLimitError(err: SpendLimitExceeded): never {
+  handleErrorAndExit("Spend Limit Exceeded", err.message, "red");
 }

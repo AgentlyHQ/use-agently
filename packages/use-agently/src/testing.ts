@@ -139,5 +139,9 @@ export function mockConfigModule(getConfig?: () => unknown) {
     loadConfig: async () => resolve(),
     saveConfig: async () => {},
     backupConfig: async () => "",
+    getMaxSpendPerCall: (config: any) => {
+      const spend = config?.wallet?.spend;
+      return typeof spend?.max === "number" ? spend.max : 0.1;
+    },
   }));
 }
