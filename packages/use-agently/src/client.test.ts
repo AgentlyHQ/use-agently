@@ -58,7 +58,7 @@ describe("SpendLimitExceeded", () => {
     const err = new SpendLimitExceeded(0.5, 0.1);
     expect(err.message).toContain("$0.5");
     expect(err.message).toContain("$0.1");
-    expect(err.message).toContain("wallet spend set-max");
+    expect(err.message).toContain("must ask the wallet owner");
     expect(err.requestedAmount).toStrictEqual(0.5);
     expect(err.maxSpendPerCall).toStrictEqual(0.1);
   });

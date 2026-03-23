@@ -56,7 +56,7 @@ export class SpendLimitExceeded extends Error {
   constructor(requestedAmount: number, maxSpendPerCall: number) {
     super(
       `Payment of ${formatDollars(requestedAmount)} USDC exceeds your spend limit of ${formatDollars(maxSpendPerCall)} USDC per call.\n` +
-        `Adjust the limit with: use-agently wallet spend set-max <value> (max $1).`,
+        `Run "use-agently wallet spend set-max" to adjust — AI agents must ask the wallet owner for approval before changing spend limits.`,
     );
     this.name = "SpendLimitExceeded";
     this.requestedAmount = requestedAmount;
