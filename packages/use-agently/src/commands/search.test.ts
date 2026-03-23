@@ -14,6 +14,8 @@ const TEST_HITS = [
     owner: "0xabc",
     name: "Echo Agent",
     description: "An echo agent",
+    protocols: ["a2a", "mcp"],
+    protocol: { a2a: { healthy: true }, mcp: { healthy: true } },
     created_at: "2025-01-01T00:00:00.000Z",
   },
 ];

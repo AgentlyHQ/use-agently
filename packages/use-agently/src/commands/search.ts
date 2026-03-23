@@ -3,6 +3,13 @@ import { getOutputFormat, outputJsonCollection, outputNoResults, boldBlue, getMa
 import { search } from "@use-agently/sdk/agently";
 import { defaultClient } from "../client";
 
+const SUPPORTED_PROTOCOLS = ["a2a", "mcp"] as const;
+
+function getHealthyProtocols(protocol?: Record<string, { healthy?: boolean }>): string[] {
+  if (!protocol) return [];
+  return SUPPORTED_PROTOCOLS.filter((name) => protocol[name]?.healthy === true);
+}
+
 export const searchCommand = new Command("search")
   .description("Search the Agently marketplace for agents")
   .option("-q, --query <text>", "Search query to filter agents by name or description")
@@ -31,7 +38,12 @@ export const searchCommand = new Command("search")
     const format = getOutputFormat(command);
     const protocol = options.protocol ? options.protocol.split(",").map((p) => p.trim().toLowerCase()) : undefined;
     const result = await search(defaultClient, { q: options.query, protocol });
-    const items = result.hits.map(({ id, name, description, protocols }) => ({ id, name, description, protocols }));
+    const items = result.hits
+      .map((hit) => {
+        const protocols = getHealthyProtocols(hit.protocol);
+        return { id: hit.id, name: hit.name, description: hit.description, protocols };
+      })
+      .filter((item) => item.protocols.length > 0);
 
     if (items.length === 0) {
       outputNoResults(format);

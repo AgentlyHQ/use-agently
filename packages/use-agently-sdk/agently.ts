@@ -33,6 +33,7 @@ export interface ERC8004Agent {
   name: string;
   description: string;
   protocols: string[];
+  protocol?: Record<string, { healthy?: boolean }>;
   created_at: string;
 }
 
