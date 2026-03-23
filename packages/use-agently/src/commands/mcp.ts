@@ -2,8 +2,6 @@ import { Command } from "commander";
 import boxen from "boxen";
 import { formatUnits } from "viem";
 import {
-  type TransactionMode,
-  type unstable_Client,
   DryRunTransaction,
   PayTransaction,
   DryRunPaymentRequired,
@@ -13,25 +11,30 @@ import {
   callMcpTool,
 } from "@use-agently/sdk";
 import { getConfigOrThrow, getMaxSpendPerCall } from "../config";
-import {
-  defaultClient,
-  clientFetch,
-  handleDryRunError,
-  handleSpendLimitError,
-  SpendLimitExceeded,
-  createSpendLimitedClient,
-} from "../client";
+import { defaultClient, clientFetch, handleDryRunError, handleSpendLimitError, SpendLimitExceeded } from "../client";
 import pkg from "../../package.json" with { type: "json" };
 import { output, outputCollection } from "../output";
 
-async function resolveTransactionMode(pay?: boolean): Promise<{ client: unstable_Client; mode: TransactionMode }> {
-  if (pay) {
-    const config = await getConfigOrThrow();
-    const wallet = loadWallet(config.wallet);
-    const maxSpend = getMaxSpendPerCall(config);
-    return { client: createSpendLimitedClient(maxSpend), mode: PayTransaction(wallet) };
+/**
+ * Check payment requirements against the spend limit.
+ * Throws SpendLimitExceeded if the amount exceeds the limit.
+ * Fail-closed: throws if the amount cannot be determined.
+ */
+function checkSpendLimit(err: DryRunPaymentRequired, maxSpendPerCall: number): void {
+  const req = err.requirements[0];
+  if (!req) {
+    throw new SpendLimitExceeded(NaN, maxSpendPerCall);
   }
-  return { client: defaultClient, mode: DryRunTransaction };
+  let amountInDollars: number;
+  try {
+    const { usdcDecimals } = getChainConfigByNetwork(req.network);
+    amountInDollars = Number(formatUnits(BigInt(req.amount), usdcDecimals));
+  } catch {
+    throw new SpendLimitExceeded(NaN, maxSpendPerCall);
+  }
+  if (amountInDollars > maxSpendPerCall) {
+    throw new SpendLimitExceeded(amountInDollars, maxSpendPerCall);
+  }
 }
 
 export const mcpCommand = new Command("mcp")
@@ -80,78 +83,122 @@ const mcpCallCommand = new Command("call")
         );
       }
     }
-    const { client, mode } = await resolveTransactionMode(options.pay);
 
+    const mcpClientInfo = { name: "use-agently", version: pkg.version };
+
+    // When --pay is used, do a dry-run preflight to check cost against spend limit.
+    // MCP payment goes through @x402/mcp at the protocol level (not fetch), so
+    // createSpendLimitedFetch cannot intercept it — we must check before paying.
+    if (options.pay) {
+      const config = await getConfigOrThrow();
+      const wallet = loadWallet(config.wallet);
+      const maxSpend = getMaxSpendPerCall(config);
+
+      // Preflight: dry-run to discover the cost
+      try {
+        const result = await callMcpTool(defaultClient, uri, tool, args, {
+          transaction: DryRunTransaction,
+          clientInfo: mcpClientInfo,
+          fetchImpl: clientFetch,
+        });
+        // Tool succeeded without requiring payment — return result directly
+        return outputMcpResult(result, command);
+      } catch (err) {
+        if (err instanceof DryRunPaymentRequired) {
+          checkSpendLimit(err, maxSpend);
+          // Within limit — proceed to actual payment below
+        } else {
+          throw err;
+        }
+      }
+
+      // Cost is within limit — make the paid call
+      try {
+        const result = await callMcpTool(defaultClient, uri, tool, args, {
+          transaction: PayTransaction(wallet),
+          clientInfo: mcpClientInfo,
+          fetchImpl: clientFetch,
+        });
+        return outputMcpResult(result, command);
+      } catch (err) {
+        if (err instanceof SpendLimitExceeded) handleSpendLimitError(err);
+        throw err;
+      }
+    }
+
+    // No --pay: dry-run mode
     try {
-      const result = await callMcpTool(client, uri, tool, args, {
-        transaction: mode,
-        clientInfo: { name: "use-agently", version: pkg.version },
+      const result = await callMcpTool(defaultClient, uri, tool, args, {
+        transaction: DryRunTransaction,
+        clientInfo: mcpClientInfo,
         fetchImpl: clientFetch,
       });
-
-      const content = result.content as Array<{ type: string; text?: string }>;
-
-      // Handle error responses
-      if (result.isError) {
-        const text = content?.find((c) => c.type === "text")?.text;
-        if (text) {
-          try {
-            const parsed = JSON.parse(text);
-            if (parsed?.error && Array.isArray(parsed?.accepts) && parsed.accepts.length > 0) {
-              let message: string;
-              if (parsed.error === "insufficient_funds") {
-                const req = parsed.accepts[0];
-                let amountStr = "unknown amount";
-                try {
-                  const { usdcDecimals } = getChainConfigByNetwork(req.network);
-                  const raw = formatUnits(BigInt(req.amount), usdcDecimals);
-                  const formatted = raw.includes(".") ? raw.replace(/\.?0+$/, "") : raw;
-                  amountStr = `$${formatted} USDC on ${req.network}`;
-                } catch {
-                  amountStr = `${req.amount} (raw units)`;
-                }
-                message = `Insufficient funds to pay for this tool.\nRequired: ${amountStr}\nEnsure your wallet has sufficient USDC balance and try again.`;
-              } else {
-                message = `Payment error: ${parsed.error}`;
-              }
-              if (process.stderr.isTTY) {
-                console.error(
-                  boxen(message, {
-                    title: parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error",
-                    titleAlignment: "center",
-                    borderColor: "red",
-                    padding: 1,
-                  }),
-                );
-              } else {
-                const title = parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error";
-                console.error(`${title}: ${message}`);
-              }
-              process.exit(1);
-            }
-          } catch {
-            // Not JSON — fall through to print as-is
-          }
-          console.error(text);
-        } else {
-          console.error("Tool call returned an error with no text content.");
-        }
-        process.exit(1);
-      }
-
-      // Success: extract text entries when all content is text, otherwise output the full result
-      if (content?.every((c) => c.type === "text" && c.text)) {
-        const texts = content.map((c) => c.text!);
-        output(command, texts.length === 1 ? texts[0] : texts);
-      } else {
-        output(command, result);
-      }
+      return outputMcpResult(result, command);
     } catch (err) {
-      if (err instanceof SpendLimitExceeded) handleSpendLimitError(err);
       if (err instanceof DryRunPaymentRequired) handleDryRunError(err);
       throw err;
     }
   });
+
+function outputMcpResult(result: any, command: Command): void {
+  const content = result.content as Array<{ type: string; text?: string }>;
+
+  // Handle error responses
+  if (result.isError) {
+    const text = content?.find((c) => c.type === "text")?.text;
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed?.error && Array.isArray(parsed?.accepts) && parsed.accepts.length > 0) {
+          let message: string;
+          if (parsed.error === "insufficient_funds") {
+            const req = parsed.accepts[0];
+            let amountStr = "unknown amount";
+            try {
+              const { usdcDecimals } = getChainConfigByNetwork(req.network);
+              const raw = formatUnits(BigInt(req.amount), usdcDecimals);
+              const formatted = raw.includes(".") ? raw.replace(/\.?0+$/, "") : raw;
+              amountStr = `$${formatted} USDC on ${req.network}`;
+            } catch {
+              amountStr = `${req.amount} (raw units)`;
+            }
+            message = `Insufficient funds to pay for this tool.\nRequired: ${amountStr}\nEnsure your wallet has sufficient USDC balance and try again.`;
+          } else {
+            message = `Payment error: ${parsed.error}`;
+          }
+          if (process.stderr.isTTY) {
+            console.error(
+              boxen(message, {
+                title: parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error",
+                titleAlignment: "center",
+                borderColor: "red",
+                padding: 1,
+              }),
+            );
+          } else {
+            const title = parsed.error === "insufficient_funds" ? "Insufficient Funds" : "Payment Error";
+            console.error(`${title}: ${message}`);
+          }
+          process.exit(1);
+        }
+      } catch {
+        // Not JSON — fall through to print as-is
+      }
+      console.error(text);
+    } else {
+      console.error("Tool call returned an error with no text content.");
+    }
+    process.exit(1);
+  }
+
+  // Success: extract text entries when all content is text, otherwise output the full result
+  if (content?.every((c) => c.type === "text" && c.text)) {
+    const texts = content.map((c) => c.text!);
+    output(command, texts.length === 1 ? texts[0] : texts);
+  } else {
+    output(command, result);
+  }
+}
 
 mcpCommand.addCommand(mcpToolsCommand);
 mcpCommand.addCommand(mcpCallCommand);

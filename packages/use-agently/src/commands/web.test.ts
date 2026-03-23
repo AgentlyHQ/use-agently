@@ -13,8 +13,12 @@ import {
   testWalletConfig,
   type X402FacilitatorLocal,
 } from "../testing";
-import { createPaymentFetch, createDryRunFetch } from "../client";
-import { EvmPrivateKeyWallet, DryRunPaymentRequired } from "@use-agently/sdk";
+import { createDryRunFetch } from "../client";
+import {
+  EvmPrivateKeyWallet,
+  DryRunPaymentRequired,
+  createPaymentFetch as sdkCreatePaymentFetch,
+} from "@use-agently/sdk";
 
 mockConfigModule();
 
@@ -598,7 +602,7 @@ describe("web x402 payment", () => {
 
     test("paid GET succeeds with funded wallet and debits sender $0.003", async () => {
       const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
-      const paymentFetch = createPaymentFetch(wallet);
+      const paymentFetch = sdkCreatePaymentFetch(wallet);
 
       const senderBefore = await fixture.container.balance(TEST_ADDRESS);
 
@@ -613,7 +617,7 @@ describe("web x402 payment", () => {
 
     test("paid POST succeeds with funded wallet and debits sender $0.003", async () => {
       const wallet = new EvmPrivateKeyWallet(TEST_PRIVATE_KEY, fixture.container.getRpcUrl());
-      const paymentFetch = createPaymentFetch(wallet);
+      const paymentFetch = sdkCreatePaymentFetch(wallet);
 
       const senderBefore = await fixture.container.balance(TEST_ADDRESS);
 
