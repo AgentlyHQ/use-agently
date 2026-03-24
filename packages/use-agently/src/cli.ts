@@ -2,7 +2,6 @@ import { Command } from "commander";
 import { initCommand } from "./commands/init";
 import { whoamiCommand } from "./commands/whoami";
 import { balanceCommand } from "./commands/balance";
-import { agentsCommand } from "./commands/agents";
 import { searchCommand } from "./commands/search";
 import { viewCommand } from "./commands/view";
 import { a2aCommand } from "./commands/a2a";
@@ -39,7 +38,6 @@ cli.addCommand(whoamiCommand.helpGroup("Diagnostics"));
 cli.addCommand(balanceCommand.helpGroup("Diagnostics"));
 
 // Discovery
-cli.addCommand(agentsCommand.helpGroup("Discovery"));
 cli.addCommand(searchCommand.helpGroup("Discovery"));
 cli.addCommand(viewCommand.helpGroup("Discovery"));
 

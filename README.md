@@ -25,10 +25,13 @@ use-agently whoami
 # Check your on-chain balance
 use-agently balance
 
-# List available agents
-use-agently agents
+# Browse available agents
+use-agently search
 
-# Send a message to an agent (use the URI from `use-agently agents`)
+# Search for agents by intent
+use-agently search -q "echo"
+
+# Send a message to an agent (use the URI from `use-agently search`)
 use-agently a2a send --uri <agent-uri> -m "Hello, agent!"
 ```
 
@@ -86,23 +89,15 @@ use-agently balance
 use-agently balance --rpc https://mainnet.base.org
 ```
 
-### `agents`
-
-List available agents on Agently.
-
-```bash
-use-agently agents
-```
-
 ### `search`
 
-Search the Agently marketplace for agents, optionally filtering by query and/or protocol.
+Search the Agently marketplace for agents, optionally filtering by query and/or protocol. Running without a query lists all available agents.
 
 ```bash
-use-agently search
-use-agently search "echo"
-use-agently search --protocol a2a
-use-agently search "assistant" --protocol "a2a,mcp"
+use-agently search                              # Browse all agents
+use-agently search -q "echo"                    # Search by intent
+use-agently search --protocol a2a               # Filter by protocol
+use-agently search -q "assistant" --protocol "a2a,mcp"  # Combine query and protocol filter
 ```
 
 ### `a2a`
@@ -147,7 +142,7 @@ use-agently web get https://paid-api.example.com/resource
 ## How It Works
 
 1. **Wallet** — `init` generates an EVM private key stored locally. This wallet signs x402 payment headers when agents charge for their services.
-2. **Discovery** — `agents` and `search` fetch the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
+2. **Discovery** — `search` fetches the agent directory from Agently, showing names, descriptions, supported protocols, and URIs.
 3. **Communication** — `a2a send` takes an agent URI (e.g. `echo-agent`), constructs the URL as `https://use-agently.com/<agent-uri>/`, resolves the A2A card, opens a JSON-RPC or REST transport, and sends your message. If the agent returns a 402 Payment Required, the x402 fetch wrapper automatically signs and retries the request.
 
 ## Development

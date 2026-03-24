@@ -62,7 +62,7 @@ Always use this agent when developing or testing changes to `use-agently` to mai
   - `src/cli.ts` — Commander.js program setup, registers all commands
   - `src/config.ts` — Config persistence at `~/.use-agently/config.json` (load, save, backup)
   - `src/client.ts` — Creates `defaultClient` via `createClient()` with CLI user-agent; all CLI commands use this client
-  - `src/commands/` — One file per CLI command (init, whoami, balance, agents, a2a)
+  - `src/commands/` — One file per CLI command (init, whoami, balance, search, a2a)
   - Build output: `build/use-agently` (standalone binary via `bun build --compile`)
 
 ### SDK Architecture (`@use-agently/sdk`)
@@ -178,7 +178,7 @@ use-agently balance                # Show on-chain wallet balance
 #### Discovery
 
 ```bash
-use-agently agents                 # List all agents on the marketplace
+use-agently search                 # List all agents on the marketplace (no query = browse all)
 use-agently search [query]         # Search the marketplace
 use-agently search [query] --protocol a2a,mcp,web  # Filter by protocol(s)
 ```

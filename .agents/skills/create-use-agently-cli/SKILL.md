@@ -29,7 +29,7 @@ Every command belongs to one of four categories. Place new commands in the corre
 | Category               | Purpose                               | Examples                                        |
 | ---------------------- | ------------------------------------- | ----------------------------------------------- |
 | **Lifecycle & Health** | Setup, diagnostics, identity, balance | `doctor`, `whoami`, `balance`, `init`           |
-| **Discovery**          | Browse the Agently marketplace        | `marketplace`, `marketplace:agents`             |
+| **Discovery**          | Browse the Agently marketplace        | `search`, `view`                                |
 | **Operations**         | Config, wallets, updates              | `config`, `wallets`, `update`                   |
 | **Protocols**          | Protocol invocations                  | `a2a`, `a2a:card`, `mcp`, `erc-8004`, `web:get` |
 
@@ -44,15 +44,10 @@ use-agently whoami                 # Show current wallet type and address
 use-agently balance                # Show on-chain wallet balance
 
 # Discovery
-use-agently marketplace            # List all agents/tools/skills on the marketplace
-use-agently marketplace "query"    # Search the marketplace
-use-agently marketplace:agents "query"
-use-agently marketplace:tools "query"
-use-agently marketplace:skills "query"
-use-agently m "query"              # shorthand for marketplace
-use-agently m:agents "query"
-use-agently m:tools "query"
-use-agently m:skills "query"
+use-agently search                 # Browse all agents on the marketplace (no query = list all)
+use-agently search -q "query"      # Search agents by name or description
+use-agently search --protocol a2a  # Filter by protocol
+use-agently view --uri <uri>       # View agent details by CAIP-19 ID
 
 # Operations
 use-agently init                   # Initialize a wallet and config
