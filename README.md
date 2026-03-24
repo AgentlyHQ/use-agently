@@ -7,6 +7,7 @@ Manage local EVM wallets, discover agents, and communicate with them via the [A2
 ## Install
 
 ```bash
+npx skills add https://github.com/agentlyhq/use-agently --skill use-agently
 npm install -g use-agently@latest
 ```
 
