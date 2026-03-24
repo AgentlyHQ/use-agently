@@ -36,6 +36,10 @@ async function resolveTransactionMode(pay?: boolean): Promise<{ client: unstable
 
 export const a2aCommand = new Command("a2a")
   .description("Send messages and fetch agent cards via the A2A protocol")
+  .addHelpText(
+    "after",
+    '\nExamples:\n  use-agently a2a send --uri <uri> -m "Hello!"\n  use-agently a2a card --uri <uri>',
+  )
   .action(function () {
     (this as Command).outputHelp();
   });

@@ -51,6 +51,32 @@ cli.addCommand(initCommand.helpGroup("Lifecycle"));
 cli.addCommand(walletCommand.helpGroup("Lifecycle"));
 cli.addCommand(updateCommand.helpGroup("Lifecycle"));
 
+cli.addHelpText(
+  "after",
+  `
+Protocol Quick Reference:
+
+  a2a send  -u <uri> -m <message> [--pay]    Send a message via A2A
+  a2a card  -u <uri>                          Fetch an agent's A2A card
+
+  mcp tools -u <uri>                          List tools on an MCP server
+  mcp call  -u <uri> --tool <name> [--args <json>] [--pay]
+                                              Call a tool on an MCP server
+
+  web get|post|put|patch|delete <url> [options]
+            [-d <body>] [-H <header>] [-v] [--pay]
+                                              HTTP requests with x402 support
+
+  wallet spend                                View current spend limit
+  wallet spend set-max <value>                Set max USD spend per call (0–1)
+
+  <uri> can be an HTTP URL or a CAIP-19 ID (e.g. eip155:8453/erc8004:0x…/1)
+
+  Getting started: use-agently init → use-agently doctor → use-agently search
+
+  Run "use-agently <command> -h" for full option details.`,
+);
+
 // Propagate showGlobalOptions to all subcommands added via addCommand(),
 // which does not inherit configureHelp from the parent.
 function enableGlobalOptionsInHelp(cmd: Command) {

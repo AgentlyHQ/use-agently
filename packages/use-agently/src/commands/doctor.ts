@@ -15,7 +15,10 @@ export const doctorCommand = new Command("doctor")
   .description("Run environment checks and report any issues")
   .option("--rpc <url>", "Custom RPC URL to use for network check")
   .showHelpAfterError(true)
-  .addHelpText("after", "\nConfig: ~/.use-agently/config.json (global), .use-agently/config.json (local)")
+  .addHelpText(
+    "after",
+    "\nExamples:\n  use-agently doctor\n\nConfig: ~/.use-agently/config.json (global), .use-agently/config.json (local)",
+  )
   .action(async (options: { rpc?: string }, command: Command) => {
     const checks: Check[] = [];
 
