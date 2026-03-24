@@ -54,26 +54,26 @@ cli.addCommand(updateCommand.helpGroup("Lifecycle"));
 cli.addHelpText(
   "after",
   `
-Protocol Quick Reference:
+Getting started: use-agently init → use-agently doctor → use-agently search
 
-  a2a send  -u <uri> -m <message> [--pay]    Send a message via A2A
-  a2a card  -u <uri>                          Fetch an agent's A2A card
+Quick Reference:
 
-  mcp tools -u <uri>                          List tools on an MCP server
-  mcp call  -u <uri> --tool <name> [--args <json>] [--pay]
-                                              Call a tool on an MCP server
+  Send a message or fetch an agent card via A2A:
+    a2a send -u <uri> -m <message> [--pay]
+    a2a card -u <uri>
 
-  web get|post|put|patch|delete <url> [options]
-            [-d <body>] [-H <header>] [-v] [--pay]
-                                              HTTP requests with x402 support
+  List or call tools on an MCP server:
+    mcp tools -u <uri>
+    mcp call  -u <uri> --tool <name> [--args <json>] [--pay]
 
-  wallet spend                                View current spend limit
-  wallet spend set-max <value>                Set max USD spend per call (0–1)
+  HTTP requests with x402 payment support:
+    web get|post|put|patch|delete <url> [-d <body>] [-H <header>] [-v] [--pay]
 
-  <uri> can be an HTTP URL or a CAIP-19 ID (e.g. eip155:8453/erc8004:0x…/1)
+  Manage wallet spend limits:
+    wallet spend
+    wallet spend set-max <value>
 
-  Getting started: use-agently init → use-agently doctor → use-agently search
-
+  <uri> = HTTP URL or CAIP-19 ID (e.g. eip155:8453/erc8004:0x…/1)
   Run "use-agently <command> -h" for full option details.`,
 );
 
