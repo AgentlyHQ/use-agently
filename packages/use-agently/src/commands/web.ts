@@ -332,7 +332,11 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
   addSharedOptions(cmd, hasBody);
 
   const bodyExample = hasBody ? ' -d \'{"key":"value"}\' -H "Content-Type: application/json"' : "";
-  cmd.addHelpText("after", `\nExamples:\n  use-agently web ${method} https://api.example.com/data${bodyExample} -v`);
+  const payExample = !hasBody ? `\n  use-agently web ${method} https://api.example.com/paid-endpoint --pay` : "";
+  cmd.addHelpText(
+    "after",
+    `\nExamples:\n  use-agently web ${method} https://api.example.com/data${bodyExample} -v${payExample}`,
+  );
 
   cmd.action(async (url: string, options: WebOptions, command: Command) => {
     await executeHttpRequest(method, url, options, command);
@@ -343,6 +347,10 @@ function createMethodSubcommand(method: string, description: string, hasBody: bo
 
 export const webCommand = new Command("web")
   .description("Make HTTP requests with automatic x402 payment support (GET, POST, PUT, PATCH, DELETE)")
+  .addHelpText(
+    "after",
+    '\nExamples:\n  use-agently web get https://api.example.com/data\n  use-agently web post https://api.example.com/data -d \'{"key":"value"}\' --pay',
+  )
   .action(function () {
     (this as Command).outputHelp();
   });

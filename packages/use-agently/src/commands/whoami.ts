@@ -6,6 +6,7 @@ import { getConfigOrThrow } from "../config";
 export const whoamiCommand = new Command("whoami")
   .description("Show current wallet info")
   .showHelpAfterError(true)
+  .addHelpText("after", "\nExamples:\n  use-agently whoami")
   .action(async (_options: Record<string, never>, command: Command) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);

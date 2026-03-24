@@ -4,6 +4,7 @@ import { output } from "../output";
 
 export const walletCommand = new Command("wallet")
   .description("Manage wallet settings (spend limits)")
+  .addHelpText("after", "\nExamples:\n  use-agently wallet spend\n  use-agently wallet spend set-max 0.5")
   .action(function () {
     (this as Command).outputHelp();
   });

@@ -7,6 +7,7 @@ export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
   .option("--rpc <url>", "Custom RPC URL")
   .showHelpAfterError(true)
+  .addHelpText("after", "\nExamples:\n  use-agently balance")
   .action(async (options: { rpc?: string }, command: Command) => {
     const config = await getConfigOrThrow();
     const wallet = loadWallet(config.wallet);

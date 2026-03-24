@@ -39,6 +39,10 @@ function checkSpendLimit(err: DryRunPaymentRequired, maxSpendPerCall: number): v
 
 export const mcpCommand = new Command("mcp")
   .description("Discover and call tools on MCP servers (always list tools before calling)")
+  .addHelpText(
+    "after",
+    '\nExamples:\n  use-agently mcp tools --uri <uri>\n  use-agently mcp call --uri <uri> --tool <name> --args \'{"key":"value"}\'',
+  )
   .action(function () {
     (this as Command).outputHelp();
   });
