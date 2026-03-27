@@ -166,7 +166,7 @@ function outputMcpResult(result: any, command: Command): void {
             } catch {
               amountStr = `${req.amount} (raw units)`;
             }
-            message = `Insufficient funds to pay for this tool.\nRequired: ${amountStr}\nEnsure your wallet has sufficient USDC balance and try again.`;
+            message = `Insufficient funds to pay for this tool.\nRequired: ${amountStr}\nRun "use-agently balance" to check your wallet address and balance, then send USDC on Base to fund it.`;
           } else {
             message = `Payment error: ${parsed.error}`;
           }

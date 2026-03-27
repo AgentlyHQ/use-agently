@@ -27,8 +27,8 @@ export class DryRunPaymentRequired extends SdkDryRunPaymentRequired {
     const req = requirements[0];
     const amount = req ? formatUsdcAmount(req) : null;
     this.message = amount
-      ? `This request requires payment of ${amount}.\nRun the same command with --pay to authorize the transaction and proceed.`
-      : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.`;
+      ? `This request requires payment of ${amount}.\nRun the same command with --pay to authorize the transaction and proceed.\nRun "use-agently balance" to check your wallet address and balance, then send USDC on Base to fund it.`
+      : `This request requires payment, but the amount could not be determined.\nInspect the endpoint manually before running with --pay.\nRun "use-agently balance" to check your wallet address and balance.`;
   }
 }
 
