@@ -144,6 +144,14 @@ const mcpCallCommand = new Command("call")
     }
   });
 
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 function outputMcpResult(result: any, command: Command): void {
   const content = result.content as Array<{ type: string; text?: string }>;
 
@@ -198,7 +206,8 @@ function outputMcpResult(result: any, command: Command): void {
   // Success: extract text entries when all content is text, otherwise output the full result
   if (content?.every((c) => c.type === "text" && c.text)) {
     const texts = content.map((c) => c.text!);
-    output(command, texts.length === 1 ? texts[0] : texts);
+    const parsed = texts.length === 1 ? tryParseJson(texts[0]) : texts.map(tryParseJson);
+    output(command, parsed);
   } else {
     output(command, result);
   }
