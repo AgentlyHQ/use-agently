@@ -1,7 +1,9 @@
 import { Command } from "commander";
-import { output } from "../output";
-import { loadWallet, getBalance } from "@use-agently/sdk";
-import { getConfigOrThrow } from "../config";
+import { getOutputFormat, outputJson, outputTuiKeyValue } from "../output";
+import { getBalance } from "@use-agently/sdk";
+import { getConfigOrThrow, getActiveProvider } from "../config";
+import { resolveWallet } from "../wallet";
+import { detectProviders } from "../providers";
 
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
@@ -10,7 +12,37 @@ export const balanceCommand = new Command("balance")
   .addHelpText("after", "\nExamples:\n  use-agently balance")
   .action(async (options: { rpc?: string }, command: Command) => {
     const config = await getConfigOrThrow();
-    const wallet = loadWallet(config.wallet);
+    const wallet = await resolveWallet(config);
     const result = await getBalance(wallet.address, { rpc: options.rpc });
-    output(command, result);
+    const activeProvider = getActiveProvider(config);
+
+    const detected = await detectProviders(activeProvider);
+    const otherProviders = detected.filter((p) => p.installed && !p.active);
+
+    const format = getOutputFormat(command);
+
+    if (format === "json") {
+      outputJson({
+        ...result,
+        provider: activeProvider,
+        otherProviders: otherProviders.map((p) => ({
+          type: p.type,
+          name: p.name,
+          address: p.address,
+          switchCommand: `use-agently wallet set ${p.type}`,
+        })),
+      });
+    } else {
+      outputTuiKeyValue({ ...result, provider: activeProvider });
+
+      if (otherProviders.length > 0) {
+        console.log("");
+        console.log("Other wallets detected:");
+        for (const p of otherProviders) {
+          const addr = p.address ? `  ${p.address}` : "";
+          console.log(`  ${p.name}${addr}`);
+        }
+        console.log("\nSwitch provider: use-agently wallet set <provider>");
+      }
+    }
   });

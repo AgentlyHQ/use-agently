@@ -20,6 +20,14 @@ mock.module("../config.js", () => ({
   getConfigOrThrow: async () => {
     throw new Error("No wallet configured.");
   },
+  getActiveProvider: () => "local",
+}));
+
+mock.module("../wallet.js", () => ({
+  resolveWallet: async (config: any) => {
+    const { loadWallet } = await import("@use-agently/sdk");
+    return loadWallet(config.wallet);
+  },
 }));
 
 mock.module("node:child_process", () => ({

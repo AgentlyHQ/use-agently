@@ -7,9 +7,9 @@ import {
   getChainConfigByNetwork,
   type PaymentRequirementsInfo,
   type unstable_Client,
-  loadWallet,
 } from "@use-agently/sdk";
 import { getConfigOrThrow, getMaxSpendPerCall } from "./config";
+import { resolveWallet } from "./wallet";
 import pkg from "../package.json" with { type: "json" };
 import { createClient } from "@use-agently/sdk/client";
 
@@ -119,7 +119,7 @@ export function createSpendLimitedFetch(baseFetch: typeof fetch, maxSpendPerCall
 export async function resolveFetch(pay?: boolean): Promise<typeof fetch> {
   if (pay) {
     const config = await getConfigOrThrow();
-    const wallet = loadWallet(config.wallet);
+    const wallet = await resolveWallet(config);
     const maxSpend = getMaxSpendPerCall(config);
     const limitedFetch = createSpendLimitedFetch(clientFetch, maxSpend);
     return sdkCreatePaymentFetch(wallet, limitedFetch) as typeof fetch;
