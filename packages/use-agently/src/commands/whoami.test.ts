@@ -14,6 +14,7 @@ describe("whoami command", () => {
     expect(out.json).toEqual({
       namespace: "eip155",
       address: TEST_ADDRESS,
+      provider: "local",
     });
   });
 

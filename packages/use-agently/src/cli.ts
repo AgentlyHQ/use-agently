@@ -69,7 +69,9 @@ Quick Reference:
   HTTP requests with x402 payment support:
     web get|post|put|patch|delete <url> [-d <body>] [-H <header>] [-v] [--pay]
 
-  Manage wallet spend limits:
+  Manage wallet providers and spend limits:
+    wallet providers
+    wallet set <provider>
     wallet spend
     wallet spend set-max <value>
 

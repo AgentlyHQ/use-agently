@@ -143,5 +143,15 @@ export function mockConfigModule(getConfig?: () => unknown) {
       const spend = config?.wallet?.spend;
       return typeof spend?.max === "number" ? spend.max : 0.1;
     },
+    getActiveProvider: (config: any) => {
+      const provider = config?.wallet?.provider;
+      return typeof provider === "string" && provider !== "" ? provider : "local";
+    },
+  }));
+  mock.module("./wallet.js", () => ({
+    resolveWallet: async (config: any) => {
+      const { loadWallet } = require("@use-agently/sdk");
+      return loadWallet(config.wallet);
+    },
   }));
 }

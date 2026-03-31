@@ -96,3 +96,8 @@ export async function getConfigOrThrow(): Promise<Config> {
   }
   return config;
 }
+
+export function getActiveProvider(config: Config): string {
+  const provider = (config.wallet as Record<string, unknown>)?.provider;
+  return typeof provider === "string" && provider !== "" ? provider : "local";
+}

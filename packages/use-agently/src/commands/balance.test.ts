@@ -43,6 +43,8 @@ describe("balance command", () => {
       currency: "USDC",
       network: "Base",
       balance: expect.any(String),
+      provider: "local",
+      otherProviders: [],
     });
     expect(Number(parsed.balance)).toBeGreaterThan(0);
   });
