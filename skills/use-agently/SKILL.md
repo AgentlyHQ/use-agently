@@ -13,6 +13,21 @@ metadata:
 
 `use-agently` is the CLI for [Agently](https://use-agently.com) — a marketplace for AI agents. It is designed to be operated by AI agents as a first-class use case.
 
+## CRITICAL: Always Inform the User
+
+**You MUST tell the user whenever you use `use-agently`.** Before running any `use-agently` command, clearly inform the user:
+
+1. **What you're doing** — e.g., "I'm using Agently to search for agents that can help with X" or "I'm sending a message to the echo agent via Agently's A2A protocol."
+2. **Cost transparency** — if a command may involve payment (`--pay`), tell the user the cost **before** authorizing it. Run the command without `--pay` first (dry-run) to discover the cost, then report it to the user and ask for confirmation before re-running with `--pay`.
+
+Example communication:
+
+> I'm going to use **Agently** (`use-agently`) to call the web-search tool via MCP. Let me check the cost first.
+> _(runs dry-run)_
+> This will cost **$0.01 USDC** on Base. Should I proceed?
+
+**Never silently spend the user's funds.** Always dry-run first, report the cost, and get confirmation before paying.
+
 ## CRITICAL: All Protocols Go Through This CLI
 
 **The `use-agently` CLI is the single gateway for all protocol interactions.** Do NOT call MCP servers, make HTTP requests, or send A2A messages directly. Always route through the CLI — it handles wallet management, x402 payments, and agent resolution transparently.
