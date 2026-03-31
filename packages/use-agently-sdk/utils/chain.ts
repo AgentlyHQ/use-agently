@@ -1,5 +1,5 @@
 import type { Chain } from "viem";
-import { base } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 
 export interface ChainConfig {
   chainId: number;
@@ -15,6 +15,13 @@ const chains: Record<string, ChainConfig> = {
     network: `eip155:${base.id}`,
     chain: base,
     usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    usdcDecimals: 6,
+  },
+  "base-sepolia": {
+    chainId: baseSepolia.id, // 84532
+    network: `eip155:${baseSepolia.id}`,
+    chain: baseSepolia,
+    usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     usdcDecimals: 6,
   },
 };

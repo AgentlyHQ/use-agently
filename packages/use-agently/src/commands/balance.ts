@@ -8,12 +8,14 @@ import { detectProviders } from "../providers";
 export const balanceCommand = new Command("balance")
   .description("Check wallet balance on-chain")
   .option("--rpc <url>", "Custom RPC URL")
+  .option("--testnet", "Check Base Sepolia Testnet")
   .showHelpAfterError(true)
-  .addHelpText("after", "\nExamples:\n  use-agently balance")
-  .action(async (options: { rpc?: string }, command: Command) => {
+  .addHelpText("after", "\nExamples:\n  use-agently balance\n  use-agently balance --testnet")
+  .action(async (options: { rpc?: string; testnet?: boolean }, command: Command) => {
     const config = await getConfigOrThrow();
     const wallet = await resolveWallet(config);
-    const result = await getBalance(wallet.address, { rpc: options.rpc });
+    const chain = options.testnet ? "base-sepolia" : "base";
+    const result = await getBalance(wallet.address, { rpc: options.rpc, chain });
     const activeProvider = getActiveProvider(config);
 
     const detected = await detectProviders(activeProvider);
