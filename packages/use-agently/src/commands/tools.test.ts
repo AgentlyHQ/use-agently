@@ -75,13 +75,13 @@ describe("tools command (free)", () => {
         "-o",
         "tui",
         "tools",
+        "--uri",
+        fixture.agent.getAgentHost() + "/mcp",
         "call",
         "--tool",
         "echo",
         "--args",
         '{"message":"hello from tools"}',
-        "--uri",
-        fixture.agent.getAgentHost() + "/mcp",
       ]);
       expect(out.stdout).toStrictEqual("hello from tools");
 
@@ -108,13 +108,13 @@ describe("tools command x402 payment (paid)", () => {
           "test",
           "use-agently",
           "tools",
+          "--uri",
+          fixture.agent.getAgentHost() + "/mcp",
           "call",
           "--tool",
           "paid-echo-tool",
           "--args",
           '{"message":"dry run"}',
-          "--uri",
-          fixture.agent.getAgentHost() + "/mcp",
         ]);
       } catch {
         // expected: process.exit throws
@@ -137,13 +137,13 @@ describe("tools command x402 payment (paid)", () => {
         "-o",
         "tui",
         "tools",
+        "--uri",
+        fixture.agent.getAgentHost() + "/mcp",
         "call",
         "--tool",
         "paid-echo-tool",
         "--args",
         '{"message":"paid cli test"}',
-        "--uri",
-        fixture.agent.getAgentHost() + "/mcp",
         "--pay",
       ]);
 
@@ -180,13 +180,13 @@ describe("tools command x402 payment (paid)", () => {
           "test",
           "use-agently",
           "tools",
+          "--uri",
+          fixture.agent.getAgentHost() + "/mcp",
           "call",
           "--tool",
           "paid-echo-tool",
           "--args",
           '{"message":"should fail"}',
-          "--uri",
-          fixture.agent.getAgentHost() + "/mcp",
           "--pay",
         ]);
       } catch {
@@ -211,13 +211,13 @@ describe("tools command x402 payment (paid)", () => {
         "-o",
         "json",
         "tools",
+        "--uri",
+        fixture.agent.getAgentHost() + "/mcp",
         "call",
         "--tool",
         "paid-echo-tool",
         "--args",
         '{"message":"json output test"}',
-        "--uri",
-        fixture.agent.getAgentHost() + "/mcp",
         "--pay",
       ]);
 

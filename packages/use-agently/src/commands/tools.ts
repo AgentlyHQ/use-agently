@@ -1,7 +1,6 @@
 import { Command } from "commander";
 import boxen from "boxen";
 import { formatUnits } from "viem";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import {
   DryRunTransaction,
   PayTransaction,
@@ -40,16 +39,13 @@ function checkSpendLimit(err: DryRunPaymentRequired, maxSpendPerCall: number): v
 
 export const toolsCommand = new Command("tools")
   .description("List or call tools on an MCP server")
-  .option("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
+  .requiredOption("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
+  .showHelpAfterError(true)
   .addHelpText(
     "after",
     "\nExamples:\n  use-agently tools --uri https://example.com/mcp\n  use-agently tools --uri eip155:8453/erc8004:0x1234/1\n  use-agently tools call --uri https://example.com/mcp --tool echo",
   )
-  .action(async (options: { uri?: string }, command: Command) => {
-    if (!options.uri) {
-      command.outputHelp();
-      return;
-    }
+  .action(async (options: { uri: string }, command: Command) => {
     const tools = await listMcpTools(defaultClient, options.uri, {
       clientInfo: { name: "use-agently", version: pkg.version },
       fetchImpl: clientFetch,
@@ -59,7 +55,6 @@ export const toolsCommand = new Command("tools")
 
 const toolsCallCommand = new Command("call")
   .description("Call a specific tool on an MCP server")
-  .requiredOption("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
   .requiredOption("--tool <name>", "Tool name to call")
   .option("--args <json>", "JSON arguments to pass to the tool")
   .option("--pay", "Authorize payment if the tool requires it (default: dry-run, shows cost only)")
@@ -68,8 +63,8 @@ const toolsCallCommand = new Command("call")
     "after",
     '\nExamples:\n  use-agently tools call --uri https://example.com/mcp --tool echo --args \'{"message":"hello"}\'\n  use-agently tools call --uri https://example.com/mcp --tool paid-tool --args \'{"message":"hello"}\' --pay',
   )
-  .action(async (options: { uri: string; tool: string; args?: string; pay?: boolean }, command: Command) => {
-    const uri = options.uri;
+  .action(async (options: { tool: string; args?: string; pay?: boolean }, command: Command) => {
+    const uri = command.optsWithGlobals().uri as string;
     const tool = options.tool;
     let args: Record<string, unknown> = {};
     if (options.args !== undefined) {
@@ -146,8 +141,11 @@ function tryParseJson(text: string): unknown {
   }
 }
 
-function outputMcpResult(result: CallToolResult, command: Command): void {
-  const content = result.content as Array<{ type: string; text?: string }>;
+function outputMcpResult(
+  result: { content: Array<{ type: string; text?: string }>; isError?: boolean },
+  command: Command,
+): void {
+  const content = result.content;
 
   // Handle error responses
   if (result.isError) {
