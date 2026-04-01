@@ -23,9 +23,17 @@ export const balanceCommand = new Command("balance")
 
     const format = getOutputFormat(command);
 
+    const website = `https://use-agently.com/account/${wallet.address}`;
+
     if (format === "json") {
       outputJson({
-        ...result,
+        website: website,
+        address: result.address,
+        balance: {
+          value: result.balance,
+          currency: result.currency,
+          network: result.network,
+        },
         provider: activeProvider,
         otherProviders: otherProviders.map((p) => ({
           type: p.type,
@@ -35,7 +43,12 @@ export const balanceCommand = new Command("balance")
         })),
       });
     } else {
-      outputTuiKeyValue({ ...result, provider: activeProvider });
+      outputTuiKeyValue({
+        website: website,
+        balance: `${result.balance} USD (${result.currency} on ${result.network})`,
+        address: result.address,
+        provider: activeProvider,
+      });
 
       if (otherProviders.length > 0) {
         console.log("");
