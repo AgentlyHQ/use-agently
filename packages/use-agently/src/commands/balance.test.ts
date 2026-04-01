@@ -29,9 +29,10 @@ describe("balance command", () => {
 
     const parsed = out.json as Record<string, unknown>;
     expect(parsed.address).toStrictEqual(TEST_ADDRESS);
-    expect(parsed.currency).toStrictEqual("USDC");
-    expect(parsed.network).toStrictEqual("Base");
-    expect(Number(parsed.balance as string)).toBeGreaterThan(0);
+    const balance = parsed.balance as Record<string, unknown>;
+    expect(balance.currency).toStrictEqual("USDC");
+    expect(balance.network).toStrictEqual("Base");
+    expect(Number(balance.value as string)).toBeGreaterThan(0);
   });
 
   test("json output", async () => {
@@ -40,12 +41,15 @@ describe("balance command", () => {
     const parsed = out.json as Record<string, unknown>;
     expect(parsed).toStrictEqual({
       address: TEST_ADDRESS,
-      currency: "USDC",
-      network: "Base",
-      balance: expect.any(String),
+      balance: {
+        currency: "USDC",
+        network: "Base",
+        value: expect.any(String),
+      },
       provider: "local",
       otherProviders: [],
+      website: expect.any(String),
     });
-    expect(Number(parsed.balance)).toBeGreaterThan(0);
+    expect(Number((parsed.balance as Record<string, unknown>).value)).toBeGreaterThan(0);
   });
 });

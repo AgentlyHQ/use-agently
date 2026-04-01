@@ -6,6 +6,7 @@ import { searchCommand } from "./commands/search";
 import { viewCommand } from "./commands/view";
 import { a2aCommand } from "./commands/a2a";
 import { mcpCommand } from "./commands/mcp";
+import { toolsCommand } from "./commands/tools";
 import { webCommand } from "./commands/web";
 import { doctorCommand } from "./commands/doctor";
 import { updateCommand } from "./commands/update";
@@ -43,6 +44,7 @@ cli.addCommand(viewCommand.helpGroup("Discovery"));
 
 // Protocols
 cli.addCommand(a2aCommand.helpGroup("Protocols"));
+cli.addCommand(toolsCommand.helpGroup("Protocols"));
 cli.addCommand(mcpCommand.helpGroup("Protocols"));
 cli.addCommand(webCommand.helpGroup("Protocols"));
 
@@ -63,6 +65,10 @@ Quick Reference:
     a2a card -u <uri>
 
   List or call tools on an MCP server:
+    tools -u <uri>
+    tools call -u <uri> --tool <name> [--args <json>] [--pay]
+
+  (Legacy) List or call tools via the MCP command:
     mcp tools -u <uri>
     mcp call  -u <uri> --tool <name> [--args <json>] [--pay]
 
