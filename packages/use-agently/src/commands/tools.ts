@@ -39,14 +39,17 @@ function checkSpendLimit(err: DryRunPaymentRequired, maxSpendPerCall: number): v
 }
 
 export const toolsCommand = new Command("tools")
-  .description("List available tools on an MCP server")
-  .requiredOption("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
-  .showHelpAfterError(true)
+  .description("List or call tools on an MCP server")
+  .option("-u, --uri <value>", "MCP server URL or CAIP-19 ID")
   .addHelpText(
     "after",
-    "\nExamples:\n  use-agently tools --uri https://example.com/mcp\n  use-agently tools --uri eip155:8453/erc8004:0x1234/1",
+    "\nExamples:\n  use-agently tools --uri https://example.com/mcp\n  use-agently tools --uri eip155:8453/erc8004:0x1234/1\n  use-agently tools call --uri https://example.com/mcp --tool echo",
   )
-  .action(async (options: { uri: string }, command: Command) => {
+  .action(async (options: { uri?: string }, command: Command) => {
+    if (!options.uri) {
+      command.outputHelp();
+      return;
+    }
     const tools = await listMcpTools(defaultClient, options.uri, {
       clientInfo: { name: "use-agently", version: pkg.version },
       fetchImpl: clientFetch,
